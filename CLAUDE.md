@@ -13,22 +13,47 @@ RhythmEx is a browser-based rhythm practice app for young musicians. See `SPEC.m
 ## Project Structure
 ```
 src/
-  components/
-    instruments/    # HandPan, DrumPad — virtual instrument UIs
-    practice/       # BeatGrid, TimingFeedback, StarRating — practice session UI
-    ui/             # Layout, Navigation, Button — shared UI components
-  hooks/
-    useAudio.ts     # Tone.js integration, sample loading, playback
-    useTiming.ts    # Tap detection, accuracy scoring, star calculation
-    useExercise.ts  # Exercise state, playhead position, BPM control
-  data/
-    exercises/      # JSON exercise definitions by difficulty
-    samples/        # Audio sample manifests per instrument
-  utils/
-    rhythm.ts       # Beat pattern helpers, time conversion
-    scoring.ts      # Accuracy calculation, star thresholds
+  App.tsx               # Root component — state machine navigation across screens
+  main.tsx              # Entry point — renders App into DOM
+  index.css             # Tailwind CSS import
   types/
-    index.ts        # Shared TypeScript types and interfaces
+    index.ts            # All shared TypeScript types and interfaces
+  components/
+    screens/            # Full-page screen components
+      HomeScreen.tsx
+      InstrumentSelectScreen.tsx
+      ExerciseSelectScreen.tsx
+      PracticeScreen.tsx        # Placeholder — real UI in Phase 2-3
+      ResultsScreen.tsx         # Placeholder — real scoring in Phase 4
+    ui/                 # Shared reusable UI components
+      Button.tsx        # Variant/size props, 44px+ touch targets
+      Layout.tsx        # Page wrapper with gradient bg, max-width
+      Navigation.tsx    # Back button + screen title
+      StarDisplay.tsx   # 1-3 filled/unfilled stars
+    instruments/        # (Phase 5) HandPan, DrumPad — virtual instrument UIs
+    practice/           # (Phase 2-3) BeatGrid, TimingFeedback
+  hooks/                # (Phase 2-5) Custom hooks
+    useAudio.ts         # Tone.js integration, sample loading, playback
+    useTiming.ts        # Tap detection, accuracy scoring, star calculation
+    useExercise.ts      # Exercise state, playhead position, BPM control
+  data/
+    exercises/          # Exercise definitions by difficulty
+      beginner.ts       # 3 exercises: quarter notes, half notes, whole notes
+      intermediate.ts   # 2 exercises: eighth notes, dotted rhythms
+      advanced.ts       # 2 exercises: sixteenth notes, syncopation
+      index.ts          # Aggregator: allExercises, exercisesByDifficulty(), exerciseById()
+    samples/
+      index.ts          # Audio sample path manifests (placeholder paths)
+  utils/
+    rhythm.ts           # transportTimeToMs, msPerBeat, exerciseDurationMs, beatTimesMs
+    scoring.ts          # TIMING_WINDOWS, judgeTap, calculateAccuracy, calculateStars
+    storage.ts          # localStorage CRUD: loadScores, saveResult, getBestScore
+    __tests__/          # Vitest unit tests (42 tests)
+      rhythm.test.ts
+      scoring.test.ts
+      storage.test.ts
+  test/
+    setup.ts            # Vitest setup — @testing-library/jest-dom
 ```
 
 ## Commands
@@ -55,6 +80,13 @@ src/
 - Test timing/scoring logic thoroughly (utils/ and hooks/)
 - Components: test user interactions, not implementation details
 - No need to test Tone.js internals — mock the audio layer
+
+## Architecture Decisions
+- **Navigation:** Simple state machine in `App.tsx` using `AppState` — no router library. Screen is a union type, callbacks handle transitions.
+- **Path alias:** `@/` maps to `src/` (configured in both `tsconfig.app.json` and `vite.config.ts`)
+- **Timing windows:** On-time ≤50ms, acceptable ≤120ms, beyond = miss (defined in `utils/scoring.ts`)
+- **Star thresholds:** ≥90% → 3 stars, ≥75% → 2 stars, else → 1 star
+- **Transport time format:** Tone.js `"measure:beat:sixteenth"` — parsed by `utils/rhythm.ts`
 
 ## Important Notes
 - Target audience is young children (5+): keep UI simple, colorful, and forgiving

@@ -1,0 +1,48 @@
+import type { Exercise } from '@/types'
+
+export const intermediateExercises: Exercise[] = [
+  {
+    id: 'eighth-note-drive',
+    name: 'Eighth Note Drive',
+    difficulty: 'intermediate',
+    timeSignature: [4, 4],
+    bpm: 90,
+    measures: 2,
+    beats: [
+      { time: '0:0:0', duration: '8n', note: 'C4' },
+      { time: '0:0:2', duration: '8n', note: 'C4' },
+      { time: '0:1:0', duration: '8n', note: 'C4' },
+      { time: '0:1:2', duration: '8n', note: 'C4' },
+      { time: '0:2:0', duration: '8n', note: 'C4' },
+      { time: '0:2:2', duration: '8n', note: 'C4' },
+      { time: '0:3:0', duration: '8n', note: 'C4' },
+      { time: '0:3:2', duration: '8n', note: 'C4' },
+      { time: '1:0:0', duration: '8n', note: 'C4' },
+      { time: '1:0:2', duration: '8n', note: 'C4' },
+      { time: '1:1:0', duration: '8n', note: 'C4' },
+      { time: '1:1:2', duration: '8n', note: 'C4' },
+      { time: '1:2:0', duration: '8n', note: 'C4' },
+      { time: '1:2:2', duration: '8n', note: 'C4' },
+      { time: '1:3:0', duration: '8n', note: 'C4' },
+      { time: '1:3:2', duration: '8n', note: 'C4' },
+    ],
+  },
+  {
+    id: 'dotted-quarter-flow',
+    name: 'Dotted Quarter Flow',
+    difficulty: 'intermediate',
+    timeSignature: [4, 4],
+    bpm: 85,
+    measures: 2,
+    beats: [
+      { time: '0:0:0', duration: '4n.', note: 'C4' },
+      { time: '0:1:2', duration: '8n', note: 'C4' },
+      { time: '0:2:0', duration: '4n.', note: 'C4' },
+      { time: '0:3:2', duration: '8n', note: 'C4' },
+      { time: '1:0:0', duration: '4n.', note: 'C4' },
+      { time: '1:1:2', duration: '8n', note: 'C4' },
+      { time: '1:2:0', duration: '4n.', note: 'C4' },
+      { time: '1:3:2', duration: '8n', note: 'C4' },
+    ],
+  },
+]
