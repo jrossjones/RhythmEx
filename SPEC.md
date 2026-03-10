@@ -111,10 +111,12 @@ Young practicing musicians, ages 5 and up. The UI must be simple, colorful, and 
 - BPM +/- controls (adjustable in idle phase, range 40–200)
 - 54 tests passing (42 existing + 12 new)
 
-### Phase 3 — Tap Input & Timing Feedback (Not Started)
-- Keyboard and touch tap detection
-- Real-time timing judgment (early/on-time/late/miss)
-- Color-coded visual feedback per tap
+### Phase 3 — Tap Input & Timing Feedback (Complete)
+- `useTiming` hook: tap-to-beat matching, stray tap filtering (>240ms ignored), finalize fills misses
+- `TapZone` component: keyboard (Space), touch, and click input with 300ms judgment flash
+- `BeatTimeline` enhanced with `beatJudgments` prop — markers turn green/yellow/red as tapped
+- `PracticeScreen` wired with real scoring: `finalize()` → `calculateAccuracy()` → `calculateStars()`
+- 74 tests passing (54 existing + 20 new)
 
 ### Phase 4 — Results & Scoring (Not Started)
 - Wire real scoring into results screen

@@ -23,7 +23,7 @@ src/
       HomeScreen.tsx
       InstrumentSelectScreen.tsx
       ExerciseSelectScreen.tsx
-      PracticeScreen.tsx        # Exercise lifecycle, BPM controls, beat timeline
+      PracticeScreen.tsx        # Exercise lifecycle, BPM controls, beat timeline, tap input
       ResultsScreen.tsx         # Placeholder — real scoring in Phase 4
     ui/                 # Shared reusable UI components
       Button.tsx        # Variant/size props, 44px+ touch targets
@@ -32,12 +32,13 @@ src/
       StarDisplay.tsx   # 1-3 filled/unfilled stars
     instruments/        # (Phase 5) HandPan, DrumPad — virtual instrument UIs
     practice/           # Practice UI components
-      BeatTimeline.tsx  # Horizontal beat timeline with playhead and color-coded markers
+      BeatTimeline.tsx  # Horizontal beat timeline with playhead, color-coded markers, judgment colors
       CountdownOverlay.tsx # Full-screen 3-2-1-Go! countdown overlay
+      TapZone.tsx       # Large tap target with keyboard/touch/click input, judgment flash feedback
   hooks/
     useExercise.ts      # Exercise lifecycle (idle/countdown/playing/done), playhead, BPM
     useAudio.ts         # (Phase 5) Tone.js integration, sample loading, playback
-    useTiming.ts        # (Phase 3) Tap detection, accuracy scoring, star calculation
+    useTiming.ts        # Tap detection, beat matching, result accumulation, finalize/reset
   data/
     exercises/          # Exercise definitions by difficulty
       beginner.ts       # 3 exercises: quarter notes, half notes, whole notes
@@ -54,6 +55,15 @@ src/
       rhythm.test.ts
       scoring.test.ts
       storage.test.ts
+  hooks/
+    __tests__/
+      useExercise.test.ts
+      useTiming.test.ts
+  components/
+    practice/
+      __tests__/
+        BeatTimeline.test.tsx
+        TapZone.test.tsx
   test/
     setup.ts            # Vitest setup — @testing-library/jest-dom
 ```
@@ -90,6 +100,8 @@ src/
 - **Star thresholds:** ≥90% → 3 stars, ≥75% → 2 stars, else → 1 star
 - **Transport time format:** Tone.js `"measure:beat:sixteenth"` — parsed by `utils/rhythm.ts`
 - **Exercise lifecycle:** `idle → countdown (3-2-1) → playing → done` managed by `useExercise` hook. Uses `requestAnimationFrame` for smooth playhead animation and `performance.now()` for timing. BPM adjustable only in idle phase.
+- **Tap matching:** `useTiming` hook matches each tap to the nearest unmatched beat via `judgeTap()`. Stray taps beyond 240ms from any beat are silently ignored (kid-friendly). `finalize()` fills unmatched beats as misses. Uses refs for tap data (performance), state only for UI feedback.
+- **Tap input:** `TapZone` supports Space key (`keydown` with `event.repeat` guard), `onTouchStart` (lower latency), and `onClick` (desktop fallback). Flashes green/yellow/red for 300ms per judgment.
 
 ## Important Notes
 - Target audience is young children (5+): keep UI simple, colorful, and forgiving

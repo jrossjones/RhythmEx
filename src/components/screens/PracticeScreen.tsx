@@ -1,10 +1,14 @@
+import { useRef } from 'react'
 import { Layout } from '@/components/ui/Layout'
 import { Navigation } from '@/components/ui/Navigation'
 import { Button } from '@/components/ui/Button'
 import { BeatTimeline } from '@/components/practice/BeatTimeline'
+import { TapZone } from '@/components/practice/TapZone'
 import { CountdownOverlay } from '@/components/practice/CountdownOverlay'
 import { useExercise } from '@/hooks/useExercise'
-import type { Exercise, ExerciseResult, InstrumentType } from '@/types'
+import { useTiming } from '@/hooks/useTiming'
+import { calculateAccuracy, calculateStars } from '@/utils/scoring'
+import type { Exercise, ExerciseResult, InstrumentType, TapResult } from '@/types'
 
 interface PracticeScreenProps {
   exercise: Exercise
@@ -14,14 +18,20 @@ interface PracticeScreenProps {
 }
 
 export function PracticeScreen({ exercise, instrument, onFinish, onBack }: PracticeScreenProps) {
+  // Ref to hold finalize — breaks circular dependency between useExercise and useTiming
+  const finalizeRef = useRef<() => TapResult[]>(() => [])
+
   const handleDone = () => {
-    // Placeholder result — real scoring comes in Phase 3
+    const tapResults = finalizeRef.current()
+    const accuracy = calculateAccuracy(tapResults)
+    const stars = calculateStars(accuracy)
+
     onFinish({
       exerciseId: exercise.id,
       instrument,
-      accuracy: 85,
-      stars: 2,
-      tapResults: [],
+      accuracy,
+      stars,
+      tapResults,
       timestamp: Date.now(),
     })
   }
@@ -32,14 +42,32 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack }: Pract
     progress,
     bpm,
     setBpm,
+    elapsedMsRef,
     startExercise,
     stopExercise,
   } = useExercise(exercise, handleDone)
 
+  const {
+    lastTapFeedback,
+    beatJudgments,
+    recordTap,
+    finalize,
+    reset,
+  } = useTiming({ exercise, bpm, phase, elapsedMsRef })
+
+  // Keep ref up to date so handleDone always calls the latest finalize
+  finalizeRef.current = finalize
+
   const isIdle = phase === 'idle'
+
+  const handleStop = () => {
+    stopExercise()
+    reset()
+  }
 
   const handleBack = () => {
     stopExercise()
+    reset()
     onBack()
   }
 
@@ -77,12 +105,21 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack }: Pract
 
       {/* Beat timeline */}
       <div className="mb-6">
-        <BeatTimeline exercise={exercise} progress={progress} bpm={bpm} />
+        <BeatTimeline
+          exercise={exercise}
+          progress={progress}
+          bpm={bpm}
+          beatJudgments={beatJudgments}
+        />
       </div>
 
-      {/* Instrument placeholder */}
-      <div className="mb-6 rounded-2xl bg-white/60 p-6 text-center text-gray-400">
-        Tap input coming in Phase 3...
+      {/* Tap zone */}
+      <div className="mb-6">
+        <TapZone
+          onTap={recordTap}
+          lastFeedback={lastTapFeedback}
+          disabled={phase !== 'playing'}
+        />
       </div>
 
       {/* Action area */}
@@ -93,7 +130,7 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack }: Pract
           </Button>
         )}
         {phase === 'playing' && (
-          <Button variant="secondary" size="sm" onClick={stopExercise}>
+          <Button variant="secondary" size="sm" onClick={handleStop}>
             Stop
           </Button>
         )}

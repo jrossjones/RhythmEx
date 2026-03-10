@@ -1,10 +1,11 @@
-import type { Exercise } from '@/types'
+import type { Exercise, TimingJudgment } from '@/types'
 import { beatTimesMs, exerciseDurationMs, msPerBeat } from '@/utils/rhythm'
 
 interface BeatTimelineProps {
   exercise: Exercise
   progress: number
   bpm: number
+  beatJudgments?: Map<number, TimingJudgment>
 }
 
 const durationColors: Record<string, string> = {
@@ -15,7 +16,14 @@ const durationColors: Record<string, string> = {
   '1n': 'bg-amber-500',
 }
 
-export function BeatTimeline({ exercise, progress, bpm }: BeatTimelineProps) {
+const judgmentColors: Record<TimingJudgment, string> = {
+  'on-time': 'bg-green-400',
+  early: 'bg-yellow-400',
+  late: 'bg-yellow-400',
+  miss: 'bg-red-400',
+}
+
+export function BeatTimeline({ exercise, progress, bpm, beatJudgments }: BeatTimelineProps) {
   const exerciseWithBpm = { ...exercise, bpm }
   const durationMs = exerciseDurationMs(exerciseWithBpm)
   const times = beatTimesMs(exerciseWithBpm)
@@ -47,13 +55,15 @@ export function BeatTimeline({ exercise, progress, bpm }: BeatTimelineProps) {
       {/* Beat markers */}
       {exercise.beats.map((beat, i) => {
         const pct = durationMs > 0 ? (times[i] / durationMs) * 100 : 0
-        const color = durationColors[beat.duration] ?? 'bg-gray-400'
-        const isNext = i === nextBeatIndex
+        const judgment = beatJudgments?.get(i)
+        const color = judgment ? judgmentColors[judgment] : (durationColors[beat.duration] ?? 'bg-gray-400')
+        const isNext = i === nextBeatIndex && !judgment
+        const isJudged = !!judgment
         return (
           <div
             key={`${beat.time}-${i}`}
             data-testid="beat-marker"
-            className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 rounded-full ${color} ${isNext ? 'animate-pulse scale-125' : ''}`}
+            className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 rounded-full ${color} ${isNext ? 'animate-pulse scale-125' : ''} ${isJudged ? 'ring-2 ring-white scale-110' : ''}`}
             style={{
               left: `${pct}%`,
               width: 12,
