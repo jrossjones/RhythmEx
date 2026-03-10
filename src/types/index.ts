@@ -61,6 +61,9 @@ export interface SavedScores {
   }
 }
 
+// Exercise lifecycle phases
+export type ExercisePhase = 'idle' | 'countdown' | 'playing' | 'done'
+
 // App screens
 export type Screen =
   | 'home'

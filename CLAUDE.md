@@ -23,7 +23,7 @@ src/
       HomeScreen.tsx
       InstrumentSelectScreen.tsx
       ExerciseSelectScreen.tsx
-      PracticeScreen.tsx        # Placeholder — real UI in Phase 2-3
+      PracticeScreen.tsx        # Exercise lifecycle, BPM controls, beat timeline
       ResultsScreen.tsx         # Placeholder — real scoring in Phase 4
     ui/                 # Shared reusable UI components
       Button.tsx        # Variant/size props, 44px+ touch targets
@@ -31,11 +31,13 @@ src/
       Navigation.tsx    # Back button + screen title
       StarDisplay.tsx   # 1-3 filled/unfilled stars
     instruments/        # (Phase 5) HandPan, DrumPad — virtual instrument UIs
-    practice/           # (Phase 2-3) BeatGrid, TimingFeedback
-  hooks/                # (Phase 2-5) Custom hooks
-    useAudio.ts         # Tone.js integration, sample loading, playback
-    useTiming.ts        # Tap detection, accuracy scoring, star calculation
-    useExercise.ts      # Exercise state, playhead position, BPM control
+    practice/           # Practice UI components
+      BeatTimeline.tsx  # Horizontal beat timeline with playhead and color-coded markers
+      CountdownOverlay.tsx # Full-screen 3-2-1-Go! countdown overlay
+  hooks/
+    useExercise.ts      # Exercise lifecycle (idle/countdown/playing/done), playhead, BPM
+    useAudio.ts         # (Phase 5) Tone.js integration, sample loading, playback
+    useTiming.ts        # (Phase 3) Tap detection, accuracy scoring, star calculation
   data/
     exercises/          # Exercise definitions by difficulty
       beginner.ts       # 3 exercises: quarter notes, half notes, whole notes
@@ -48,7 +50,7 @@ src/
     rhythm.ts           # transportTimeToMs, msPerBeat, exerciseDurationMs, beatTimesMs
     scoring.ts          # TIMING_WINDOWS, judgeTap, calculateAccuracy, calculateStars
     storage.ts          # localStorage CRUD: loadScores, saveResult, getBestScore
-    __tests__/          # Vitest unit tests (42 tests)
+    __tests__/          # Vitest unit tests
       rhythm.test.ts
       scoring.test.ts
       storage.test.ts
@@ -87,6 +89,7 @@ src/
 - **Timing windows:** On-time ≤50ms, acceptable ≤120ms, beyond = miss (defined in `utils/scoring.ts`)
 - **Star thresholds:** ≥90% → 3 stars, ≥75% → 2 stars, else → 1 star
 - **Transport time format:** Tone.js `"measure:beat:sixteenth"` — parsed by `utils/rhythm.ts`
+- **Exercise lifecycle:** `idle → countdown (3-2-1) → playing → done` managed by `useExercise` hook. Uses `requestAnimationFrame` for smooth playhead animation and `performance.now()` for timing. BPM adjustable only in idle phase.
 
 ## Important Notes
 - Target audience is young children (5+): keep UI simple, colorful, and forgiving

@@ -94,7 +94,7 @@ Young practicing musicians, ages 5 and up. The UI must be simple, colorful, and 
 ### Phase 1 — Scaffolding & App Shell (Complete)
 - Vite + React 19 + TypeScript project initialized
 - Tailwind CSS v4 configured with `@tailwindcss/vite` plugin
-- Vitest configured with jsdom environment (42 tests passing)
+- Vitest configured with jsdom environment
 - `@/` path alias for clean imports
 - All TypeScript types defined (`src/types/index.ts`)
 - Exercise data: 7 exercises across 3 difficulty levels
@@ -103,10 +103,13 @@ Young practicing musicians, ages 5 and up. The UI must be simple, colorful, and 
 - 5 screens with state machine navigation in `App.tsx`
 - Practice and Results screens are placeholder stubs
 
-### Phase 2 — Beat Display & Practice UI (Not Started)
-- BeatGrid component with visual beat pattern
-- Animated playhead synced to tempo
-- BPM adjustment controls
+### Phase 2 — Beat Display & Practice UI (Complete)
+- `BeatTimeline` component with color-coded beat markers and measure dividers
+- Animated playhead via `requestAnimationFrame` in `useExercise` hook
+- Exercise lifecycle: idle → countdown (3-2-1) → playing → done
+- `CountdownOverlay` with full-screen 3-2-1-Go! display
+- BPM +/- controls (adjustable in idle phase, range 40–200)
+- 54 tests passing (42 existing + 12 new)
 
 ### Phase 3 — Tap Input & Timing Feedback (Not Started)
 - Keyboard and touch tap detection
