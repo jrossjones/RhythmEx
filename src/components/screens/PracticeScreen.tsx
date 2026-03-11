@@ -20,24 +20,43 @@ interface PracticeScreenProps {
   instrument: InstrumentType
   onFinish: (result: ExerciseResult) => void
   onBack: () => void
+  initialBpm?: number
+  onSpeedTrainerBpmChange?: (nextBpm: number | null) => void
 }
 
-export function PracticeScreen({ exercise, instrument, onFinish, onBack }: PracticeScreenProps) {
+export function PracticeScreen({ exercise, instrument, onFinish, onBack, initialBpm, onSpeedTrainerBpmChange }: PracticeScreenProps) {
   const [settings, setSettings] = useState<PracticeSettings>({
     metronomeOn: true,
     tapSoundOn: true,
     strictMode: false,
+    speedTrainerOn: false,
   })
 
   const { playDrum, playMetronomeClick, startAudioContext } = useAudio()
 
-  // Ref to hold finalize — breaks circular dependency between useExercise and useTiming
+  // Refs to break circular dependency between useExercise and useTiming/settings
   const finalizeRef = useRef<() => TapResult[]>(() => [])
+  const settingsRef = useRef(settings)
+  const currentBpmRef = useRef(0)
+  const onSpeedTrainerBpmChangeRef = useRef(onSpeedTrainerBpmChange)
 
   const handleDone = () => {
     const tapResults = finalizeRef.current()
     const accuracy = calculateAccuracy(tapResults)
     const stars = calculateStars(accuracy)
+
+    // Speed trainer BPM progression
+    const bpmNow = currentBpmRef.current
+    const callback = onSpeedTrainerBpmChangeRef.current
+    if (settingsRef.current.speedTrainerOn && callback) {
+      if (accuracy >= 95) {
+        callback(Math.min(bpmNow + 5, 200))
+      } else {
+        callback(bpmNow)
+      }
+    } else if (callback) {
+      callback(null)
+    }
 
     onFinish({
       exerciseId: exercise.id,
@@ -58,7 +77,14 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack }: Pract
     elapsedMsRef,
     startExercise,
     stopExercise,
-  } = useExercise(exercise, handleDone)
+  } = useExercise(exercise, handleDone, initialBpm)
+
+  // Keep refs in sync — must be in useEffect per react-hooks/refs rule
+  useEffect(() => {
+    settingsRef.current = settings
+    currentBpmRef.current = bpm
+    onSpeedTrainerBpmChangeRef.current = onSpeedTrainerBpmChange
+  })
 
   const {
     lastTapFeedback,
@@ -109,6 +135,14 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack }: Pract
     stopExercise()
     reset()
     onBack()
+  }
+
+  // Manual BPM change resets speed trainer
+  const handleBpmChange = (newBpm: number) => {
+    setBpm(newBpm)
+    if (onSpeedTrainerBpmChange) {
+      onSpeedTrainerBpmChange(null)
+    }
   }
 
   // Metronome — countdown clicks
@@ -162,11 +196,18 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack }: Pract
     <Layout>
       <div className="flex items-center justify-between">
         <Navigation title={exercise.name} onBack={handleBack} />
-        <SettingsPopover
-          settings={settings}
-          onSettingsChange={setSettings}
-          disabled={!isIdle}
-        />
+        <div className="flex items-center gap-2">
+          {settings.speedTrainerOn && (
+            <span className="rounded-full bg-emerald-100 px-3 py-0.5 text-xs font-bold text-emerald-700">
+              Speed Trainer
+            </span>
+          )}
+          <SettingsPopover
+            settings={settings}
+            onSettingsChange={setSettings}
+            disabled={!isIdle}
+          />
+        </div>
       </div>
 
       {/* Exercise info */}
@@ -180,7 +221,7 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack }: Pract
           variant="secondary"
           size="sm"
           disabled={!isIdle || bpm <= 40}
-          onClick={() => setBpm(bpm - 5)}
+          onClick={() => handleBpmChange(bpm - 5)}
         >
           &minus;
         </Button>
@@ -191,7 +232,7 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack }: Pract
           variant="secondary"
           size="sm"
           disabled={!isIdle || bpm >= 200}
-          onClick={() => setBpm(bpm + 5)}
+          onClick={() => handleBpmChange(bpm + 5)}
         >
           +
         </Button>

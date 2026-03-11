@@ -33,10 +33,13 @@ src/
     instruments/        # Virtual instrument UIs
       DrumPad.tsx       # Grid of color-coded drum pads with keyboard shortcuts (f/d/j/k/l)
     practice/           # Practice UI components
-      BeatTimeline.tsx  # Horizontal beat timeline with playhead, color-coded markers, judgment colors
-      CountdownOverlay.tsx # Full-screen 3-2-1-Go! countdown overlay
+      BeatTimeline.tsx  # Container/orchestrator: scrolling, lane labels, delegates to DrumLane or SingleRow
+      DrumLaneTimeline.tsx  # 5-lane stacked drum timeline (hihat/tom1/tom2/snare/kick)
+      SingleRowTimeline.tsx # Single-row timeline for non-drum instruments (handpan, future)
+      timelineConstants.ts  # Shared color maps, lane order/labels, scroll constants (PX_PER_BEAT etc.)
+      CountdownOverlay.tsx # Full-screen 3-2-1-Go! countdown overlay (ticks at tempo)
       TapZone.tsx       # Large tap target with keyboard/touch/click input, judgment flash feedback
-      SettingsPopover.tsx # Gear icon popover: metronome, tap sounds, strict mode toggles
+      SettingsPopover.tsx # Gear icon popover: metronome, tap sounds, strict mode, speed trainer toggles
   hooks/
     useExercise.ts      # Exercise lifecycle (idle/countdown/playing/done), playhead, BPM
     useAudio.ts         # Tone.js synth engine: drum sounds (kick/snare/hihat/toms) + metronome click
@@ -44,8 +47,8 @@ src/
   data/
     exercises/          # Exercise definitions by difficulty
       beginner.ts       # 3 exercises: quarter notes, half notes, whole notes
-      intermediate.ts   # 2 exercises: eighth notes, dotted rhythms
-      advanced.ts       # 2 exercises: sixteenth notes, syncopation
+      intermediate.ts   # 3 exercises: eighth notes, dotted rhythms, extended groove (8 measures)
+      advanced.ts       # 3 exercises: sixteenth notes, syncopation, endurance run (16 measures)
       index.ts          # Aggregator: allExercises, exercisesByDifficulty(), exerciseById()
     samples/
       index.ts          # Audio sample path manifests (placeholder paths)
@@ -72,10 +75,11 @@ src/
     practice/
       __tests__/
         BeatTimeline.test.tsx
+        DrumLaneTimeline.test.tsx
         TapZone.test.tsx
         SettingsPopover.test.tsx
   test/
-    setup.ts            # Vitest setup — @testing-library/jest-dom
+    setup.ts            # Vitest setup — @testing-library/jest-dom + ResizeObserver mock
 ```
 
 ## Commands
@@ -109,17 +113,22 @@ src/
 - **Timing windows:** On-time ≤50ms, acceptable ≤120ms, beyond = miss (defined in `utils/scoring.ts`)
 - **Star thresholds:** ≥90% → 3 stars, ≥75% → 2 stars, else → 1 star
 - **Transport time format:** Tone.js `"measure:beat:sixteenth"` — parsed by `utils/rhythm.ts`
-- **Exercise lifecycle:** `idle → countdown (3-2-1) → playing → done` managed by `useExercise` hook. Uses `requestAnimationFrame` for smooth playhead animation and `performance.now()` for timing. BPM adjustable only in idle phase.
+- **Exercise lifecycle:** `idle → countdown (3-2-1) → playing → done` managed by `useExercise` hook. Uses `requestAnimationFrame` for smooth playhead animation and `performance.now()` for timing. BPM adjustable only in idle phase. Accepts optional `initialBpm` parameter for speed trainer persistence.
 - **Tap matching:** `useTiming` hook matches each tap to the nearest unmatched beat via `judgeTap()`. Stray taps beyond 240ms from any beat are silently ignored (kid-friendly). `finalize()` fills unmatched beats as misses. Uses refs for tap data (performance), state only for UI feedback. Feedback auto-clears after 300ms via internal timeout.
 - **Tap input:** `TapZone` supports Space key (`keydown` with `event.repeat` guard), `onTouchStart` (lower latency), and `onClick` (desktop fallback). Flashes green/yellow/red for 300ms per judgment. Used for handpan (no audio yet).
 - **Drum pads:** `DrumPad` component replaces `TapZone` when instrument is drums. Grid layout adapts to active pad count (2/3/5). Keyboard shortcuts: `f`=kick, `d`=snare, `j`=hihat, `k`=tom1, `l`=tom2. Space maps to next expected pad. Each pad color-coded (kick=red, snare=orange, hihat=cyan, tom1=purple, tom2=pink).
 - **Audio engine:** `useAudio` hook creates Tone.js synths lazily on first `startAudioContext()` call (user gesture). MembraneSynth for kick/toms, NoiseSynth for snare, MetalSynth for hihat, triangle Synth for metronome. All synths stored in ref, disposed on unmount. `playDrum`/`playMetronomeClick` are no-ops before audio context is ready.
 - **Metronome:** Clicks during countdown (on each 3-2-1-Go tick) and during playing (RAF loop tracks beat crossings from `elapsedMsRef`). Accent on downbeats (C5) vs normal beats (G4). Toggleable via settings.
-- **Practice settings:** `PracticeSettings` type with `metronomeOn`, `tapSoundOn`, `strictMode`. Managed as state in `PracticeScreen`, controlled via `SettingsPopover` gear icon. Settings only changeable in idle phase.
+- **Tempo-aligned count-in:** Countdown ticks use `msPerBeat(bpm)` intervals (not fixed 1s), so the 3-2-1-Go aligns with the exercise tempo and metronome clicks.
+- **Practice settings:** `PracticeSettings` type with `metronomeOn`, `tapSoundOn`, `strictMode`, `speedTrainerOn`. Managed as state in `PracticeScreen`, controlled via `SettingsPopover` gear icon. Settings only changeable in idle phase.
 - **Strict mode:** When enabled, `useTiming.recordTap(pad)` compares the tapped pad against `exercise.beats[nearestIndex].note`. Wrong pad overrides judgment to `miss` with `expectedPad` set. Free mode (default) accepts any pad for timing-only scoring.
 - **Exercise drum assignments:** Exercises use drum pad names as `beat.note` — beginner uses kick+snare, intermediate adds hihat, advanced adds tom1+tom2. `exerciseDrumPads()` utility extracts the deduplicated pad set from any exercise.
 - **Score storage:** Compound key `"exerciseId::instrument"` in localStorage — scores are fully independent per instrument. Each entry tracks `bestStars`, `bestAccuracy`, `attempts`, and `totalAccuracy` (enables future average calculation). `getAllScores()` returns the full dict for summary screens.
-- **Results screen:** Compares current attempt against stored personal best on render. "New Best!" badge shown only when `attempts > 1` and accuracy meets or beats `bestAccuracy` (not shown on first ever attempt).
+- **Results screen:** Compares current attempt against stored personal best on render. "New Best!" badge shown only when `attempts > 1` and accuracy meets or beats `bestAccuracy` (not shown on first ever attempt). Shows "Next: {bpm} BPM" hint when speed trainer is active.
+- **Multi-lane drum timeline:** `BeatTimeline` orchestrates `DrumLaneTimeline` (5 lanes, 28px each) or `SingleRowTimeline` (handpan/future). Shared constants in `timelineConstants.ts`. Fixed lane labels outside scroll area. `ResizeObserver` measures container width.
+- **Timeline scrolling:** GPU-accelerated `translateX` on inner content. Playhead pinned at ~30% from left. 60px per beat density. Short exercises use percentage positioning (no scroll). Threshold: rendered width > container width.
+- **Speed trainer:** `speedTrainerBpm` state in `App.tsx`. On completion: ≥95% accuracy → +5 BPM (cap 200), <95% → same BPM, speed trainer off → null. Manual BPM change resets. "Speed Trainer" badge on practice screen. Reset on exercise select.
+- **Drum pad idle colors:** Disabled pads use muted pad-colored backgrounds (`DRUM_PAD_MUTED_COLORS` from `timelineConstants.ts`) instead of gray, for visual association with timeline lane colors.
 
 ## Important Notes
 - Target audience is young children (5+): keep UI simple, colorful, and forgiving

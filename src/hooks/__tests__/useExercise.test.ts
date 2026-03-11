@@ -47,7 +47,8 @@ describe('useExercise', () => {
     expect(result.current.countdownValue).toBe(3)
   })
 
-  it('counts down 3, 2, 1', () => {
+  it('counts down 3, 2, 1 at tempo', () => {
+    // 120 BPM = 500ms per beat
     const onDone = vi.fn()
     const { result } = renderHook(() => useExercise(testExercise, onDone))
 
@@ -58,17 +59,18 @@ describe('useExercise', () => {
     expect(result.current.countdownValue).toBe(3)
 
     act(() => {
-      vi.advanceTimersByTime(1000)
+      vi.advanceTimersByTime(500)
     })
     expect(result.current.countdownValue).toBe(2)
 
     act(() => {
-      vi.advanceTimersByTime(1000)
+      vi.advanceTimersByTime(500)
     })
     expect(result.current.countdownValue).toBe(1)
   })
 
-  it('transitions to playing after countdown', () => {
+  it('transitions to playing after countdown (at tempo)', () => {
+    // 120 BPM = 500ms per beat, 3 beats = 1500ms countdown
     const onDone = vi.fn()
     const { result } = renderHook(() => useExercise(testExercise, onDone))
 
@@ -77,7 +79,7 @@ describe('useExercise', () => {
     })
 
     act(() => {
-      vi.advanceTimersByTime(3000)
+      vi.advanceTimersByTime(1500)
     })
 
     expect(result.current.phase).toBe('playing')
@@ -147,5 +149,11 @@ describe('useExercise', () => {
     const onDone = vi.fn()
     const { result } = renderHook(() => useExercise(testExercise, onDone))
     expect(result.current.bpm).toBe(120)
+  })
+
+  it('initialBpm overrides exercise.bpm', () => {
+    const onDone = vi.fn()
+    const { result } = renderHook(() => useExercise(testExercise, onDone, 95))
+    expect(result.current.bpm).toBe(95)
   })
 })

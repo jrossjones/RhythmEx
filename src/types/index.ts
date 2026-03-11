@@ -46,6 +46,7 @@ export interface PracticeSettings {
   metronomeOn: boolean
   tapSoundOn: boolean
   strictMode: boolean
+  speedTrainerOn: boolean
 }
 
 // Star rating (1-3)

@@ -7,6 +7,7 @@ const defaultSettings: PracticeSettings = {
   metronomeOn: true,
   tapSoundOn: true,
   strictMode: false,
+  speedTrainerOn: false,
 }
 
 describe('SettingsPopover', () => {
@@ -24,7 +25,7 @@ describe('SettingsPopover', () => {
     expect(screen.queryByTestId('settings-popover')).not.toBeInTheDocument()
   })
 
-  it('click gear opens popover with 3 toggles', () => {
+  it('click gear opens popover with 4 toggles', () => {
     render(
       <SettingsPopover settings={defaultSettings} onSettingsChange={vi.fn()} disabled={false} />
     )
@@ -35,6 +36,7 @@ describe('SettingsPopover', () => {
     expect(screen.getByText('Metronome')).toBeInTheDocument()
     expect(screen.getByText('Tap Sounds')).toBeInTheDocument()
     expect(screen.getByText('Strict Mode')).toBeInTheDocument()
+    expect(screen.getByText('Speed Trainer')).toBeInTheDocument()
   })
 
   it('toggling metronome calls onSettingsChange', () => {
@@ -88,6 +90,23 @@ describe('SettingsPopover', () => {
     })
   })
 
+  it('toggling speed trainer calls onSettingsChange', () => {
+    const onChange = vi.fn()
+    render(
+      <SettingsPopover settings={defaultSettings} onSettingsChange={onChange} disabled={false} />
+    )
+
+    fireEvent.click(screen.getByTestId('settings-gear'))
+
+    const switches = screen.getAllByRole('switch')
+    // Fourth switch is speed trainer (currently off)
+    fireEvent.click(switches[3])
+    expect(onChange).toHaveBeenCalledWith({
+      ...defaultSettings,
+      speedTrainerOn: true,
+    })
+  })
+
   it('toggles are disabled when disabled prop is true', () => {
     render(
       <SettingsPopover settings={defaultSettings} onSettingsChange={vi.fn()} disabled={true} />
@@ -113,5 +132,16 @@ describe('SettingsPopover', () => {
     // Click outside
     fireEvent.mouseDown(document.body)
     expect(screen.queryByTestId('settings-popover')).not.toBeInTheDocument()
+  })
+
+  it('renders 4 toggles total', () => {
+    render(
+      <SettingsPopover settings={defaultSettings} onSettingsChange={vi.fn()} disabled={false} />
+    )
+
+    fireEvent.click(screen.getByTestId('settings-gear'))
+
+    const switches = screen.getAllByRole('switch')
+    expect(switches).toHaveLength(4)
   })
 })

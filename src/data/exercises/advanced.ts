@@ -61,4 +61,37 @@ export const advancedExercises: Exercise[] = [
       { time: '1:2:2', duration: '4n', note: 'tom2' },
     ],
   },
+  {
+    id: 'endurance-run',
+    name: 'Endurance Run',
+    difficulty: 'advanced',
+    timeSignature: [4, 4],
+    bpm: 85,
+    measures: 16,
+    beats: Array.from({ length: 4 }, (_, phrase) => {
+      const base = phrase * 4
+      return [
+        // M1: kick/hihat/snare/hihat
+        { time: `${base}:0:0`, duration: '4n', note: 'kick' },
+        { time: `${base}:1:0`, duration: '4n', note: 'hihat' },
+        { time: `${base}:2:0`, duration: '4n', note: 'snare' },
+        { time: `${base}:3:0`, duration: '4n', note: 'hihat' },
+        // M2: kick/hihat/snare/hihat
+        { time: `${base + 1}:0:0`, duration: '4n', note: 'kick' },
+        { time: `${base + 1}:1:0`, duration: '4n', note: 'hihat' },
+        { time: `${base + 1}:2:0`, duration: '4n', note: 'snare' },
+        { time: `${base + 1}:3:0`, duration: '4n', note: 'hihat' },
+        // M3: tom1/hihat/tom2/hihat
+        { time: `${base + 2}:0:0`, duration: '4n', note: 'tom1' },
+        { time: `${base + 2}:1:0`, duration: '4n', note: 'hihat' },
+        { time: `${base + 2}:2:0`, duration: '4n', note: 'tom2' },
+        { time: `${base + 2}:3:0`, duration: '4n', note: 'hihat' },
+        // M4: kick/snare/kick/snare
+        { time: `${base + 3}:0:0`, duration: '4n', note: 'kick' },
+        { time: `${base + 3}:1:0`, duration: '4n', note: 'snare' },
+        { time: `${base + 3}:2:0`, duration: '4n', note: 'kick' },
+        { time: `${base + 3}:3:0`, duration: '4n', note: 'snare' },
+      ]
+    }).flat(),
+  },
 ]

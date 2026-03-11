@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import type { DrumPad as DrumPadType, TimingJudgment } from '@/types'
+import { DRUM_PAD_MUTED_COLORS } from '@/components/practice/timelineConstants'
 
 interface TapFeedback {
   judgment: TimingJudgment
@@ -85,7 +86,7 @@ export function DrumPad({
     if (lastFeedback && lastFeedbackPad === pad) {
       return feedbackColors[lastFeedback.judgment]
     }
-    if (disabled) return 'bg-gray-300 opacity-50'
+    if (disabled) return DRUM_PAD_MUTED_COLORS[pad] ?? 'bg-gray-200'
     return padConfig[pad].color
   }
 

@@ -142,42 +142,18 @@ Note: `beat.note` uses drum pad names (`kick`, `snare`, `hihat`, `tom1`, `tom2`)
 - **Scoring integration:** `useTiming` accepts optional `pad` argument and `strictMode` option. Wrong pad in strict mode overrides judgment to miss. `TapResult` extended with `pad` and `expectedPad` fields.
 - 129 tests passing (89 existing + 40 new)
 
-### Phase 5a.1 — Multi-Lane Timeline, Scrolling, Speed Trainer (Not Started)
+### Phase 5a.1 — Multi-Lane Timeline, Scrolling, Speed Trainer (Complete)
+- **Multi-lane beat timeline:** `BeatTimeline` refactored into orchestrator + `DrumLaneTimeline` (5 stacked lanes: hihat/tom1/tom2/snare/kick, 28px each) + `SingleRowTimeline` (backward compat for handpan). Shared constants in `timelineConstants.ts`. Fixed lane labels (HH/T1/T2/SN/KK) outside scroll area. Drum beat markers color-coded and placed in correct lanes.
+- **Scrolling viewport:** GPU-accelerated `translateX` scrolling. `ResizeObserver` measures container width. Playhead pinned at ~30% from left. Short exercises use percentage positioning (no scroll). 60px per beat density.
+- **Drum pad idle colors:** Disabled pads show muted versions of their color (e.g. `bg-red-200` for kick) instead of gray, so players associate pad and lane colors before starting.
+- **Longer exercises:** "Extended Groove" (intermediate, 8 measures, 90 BPM, 32 beats) and "Endurance Run" (advanced, 16 measures, 85 BPM, 64 beats, all 5 pads).
+- **Speed Trainer mode:** `speedTrainerOn` added to `PracticeSettings`. Toggle in `SettingsPopover`. On completion with ≥95% accuracy → next run at +5 BPM (capped at 200). Below 95% → same BPM. Manual BPM change resets speed trainer. "Speed Trainer" badge on practice screen. "Next: {bpm} BPM" hint on results screen. State held in `App.tsx`, reset on exercise select.
+- **Tempo-aligned count-in:** Countdown ticks (3-2-1-Go) now use `msPerBeat(bpm)` intervals instead of fixed 1-second intervals, so the count-in matches the metronome tempo.
+- **`useExercise` initialBpm:** Accepts optional `initialBpm` parameter for speed trainer BPM persistence across retries.
+- 145 tests passing (129 existing + 16 new)
 
-#### Multi-lane beat timeline
-Replace the single-row `BeatTimeline` with a multi-lane view for drums. Each drum pad gets its own horizontal lane stacked vertically, so the player can see at a glance which pad to hit at each time position.
-
-- **Always 5 lanes** (hihat, tom1, tom2, snare, kick — top to bottom), matching the `DrumPad` grid layout for intuitive spatial mapping. Lanes for unused pads are present but empty.
-- Each lane has a **colored label strip** on the left showing the pad name and color.
-- Beat markers sit in their respective lane at the correct horizontal time position.
-- **Playhead** is a full-height vertical line spanning all lanes.
-- Measure dividers span all lanes.
-- Non-drum instruments (handpan, future) continue using the single-row layout.
-- Simultaneous beats on different pads are supported — markers simply appear in their respective lanes at the same horizontal position.
-
-#### Drum pad idle colors
-When the exercise is in `idle` phase, drum pads show **muted/desaturated** versions of their pad colors instead of plain gray. This lets the player associate pad colors with timeline lane colors before starting.
-
-#### Scrolling viewport for long exercises
-When an exercise is long enough that beats would be too densely packed, the timeline becomes a scrolling viewport:
-- **Playhead fixed at ~30% from the left** edge of the visible area. Beats approach from the right and scroll left as the exercise progresses.
-- The full timeline is rendered at a consistent horizontal density (e.g. a fixed number of pixels per beat), and a CSS `overflow: hidden` container clips the view.
-- The container's scroll offset is driven by `elapsedMs` / `progress`, translated to pixel offset.
-- Short exercises (where all beats fit comfortably at the chosen density) render the same as today — no scrolling, beats spread across the full width.
-- Threshold for scrolling: if the rendered width exceeds the container width, scrolling activates.
-
-#### Longer exercises
-- **Intermediate — "Extended Groove" (8 measures, 90 BPM):** kick/hihat/snare pattern, ~21 seconds. Long enough to require scrolling.
-- **Advanced — "Endurance Run" (16 measures, 85 BPM):** Full kit pattern with toms, ~45 seconds. A proper endurance challenge.
-
-#### Speed Trainer mode
-A toggle in the `SettingsPopover` (default off). When enabled:
-- After completing an exercise with **≥95% accuracy**, the next run automatically starts at **+5 BPM** above the previous run's tempo.
-- The BPM increase is applied when navigating from results back to the practice screen (or on "Retry").
-- If accuracy is below 95%, BPM stays the same (no decrease).
-- The player can still manually adjust BPM at any time, which resets the speed trainer baseline.
-- A small badge or indicator on the practice screen shows "Speed Trainer" when active.
-- Add `speedTrainerOn` to `PracticeSettings`.
+#### Future: Speed Trainer auto-restart
+When Speed Trainer is active, the app should optionally auto-restart the next run instead of requiring the player to navigate Results → Retry → Start. After a run completes, briefly flash the results (accuracy, stars) for ~2 seconds, then automatically begin the countdown at the next BPM. This removes friction for tempo progression practice, especially for younger players. Implementation: add a brief results overlay in `PracticeScreen` (skip `ResultsScreen` entirely), then call `startExercise()` with the new BPM after the display timeout.
 
 #### Custom exercises (future consideration)
 The `Exercise` data model is intentionally plain JSON with no logic, making it straightforward for a future "Create Exercise" screen. No UI or storage design is specified yet — this is noted as a future feature.

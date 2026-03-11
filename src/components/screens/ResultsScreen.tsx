@@ -11,6 +11,7 @@ interface ResultsScreenProps {
   exerciseName: string
   onRetry: () => void
   onNewExercise: () => void
+  speedTrainerNextBpm?: number
 }
 
 const judgmentColors: Record<TimingJudgment, string> = {
@@ -32,6 +33,7 @@ export function ResultsScreen({
   exerciseName,
   onRetry,
   onNewExercise,
+  speedTrainerNextBpm,
 }: ResultsScreenProps) {
   const counts = useMemo(() => {
     const c: Record<TimingJudgment, number> = {
@@ -70,6 +72,13 @@ export function ResultsScreen({
         <p className="text-4xl font-bold text-gray-800">
           {Math.round(result.accuracy)}%
         </p>
+
+        {/* Speed Trainer next BPM hint */}
+        {speedTrainerNextBpm !== undefined && (
+          <p className="text-sm font-medium text-emerald-600" data-testid="speed-trainer-hint">
+            Next: {speedTrainerNextBpm} BPM
+          </p>
+        )}
 
         {/* New Best badge */}
         {isNewBest && (

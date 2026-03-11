@@ -1,12 +1,12 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import type { Exercise, ExercisePhase } from '@/types'
-import { exerciseDurationMs } from '@/utils/rhythm'
+import { exerciseDurationMs, msPerBeat } from '@/utils/rhythm'
 
-export function useExercise(exercise: Exercise, onDone: () => void) {
+export function useExercise(exercise: Exercise, onDone: () => void, initialBpm?: number) {
   const [phase, setPhase] = useState<ExercisePhase>('idle')
   const [countdownValue, setCountdownValue] = useState(0)
   const [elapsedMs, setElapsedMs] = useState(0)
-  const [bpm, setBpmState] = useState(exercise.bpm)
+  const [bpm, setBpmState] = useState(initialBpm ?? exercise.bpm)
 
   const elapsedMsRef = useRef(0)
   const startTimeRef = useRef(0)
@@ -60,15 +60,17 @@ export function useExercise(exercise: Exercise, onDone: () => void) {
     setPhase('countdown')
     setCountdownValue(3)
 
-    const t1 = window.setTimeout(() => setCountdownValue(2), 1000)
-    const t2 = window.setTimeout(() => setCountdownValue(1), 2000)
+    // Count-in ticks at tempo so the countdown aligns with the metronome
+    const beatInterval = msPerBeat(bpm)
+    const t1 = window.setTimeout(() => setCountdownValue(2), beatInterval)
+    const t2 = window.setTimeout(() => setCountdownValue(1), beatInterval * 2)
     const t3 = window.setTimeout(() => {
       setCountdownValue(0)
       startPlaying()
-    }, 3000)
+    }, beatInterval * 3)
 
     timeoutIdsRef.current = [t1, t2, t3]
-  }, [phase, cleanup, startPlaying])
+  }, [phase, cleanup, startPlaying, bpm])
 
   const stopExercise = useCallback(() => {
     cleanup()

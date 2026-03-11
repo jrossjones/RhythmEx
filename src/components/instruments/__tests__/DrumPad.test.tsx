@@ -127,6 +127,13 @@ describe('DrumPad', () => {
     expect(onTap).not.toHaveBeenCalled()
   })
 
+  it('disabled kick pad shows muted red color instead of gray', () => {
+    render(<DrumPad {...defaultProps} disabled={true} />)
+    const kickPad = screen.getByTestId('drum-pad-kick')
+    expect(kickPad.className).toContain('bg-red-200')
+    expect(kickPad.className).not.toContain('bg-gray-300')
+  })
+
   it('shows feedback flash on the correct pad', () => {
     render(
       <DrumPad

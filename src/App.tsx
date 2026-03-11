@@ -16,6 +16,7 @@ const initialState: AppState = {
 
 export function App() {
   const [state, setState] = useState<AppState>(initialState)
+  const [speedTrainerBpm, setSpeedTrainerBpm] = useState<number | null>(null)
 
   const navigate = (screen: AppState['screen']) => {
     setState((prev) => ({ ...prev, screen }))
@@ -26,6 +27,7 @@ export function App() {
   }
 
   const selectExercise = (exercise: Exercise) => {
+    setSpeedTrainerBpm(null)
     setState((prev) => ({ ...prev, selectedExercise: exercise, screen: 'practice' }))
   }
 
@@ -62,6 +64,8 @@ export function App() {
           instrument={state.selectedInstrument!}
           onFinish={finishExercise}
           onBack={() => navigate('exercise-select')}
+          initialBpm={speedTrainerBpm ?? undefined}
+          onSpeedTrainerBpmChange={setSpeedTrainerBpm}
         />
       )
 
@@ -72,6 +76,7 @@ export function App() {
           exerciseName={state.selectedExercise!.name}
           onRetry={() => navigate('practice')}
           onNewExercise={() => navigate('exercise-select')}
+          speedTrainerNextBpm={speedTrainerBpm ?? undefined}
         />
       )
   }

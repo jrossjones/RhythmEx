@@ -95,6 +95,12 @@ export function SettingsPopover({ settings, onSettingsChange, disabled }: Settin
               onChange={(val) => onSettingsChange({ ...settings, strictMode: val })}
               disabled={disabled}
             />
+            <Toggle
+              label="Speed Trainer"
+              checked={settings.speedTrainerOn}
+              onChange={(val) => onSettingsChange({ ...settings, speedTrainerOn: val })}
+              disabled={disabled}
+            />
           </div>
         </div>
       )}

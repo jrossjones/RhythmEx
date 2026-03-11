@@ -1,5 +1,19 @@
+import { useEffect, useRef, useState } from 'react'
 import type { Exercise, InstrumentType, TimingJudgment } from '@/types'
 import { beatTimesMs, exerciseDurationMs, msPerBeat } from '@/utils/rhythm'
+import { SingleRowTimeline } from './SingleRowTimeline'
+import { DrumLaneTimeline } from './DrumLaneTimeline'
+import {
+  DRUM_PAD_COLORS,
+  DURATION_COLORS,
+  JUDGMENT_COLORS,
+  DRUM_LANE_ORDER,
+  DRUM_LANE_LABELS,
+  PX_PER_BEAT,
+  PLAYHEAD_POSITION,
+  LANE_HEIGHT,
+  LABEL_WIDTH,
+} from './timelineConstants'
 
 interface BeatTimelineProps {
   exercise: Exercise
@@ -9,90 +23,121 @@ interface BeatTimelineProps {
   instrument?: InstrumentType
 }
 
-const durationColors: Record<string, string> = {
-  '4n': 'bg-indigo-400',
-  '8n': 'bg-sky-400',
-  '16n': 'bg-violet-400',
-  '2n': 'bg-amber-400',
-  '1n': 'bg-amber-500',
-}
-
-const drumPadColors: Record<string, string> = {
-  kick: 'bg-red-400',
-  snare: 'bg-orange-400',
-  hihat: 'bg-cyan-400',
-  tom1: 'bg-purple-400',
-  tom2: 'bg-pink-400',
-}
-
-const judgmentColors: Record<TimingJudgment, string> = {
-  'on-time': 'bg-green-400',
-  early: 'bg-yellow-400',
-  late: 'bg-yellow-400',
-  miss: 'bg-red-400',
-}
-
 export function BeatTimeline({ exercise, progress, bpm, beatJudgments, instrument }: BeatTimelineProps) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [containerWidth, setContainerWidth] = useState(0)
+
+  const isDrum = instrument === 'drums'
   const exerciseWithBpm = { ...exercise, bpm }
   const durationMs = exerciseDurationMs(exerciseWithBpm)
   const times = beatTimesMs(exerciseWithBpm)
-  const playheadMs = progress * durationMs
 
   // Find the next upcoming beat index for pulse effect
+  const playheadMs = progress * durationMs
   const nextBeatIndex = times.findIndex((t) => t > playheadMs)
 
   // Measure dividers
   const [beatsPerMeasure] = exercise.timeSignature
   const msPerMeasure = beatsPerMeasure * msPerBeat(bpm)
   const measureCount = exercise.measures
+
+  // Scrolling calculations
+  const totalBeats = exercise.measures * beatsPerMeasure
+  const renderedWidth = totalBeats * PX_PER_BEAT
+  const labelOffset = isDrum ? LABEL_WIDTH : 0
+  const isScrolling = containerWidth > 0 && renderedWidth > (containerWidth - labelOffset)
+
+  const contentWidth = isScrolling ? renderedWidth : containerWidth - labelOffset
+  const visibleWidth = containerWidth - labelOffset
+
+  // Measure line positions
   const measureLines: number[] = []
   for (let i = 1; i < measureCount; i++) {
-    measureLines.push((i * msPerMeasure) / durationMs * 100)
+    const frac = (i * msPerMeasure) / durationMs
+    measureLines.push(isScrolling ? frac * renderedWidth : frac * 100)
   }
 
+  // Build markers
+  const markers = exercise.beats.map((beat, i) => {
+    const frac = durationMs > 0 ? times[i] / durationMs : 0
+    const position = isScrolling ? frac * renderedWidth : frac * 100
+    const judgment = beatJudgments?.get(i)
+    const baseColor = isDrum
+      ? (DRUM_PAD_COLORS[beat.note as keyof typeof DRUM_PAD_COLORS] ?? 'bg-gray-400')
+      : (DURATION_COLORS[beat.duration] ?? 'bg-gray-400')
+    const color = judgment ? JUDGMENT_COLORS[judgment] : baseColor
+    const isNext = i === nextBeatIndex && !judgment
+    const isJudged = !!judgment
+    return { position, color, isNext, isJudged, lane: beat.note }
+  })
+
+  // Playhead position
+  const playheadPos = isScrolling ? progress * renderedWidth : progress * 100
+
+  // Scroll offset — pin playhead at ~30% from left
+  let scrollOffset = 0
+  if (isScrolling && contentWidth > visibleWidth) {
+    const playheadPx = progress * renderedWidth
+    scrollOffset = Math.max(0, Math.min(playheadPx - visibleWidth * PLAYHEAD_POSITION, renderedWidth - visibleWidth))
+  }
+
+  // ResizeObserver to measure container
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContainerWidth(entry.contentRect.width)
+      }
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
   return (
-    <div className="relative h-16 w-full rounded-2xl bg-white shadow-md overflow-hidden">
-      {/* Measure dividers */}
-      {measureLines.map((pct) => (
+    <div ref={containerRef} className="relative overflow-hidden rounded-2xl bg-white shadow-md">
+      {/* Fixed drum lane labels (drums only) */}
+      {isDrum && (
+        <div className="absolute left-0 top-0 bottom-0 z-10 flex flex-col" data-testid="drum-lane-labels" style={{ width: LABEL_WIDTH }}>
+          {DRUM_LANE_ORDER.map((pad) => (
+            <div
+              key={pad}
+              className="flex items-center justify-center text-xs font-bold text-gray-500"
+              style={{ height: LANE_HEIGHT }}
+            >
+              {DRUM_LANE_LABELS[pad]}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Scrolling content area */}
+      <div style={{ marginLeft: isDrum ? LABEL_WIDTH : 0, overflow: 'hidden' }}>
         <div
-          key={`m-${pct}`}
-          className="absolute top-0 bottom-0 w-px bg-gray-200"
-          style={{ left: `${pct}%` }}
-        />
-      ))}
-
-      {/* Beat markers */}
-      {exercise.beats.map((beat, i) => {
-        const pct = durationMs > 0 ? (times[i] / durationMs) * 100 : 0
-        const judgment = beatJudgments?.get(i)
-        const baseColor = instrument === 'drums'
-          ? (drumPadColors[beat.note] ?? 'bg-gray-400')
-          : (durationColors[beat.duration] ?? 'bg-gray-400')
-        const color = judgment ? judgmentColors[judgment] : baseColor
-        const isNext = i === nextBeatIndex && !judgment
-        const isJudged = !!judgment
-        return (
-          <div
-            key={`${beat.time}-${i}`}
-            data-testid="beat-marker"
-            className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 rounded-full ${color} ${isNext ? 'animate-pulse scale-125' : ''} ${isJudged ? 'ring-2 ring-white scale-110' : ''}`}
-            style={{
-              left: `${pct}%`,
-              width: 12,
-              height: 12,
-            }}
-          />
-        )
-      })}
-
-      {/* Playhead */}
-      <div
-        data-testid="playhead"
-        className="absolute top-0 bottom-0 w-0.5 bg-indigo-600"
-        style={{ left: `${progress * 100}%` }}
-      >
-        {/* Triangle indicator */}
-        <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[6px] border-t-indigo-600" />
+          data-testid="timeline-content"
+          style={{
+            width: isScrolling ? renderedWidth : '100%',
+            transform: isScrolling ? `translateX(-${scrollOffset}px)` : undefined,
+            willChange: isScrolling ? 'transform' : undefined,
+          }}
+        >
+          {isDrum ? (
+            <DrumLaneTimeline
+              markers={markers}
+              measureLines={measureLines}
+              playheadPosition={playheadPos}
+              isScrolling={isScrolling}
+            />
+          ) : (
+            <SingleRowTimeline
+              markers={markers}
+              measureLines={measureLines}
+              playheadPosition={playheadPos}
+              isScrolling={isScrolling}
+            />
+          )}
+        </div>
       </div>
     </div>
   )

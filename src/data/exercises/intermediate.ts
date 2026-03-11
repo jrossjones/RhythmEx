@@ -45,4 +45,18 @@ export const intermediateExercises: Exercise[] = [
       { time: '1:3:2', duration: '8n', note: 'hihat' },
     ],
   },
+  {
+    id: 'extended-groove',
+    name: 'Extended Groove',
+    difficulty: 'intermediate',
+    timeSignature: [4, 4],
+    bpm: 90,
+    measures: 8,
+    beats: Array.from({ length: 8 }, (_, m) => [
+      { time: `${m}:0:0`, duration: '4n', note: 'kick' },
+      { time: `${m}:1:0`, duration: '4n', note: 'hihat' },
+      { time: `${m}:2:0`, duration: '4n', note: 'snare' },
+      { time: `${m}:3:0`, duration: '4n', note: 'hihat' },
+    ]).flat(),
+  },
 ]
