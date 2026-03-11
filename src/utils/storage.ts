@@ -1,6 +1,10 @@
-import type { ExerciseResult, SavedScores } from '@/types'
+import type { ExerciseResult, InstrumentType, SavedScoreEntry, SavedScores } from '@/types'
 
 const STORAGE_KEY = 'rhythmex-scores'
+
+function scoreKey(exerciseId: string, instrument: InstrumentType): string {
+  return `${exerciseId}::${instrument}`
+}
 
 export function loadScores(): SavedScores {
   try {
@@ -14,25 +18,36 @@ export function loadScores(): SavedScores {
 
 export function saveResult(result: ExerciseResult): void {
   const scores = loadScores()
-  const existing = scores[result.exerciseId]
+  const key = scoreKey(result.exerciseId, result.instrument)
+  const existing = scores[key]
 
-  if (!existing || result.stars > existing.bestStars || result.accuracy > existing.bestAccuracy) {
-    scores[result.exerciseId] = {
-      bestStars: existing ? Math.max(existing.bestStars, result.stars) as 1 | 2 | 3 : result.stars,
-      bestAccuracy: existing ? Math.max(existing.bestAccuracy, result.accuracy) : result.accuracy,
-      lastPlayed: result.timestamp,
-    }
-  } else {
-    scores[result.exerciseId] = {
-      ...existing,
-      lastPlayed: result.timestamp,
-    }
+  const attempts = (existing?.attempts ?? 0) + 1
+  const totalAccuracy = (existing?.totalAccuracy ?? 0) + result.accuracy
+
+  scores[key] = {
+    bestStars: existing
+      ? (Math.max(existing.bestStars, result.stars) as 1 | 2 | 3)
+      : result.stars,
+    bestAccuracy: existing
+      ? Math.max(existing.bestAccuracy, result.accuracy)
+      : result.accuracy,
+    lastPlayed: result.timestamp,
+    instrument: result.instrument,
+    attempts,
+    totalAccuracy,
   }
 
   localStorage.setItem(STORAGE_KEY, JSON.stringify(scores))
 }
 
-export function getBestScore(exerciseId: string): SavedScores[string] | null {
+export function getBestScore(
+  exerciseId: string,
+  instrument: InstrumentType,
+): SavedScoreEntry | null {
   const scores = loadScores()
-  return scores[exerciseId] ?? null
+  return scores[scoreKey(exerciseId, instrument)] ?? null
+}
+
+export function getAllScores(): SavedScores {
+  return loadScores()
 }

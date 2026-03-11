@@ -4,9 +4,10 @@ import { Navigation } from '@/components/ui/Navigation'
 import { StarDisplay } from '@/components/ui/StarDisplay'
 import { exercisesByDifficulty } from '@/data/exercises'
 import { getBestScore } from '@/utils/storage'
-import type { Difficulty, Exercise } from '@/types'
+import type { Difficulty, Exercise, InstrumentType } from '@/types'
 
 interface ExerciseSelectScreenProps {
+  instrument: InstrumentType
   onSelect: (exercise: Exercise) => void
   onBack: () => void
 }
@@ -19,7 +20,7 @@ const difficultyColors: Record<Difficulty, string> = {
   advanced: 'bg-red-500',
 }
 
-export function ExerciseSelectScreen({ onSelect, onBack }: ExerciseSelectScreenProps) {
+export function ExerciseSelectScreen({ instrument, onSelect, onBack }: ExerciseSelectScreenProps) {
   const [activeDifficulty, setActiveDifficulty] = useState<Difficulty>('beginner')
   const exercises = exercisesByDifficulty(activeDifficulty)
 
@@ -45,7 +46,7 @@ export function ExerciseSelectScreen({ onSelect, onBack }: ExerciseSelectScreenP
 
       <div className="flex flex-col gap-3">
         {exercises.map((exercise) => {
-          const best = getBestScore(exercise.id)
+          const best = getBestScore(exercise.id, instrument)
           return (
             <button
               key={exercise.id}

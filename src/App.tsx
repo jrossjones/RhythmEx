@@ -49,6 +49,7 @@ export function App() {
     case 'exercise-select':
       return (
         <ExerciseSelectScreen
+          instrument={state.selectedInstrument!}
           onSelect={selectExercise}
           onBack={() => navigate('instrument-select')}
         />
@@ -68,6 +69,7 @@ export function App() {
       return (
         <ResultsScreen
           result={state.lastResult!}
+          exerciseName={state.selectedExercise!.name}
           onRetry={() => navigate('practice')}
           onNewExercise={() => navigate('exercise-select')}
         />

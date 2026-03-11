@@ -52,13 +52,19 @@ export interface ExerciseResult {
   timestamp: number
 }
 
+// A single saved score entry (keyed by "exerciseId::instrument")
+export interface SavedScoreEntry {
+  bestStars: StarRating
+  bestAccuracy: number
+  lastPlayed: number
+  instrument: InstrumentType
+  attempts: number
+  totalAccuracy: number
+}
+
 // Shape of saved scores in localStorage
 export interface SavedScores {
-  [exerciseId: string]: {
-    bestStars: StarRating
-    bestAccuracy: number
-    lastPlayed: number
-  }
+  [key: string]: SavedScoreEntry
 }
 
 // Exercise lifecycle phases

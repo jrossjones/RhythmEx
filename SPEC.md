@@ -118,10 +118,15 @@ Young practicing musicians, ages 5 and up. The UI must be simple, colorful, and 
 - `PracticeScreen` wired with real scoring: `finalize()` → `calculateAccuracy()` → `calculateStars()`
 - 74 tests passing (54 existing + 20 new)
 
-### Phase 4 — Results & Scoring (Not Started)
-- Wire real scoring into results screen
-- localStorage persistence of best scores
-- Star rating display with accuracy breakdown
+### Phase 4 — Results & Scoring with Per-Instrument Persistence (Complete)
+- `SavedScoreEntry` type with `attempts`, `totalAccuracy`, `instrument` fields for future summary stats
+- Compound storage key `"exerciseId::instrument"` — scores independent per instrument
+- `saveResult()` tracks attempt count and cumulative accuracy per instrument
+- `getBestScore()` requires both `exerciseId` and `instrument`
+- `getAllScores()` utility for future summary screens
+- Full `ResultsScreen`: star display, accuracy %, tap breakdown bar (on-time/early/late/miss), "New Best!" badge, personal best comparison
+- `ExerciseSelectScreen` shows per-instrument best scores
+- 89 tests passing (74 existing + 15 new)
 
 ### Phase 5 — Virtual Instruments & Audio (Not Started)
 - Tone.js integration with sample loading

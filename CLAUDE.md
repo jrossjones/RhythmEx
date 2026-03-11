@@ -24,7 +24,7 @@ src/
       InstrumentSelectScreen.tsx
       ExerciseSelectScreen.tsx
       PracticeScreen.tsx        # Exercise lifecycle, BPM controls, beat timeline, tap input
-      ResultsScreen.tsx         # Placeholder — real scoring in Phase 4
+      ResultsScreen.tsx         # Full results: stars, accuracy, tap breakdown, personal best
     ui/                 # Shared reusable UI components
       Button.tsx        # Variant/size props, 44px+ touch targets
       Layout.tsx        # Page wrapper with gradient bg, max-width
@@ -50,7 +50,7 @@ src/
   utils/
     rhythm.ts           # transportTimeToMs, msPerBeat, exerciseDurationMs, beatTimesMs
     scoring.ts          # TIMING_WINDOWS, judgeTap, calculateAccuracy, calculateStars
-    storage.ts          # localStorage CRUD: loadScores, saveResult, getBestScore
+    storage.ts          # localStorage CRUD: compound key per instrument, attempt tracking, getAllScores
     __tests__/          # Vitest unit tests
       rhythm.test.ts
       scoring.test.ts
@@ -60,6 +60,9 @@ src/
       useExercise.test.ts
       useTiming.test.ts
   components/
+    screens/
+      __tests__/
+        ResultsScreen.test.tsx
     practice/
       __tests__/
         BeatTimeline.test.tsx
@@ -102,6 +105,8 @@ src/
 - **Exercise lifecycle:** `idle → countdown (3-2-1) → playing → done` managed by `useExercise` hook. Uses `requestAnimationFrame` for smooth playhead animation and `performance.now()` for timing. BPM adjustable only in idle phase.
 - **Tap matching:** `useTiming` hook matches each tap to the nearest unmatched beat via `judgeTap()`. Stray taps beyond 240ms from any beat are silently ignored (kid-friendly). `finalize()` fills unmatched beats as misses. Uses refs for tap data (performance), state only for UI feedback.
 - **Tap input:** `TapZone` supports Space key (`keydown` with `event.repeat` guard), `onTouchStart` (lower latency), and `onClick` (desktop fallback). Flashes green/yellow/red for 300ms per judgment.
+- **Score storage:** Compound key `"exerciseId::instrument"` in localStorage — scores are fully independent per instrument. Each entry tracks `bestStars`, `bestAccuracy`, `attempts`, and `totalAccuracy` (enables future average calculation). `getAllScores()` returns the full dict for summary screens.
+- **Results screen:** Compares current attempt against stored personal best on render. "New Best!" badge shown only when `attempts > 1` and accuracy meets or beats `bestAccuracy` (not shown on first ever attempt).
 
 ## Important Notes
 - Target audience is young children (5+): keep UI simple, colorful, and forgiving

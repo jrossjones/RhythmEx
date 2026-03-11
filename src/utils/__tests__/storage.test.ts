@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { loadScores, saveResult, getBestScore } from '../storage'
+import { loadScores, saveResult, getBestScore, getAllScores } from '../storage'
 import type { ExerciseResult } from '@/types'
 
 const mockStorage: Record<string, string> = {}
@@ -17,13 +17,34 @@ beforeEach(() => {
   })
 })
 
+function makeResult(overrides: Partial<ExerciseResult> = {}): ExerciseResult {
+  return {
+    exerciseId: 'test-ex',
+    instrument: 'drums',
+    accuracy: 85,
+    stars: 2,
+    tapResults: [],
+    timestamp: 1000,
+    ...overrides,
+  }
+}
+
 describe('loadScores', () => {
   it('returns empty object when no scores saved', () => {
     expect(loadScores()).toEqual({})
   })
 
   it('returns parsed scores from localStorage', () => {
-    const scores = { 'test-exercise': { bestStars: 2, bestAccuracy: 80, lastPlayed: 1000 } }
+    const scores = {
+      'test-ex::drums': {
+        bestStars: 2,
+        bestAccuracy: 80,
+        lastPlayed: 1000,
+        instrument: 'drums',
+        attempts: 1,
+        totalAccuracy: 80,
+      },
+    }
     mockStorage['rhythmex-scores'] = JSON.stringify(scores)
     expect(loadScores()).toEqual(scores)
   })
@@ -35,88 +56,87 @@ describe('loadScores', () => {
 })
 
 describe('saveResult', () => {
-  it('saves a new result', () => {
-    const result: ExerciseResult = {
-      exerciseId: 'test-ex',
-      instrument: 'drums',
-      accuracy: 85,
-      stars: 2,
-      tapResults: [],
-      timestamp: 1000,
-    }
-    saveResult(result)
+  it('saves a new result with compound key', () => {
+    saveResult(makeResult())
     const saved = JSON.parse(mockStorage['rhythmex-scores'])
-    expect(saved['test-ex'].bestStars).toBe(2)
-    expect(saved['test-ex'].bestAccuracy).toBe(85)
+    expect(saved['test-ex::drums']).toBeDefined()
+    expect(saved['test-ex::drums'].bestStars).toBe(2)
+    expect(saved['test-ex::drums'].bestAccuracy).toBe(85)
+    expect(saved['test-ex::drums'].instrument).toBe('drums')
   })
 
   it('updates to better score', () => {
-    const first: ExerciseResult = {
-      exerciseId: 'test-ex',
-      instrument: 'drums',
-      accuracy: 70,
-      stars: 1,
-      tapResults: [],
-      timestamp: 1000,
-    }
-    const second: ExerciseResult = {
-      exerciseId: 'test-ex',
-      instrument: 'drums',
-      accuracy: 95,
-      stars: 3,
-      tapResults: [],
-      timestamp: 2000,
-    }
-    saveResult(first)
-    saveResult(second)
+    saveResult(makeResult({ accuracy: 70, stars: 1, timestamp: 1000 }))
+    saveResult(makeResult({ accuracy: 95, stars: 3, timestamp: 2000 }))
     const saved = JSON.parse(mockStorage['rhythmex-scores'])
-    expect(saved['test-ex'].bestStars).toBe(3)
-    expect(saved['test-ex'].bestAccuracy).toBe(95)
+    expect(saved['test-ex::drums'].bestStars).toBe(3)
+    expect(saved['test-ex::drums'].bestAccuracy).toBe(95)
   })
 
   it('keeps best score when new attempt is worse', () => {
-    const first: ExerciseResult = {
-      exerciseId: 'test-ex',
-      instrument: 'drums',
-      accuracy: 95,
-      stars: 3,
-      tapResults: [],
-      timestamp: 1000,
-    }
-    const second: ExerciseResult = {
-      exerciseId: 'test-ex',
-      instrument: 'drums',
-      accuracy: 60,
-      stars: 1,
-      tapResults: [],
-      timestamp: 2000,
-    }
-    saveResult(first)
-    saveResult(second)
+    saveResult(makeResult({ accuracy: 95, stars: 3, timestamp: 1000 }))
+    saveResult(makeResult({ accuracy: 60, stars: 1, timestamp: 2000 }))
     const saved = JSON.parse(mockStorage['rhythmex-scores'])
-    expect(saved['test-ex'].bestStars).toBe(3)
-    expect(saved['test-ex'].bestAccuracy).toBe(95)
-    expect(saved['test-ex'].lastPlayed).toBe(2000)
+    expect(saved['test-ex::drums'].bestStars).toBe(3)
+    expect(saved['test-ex::drums'].bestAccuracy).toBe(95)
+    expect(saved['test-ex::drums'].lastPlayed).toBe(2000)
+  })
+
+  it('stores scores independently per instrument', () => {
+    saveResult(makeResult({ instrument: 'drums', accuracy: 90, stars: 3 }))
+    saveResult(makeResult({ instrument: 'handpan', accuracy: 70, stars: 1 }))
+    const saved = JSON.parse(mockStorage['rhythmex-scores'])
+    expect(saved['test-ex::drums'].bestAccuracy).toBe(90)
+    expect(saved['test-ex::handpan'].bestAccuracy).toBe(70)
+  })
+
+  it('increments attempts on each save', () => {
+    saveResult(makeResult({ timestamp: 1000 }))
+    saveResult(makeResult({ timestamp: 2000 }))
+    saveResult(makeResult({ timestamp: 3000 }))
+    const saved = JSON.parse(mockStorage['rhythmex-scores'])
+    expect(saved['test-ex::drums'].attempts).toBe(3)
+  })
+
+  it('accumulates totalAccuracy across attempts', () => {
+    saveResult(makeResult({ accuracy: 80, timestamp: 1000 }))
+    saveResult(makeResult({ accuracy: 90, timestamp: 2000 }))
+    const saved = JSON.parse(mockStorage['rhythmex-scores'])
+    expect(saved['test-ex::drums'].totalAccuracy).toBe(170)
   })
 })
 
 describe('getBestScore', () => {
   it('returns null for unknown exercise', () => {
-    expect(getBestScore('nonexistent')).toBeNull()
+    expect(getBestScore('nonexistent', 'drums')).toBeNull()
   })
 
-  it('returns best score after saving', () => {
-    const result: ExerciseResult = {
-      exerciseId: 'test-ex',
-      instrument: 'drums',
-      accuracy: 90,
-      stars: 3,
-      tapResults: [],
-      timestamp: 1000,
-    }
-    saveResult(result)
-    const best = getBestScore('test-ex')
+  it('returns null for known exercise but different instrument', () => {
+    saveResult(makeResult({ instrument: 'drums' }))
+    expect(getBestScore('test-ex', 'handpan')).toBeNull()
+  })
+
+  it('returns best score for correct instrument', () => {
+    saveResult(makeResult({ instrument: 'drums', accuracy: 90, stars: 3 }))
+    const best = getBestScore('test-ex', 'drums')
     expect(best).not.toBeNull()
     expect(best!.bestStars).toBe(3)
+    expect(best!.bestAccuracy).toBe(90)
+    expect(best!.instrument).toBe('drums')
+  })
+})
+
+describe('getAllScores', () => {
+  it('returns empty object when no scores', () => {
+    expect(getAllScores()).toEqual({})
+  })
+
+  it('returns all saved scores', () => {
+    saveResult(makeResult({ instrument: 'drums' }))
+    saveResult(makeResult({ instrument: 'handpan', accuracy: 70, stars: 1 }))
+    const all = getAllScores()
+    expect(Object.keys(all)).toHaveLength(2)
+    expect(all['test-ex::drums']).toBeDefined()
+    expect(all['test-ex::handpan']).toBeDefined()
   })
 })
