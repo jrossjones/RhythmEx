@@ -37,6 +37,15 @@ export interface TapResult {
   actualMs: number
   deltaMs: number
   judgment: TimingJudgment
+  pad?: DrumPad          // which pad was tapped
+  expectedPad?: string   // which pad was expected (strict mode)
+}
+
+// Practice session settings
+export interface PracticeSettings {
+  metronomeOn: boolean
+  tapSoundOn: boolean
+  strictMode: boolean
 }
 
 // Star rating (1-3)

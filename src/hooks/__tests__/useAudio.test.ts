@@ -1,0 +1,204 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { renderHook, act } from '@testing-library/react'
+
+function createMockSynth() {
+  return {
+    triggerAttackRelease: vi.fn(),
+    toDestination: vi.fn().mockReturnThis(),
+    dispose: vi.fn(),
+    volume: { value: 0 },
+  }
+}
+
+// Track created instances
+let createdSynths: Record<string, ReturnType<typeof createMockSynth>[]>
+
+function MockMembraneSynth(this: ReturnType<typeof createMockSynth>) {
+  const synth = createMockSynth()
+  Object.assign(this, synth)
+  createdSynths.membrane.push(this)
+  return this
+}
+MockMembraneSynth.prototype.toDestination = function () { return this }
+
+function MockNoiseSynth(this: ReturnType<typeof createMockSynth>) {
+  const synth = createMockSynth()
+  Object.assign(this, synth)
+  createdSynths.noise.push(this)
+  return this
+}
+MockNoiseSynth.prototype.toDestination = function () { return this }
+
+function MockMetalSynth(this: ReturnType<typeof createMockSynth>) {
+  const synth = createMockSynth()
+  Object.assign(this, synth)
+  createdSynths.metal.push(this)
+  return this
+}
+MockMetalSynth.prototype.toDestination = function () { return this }
+
+function MockSynth(this: ReturnType<typeof createMockSynth>) {
+  const synth = createMockSynth()
+  Object.assign(this, synth)
+  createdSynths.synth.push(this)
+  return this
+}
+MockSynth.prototype.toDestination = function () { return this }
+
+vi.mock('tone', () => ({
+  start: vi.fn().mockResolvedValue(undefined),
+  now: vi.fn().mockReturnValue(0),
+  MembraneSynth: MockMembraneSynth,
+  NoiseSynth: MockNoiseSynth,
+  MetalSynth: MockMetalSynth,
+  Synth: MockSynth,
+}))
+
+import { useAudio } from '../useAudio'
+import * as Tone from 'tone'
+
+describe('useAudio', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    createdSynths = { membrane: [], noise: [], metal: [], synth: [] }
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('starts with isAudioReady = false', () => {
+    const { result } = renderHook(() => useAudio())
+    expect(result.current.isAudioReady).toBe(false)
+  })
+
+  it('startAudioContext calls Tone.start() and sets isAudioReady', async () => {
+    const { result } = renderHook(() => useAudio())
+
+    await act(async () => {
+      await result.current.startAudioContext()
+    })
+
+    expect(Tone.start).toHaveBeenCalledTimes(1)
+    expect(result.current.isAudioReady).toBe(true)
+  })
+
+  it('startAudioContext is idempotent', async () => {
+    const { result } = renderHook(() => useAudio())
+
+    await act(async () => {
+      await result.current.startAudioContext()
+    })
+    await act(async () => {
+      await result.current.startAudioContext()
+    })
+
+    expect(Tone.start).toHaveBeenCalledTimes(1)
+  })
+
+  it('playDrum is no-op before startAudioContext', () => {
+    const { result } = renderHook(() => useAudio())
+
+    act(() => {
+      result.current.playDrum('kick')
+    })
+
+    expect(createdSynths.membrane).toHaveLength(0)
+  })
+
+  it('playDrum("kick") triggers MembraneSynth after startAudioContext', async () => {
+    const { result } = renderHook(() => useAudio())
+
+    await act(async () => {
+      await result.current.startAudioContext()
+    })
+
+    act(() => {
+      result.current.playDrum('kick')
+    })
+
+    // First MembraneSynth instance is kick
+    const kickInstance = createdSynths.membrane[0]
+    expect(kickInstance.triggerAttackRelease).toHaveBeenCalledWith('C1', '8n', 0)
+  })
+
+  it('playDrum("snare") triggers NoiseSynth', async () => {
+    const { result } = renderHook(() => useAudio())
+
+    await act(async () => {
+      await result.current.startAudioContext()
+    })
+
+    act(() => {
+      result.current.playDrum('snare')
+    })
+
+    const snareInstance = createdSynths.noise[0]
+    expect(snareInstance.triggerAttackRelease).toHaveBeenCalledWith('8n', 0)
+  })
+
+  it('playDrum("hihat") triggers MetalSynth', async () => {
+    const { result } = renderHook(() => useAudio())
+
+    await act(async () => {
+      await result.current.startAudioContext()
+    })
+
+    act(() => {
+      result.current.playDrum('hihat')
+    })
+
+    const hihatInstance = createdSynths.metal[0]
+    expect(hihatInstance.triggerAttackRelease).toHaveBeenCalledWith('C4', '32n', 0)
+  })
+
+  it('playMetronomeClick uses different notes for accent', async () => {
+    const { result } = renderHook(() => useAudio())
+
+    await act(async () => {
+      await result.current.startAudioContext()
+    })
+
+    const metronomeInstance = createdSynths.synth[0]
+
+    act(() => {
+      result.current.playMetronomeClick()
+    })
+    expect(metronomeInstance.triggerAttackRelease).toHaveBeenCalledWith('G4', '32n', 0)
+
+    act(() => {
+      result.current.playMetronomeClick(true)
+    })
+    expect(metronomeInstance.triggerAttackRelease).toHaveBeenCalledWith('C5', '32n', 0)
+  })
+
+  it('playMetronomeClick is no-op before startAudioContext', () => {
+    const { result } = renderHook(() => useAudio())
+
+    act(() => {
+      result.current.playMetronomeClick()
+    })
+
+    expect(createdSynths.synth).toHaveLength(0)
+  })
+
+  it('disposes synths on unmount', async () => {
+    const { result, unmount } = renderHook(() => useAudio())
+
+    await act(async () => {
+      await result.current.startAudioContext()
+    })
+
+    const kickInstance = createdSynths.membrane[0]
+    const snareInstance = createdSynths.noise[0]
+    const hihatInstance = createdSynths.metal[0]
+    const metronomeInstance = createdSynths.synth[0]
+
+    unmount()
+
+    expect(kickInstance.dispose).toHaveBeenCalled()
+    expect(snareInstance.dispose).toHaveBeenCalled()
+    expect(hihatInstance.dispose).toHaveBeenCalled()
+    expect(metronomeInstance.dispose).toHaveBeenCalled()
+  })
+})

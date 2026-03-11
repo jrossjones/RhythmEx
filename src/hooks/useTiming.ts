@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react'
-import type { Exercise, ExercisePhase, TapResult, TimingJudgment } from '@/types'
+import type { DrumPad, Exercise, ExercisePhase, TapResult, TimingJudgment } from '@/types'
 import { beatTimesMs } from '@/utils/rhythm'
 import { judgeTap } from '@/utils/scoring'
 
@@ -8,6 +8,7 @@ interface UseTimingOptions {
   bpm: number
   phase: ExercisePhase
   elapsedMsRef: React.RefObject<number>
+  strictMode?: boolean
 }
 
 interface TapFeedback {
@@ -15,13 +16,15 @@ interface TapFeedback {
   timestamp: number
 }
 
-export function useTiming({ exercise, bpm, phase, elapsedMsRef }: UseTimingOptions) {
+export function useTiming({ exercise, bpm, phase, elapsedMsRef, strictMode }: UseTimingOptions) {
   const [lastTapFeedback, setLastTapFeedback] = useState<TapFeedback | null>(null)
+  const [lastFeedbackPad, setLastFeedbackPad] = useState<DrumPad | null>(null)
   const [beatJudgments, setBeatJudgments] = useState<Map<number, TimingJudgment>>(new Map())
 
   const tapResultsRef = useRef<TapResult[]>([])
   const matchedBeatsRef = useRef<Set<number>>(new Set())
   const beatTimesRef = useRef<number[]>([])
+  const feedbackTimeoutRef = useRef<number>(0)
 
   // Pre-compute beat times whenever exercise/bpm changes
   // We store in ref and recompute on access to keep it current
@@ -31,7 +34,7 @@ export function useTiming({ exercise, bpm, phase, elapsedMsRef }: UseTimingOptio
     return times
   }, [exercise, bpm])
 
-  const recordTap = useCallback(() => {
+  const recordTap = useCallback((pad?: DrumPad) => {
     if (phase !== 'playing') return
 
     const tapMs = elapsedMsRef.current
@@ -54,6 +57,21 @@ export function useTiming({ exercise, bpm, phase, elapsedMsRef }: UseTimingOptio
     if (nearestIndex === -1 || nearestDist > 240) return
 
     const result = judgeTap(times[nearestIndex], tapMs)
+
+    // Attach pad info if provided
+    if (pad) {
+      result.pad = pad
+    }
+
+    // Strict mode: wrong pad = miss
+    if (strictMode && pad) {
+      const expectedNote = exercise.beats[nearestIndex].note
+      if (pad !== expectedNote) {
+        result.judgment = 'miss'
+        result.expectedPad = expectedNote
+      }
+    }
+
     tapResultsRef.current.push(result)
     matchedBeatsRef.current.add(nearestIndex)
 
@@ -65,7 +83,17 @@ export function useTiming({ exercise, bpm, phase, elapsedMsRef }: UseTimingOptio
     })
 
     setLastTapFeedback({ judgment: result.judgment, timestamp: performance.now() })
-  }, [phase, elapsedMsRef, getBeatTimes])
+    if (pad) {
+      setLastFeedbackPad(pad)
+    }
+
+    // Auto-clear feedback after 300ms
+    clearTimeout(feedbackTimeoutRef.current)
+    feedbackTimeoutRef.current = window.setTimeout(() => {
+      setLastTapFeedback(null)
+      setLastFeedbackPad(null)
+    }, 300)
+  }, [phase, elapsedMsRef, getBeatTimes, strictMode, exercise.beats])
 
   const finalize = useCallback((): TapResult[] => {
     const times = getBeatTimes()
@@ -95,6 +123,7 @@ export function useTiming({ exercise, bpm, phase, elapsedMsRef }: UseTimingOptio
     tapResultsRef.current = []
     matchedBeatsRef.current = new Set()
     setLastTapFeedback(null)
+    setLastFeedbackPad(null)
     setBeatJudgments(new Map())
   }, [])
 
@@ -102,6 +131,7 @@ export function useTiming({ exercise, bpm, phase, elapsedMsRef }: UseTimingOptio
     tapResults: tapResultsRef.current,
     tapResultsRef,
     lastTapFeedback,
+    lastFeedbackPad,
     beatJudgments,
     recordTap,
     finalize,

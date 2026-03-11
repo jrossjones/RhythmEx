@@ -1,14 +1,19 @@
-import { useRef } from 'react'
+import { useRef, useState, useCallback, useEffect, useMemo } from 'react'
 import { Layout } from '@/components/ui/Layout'
 import { Navigation } from '@/components/ui/Navigation'
 import { Button } from '@/components/ui/Button'
 import { BeatTimeline } from '@/components/practice/BeatTimeline'
 import { TapZone } from '@/components/practice/TapZone'
+import { DrumPad } from '@/components/instruments/DrumPad'
 import { CountdownOverlay } from '@/components/practice/CountdownOverlay'
+import { SettingsPopover } from '@/components/practice/SettingsPopover'
 import { useExercise } from '@/hooks/useExercise'
 import { useTiming } from '@/hooks/useTiming'
+import { useAudio } from '@/hooks/useAudio'
 import { calculateAccuracy, calculateStars } from '@/utils/scoring'
-import type { Exercise, ExerciseResult, InstrumentType, TapResult } from '@/types'
+import { exerciseDrumPads } from '@/utils/rhythm'
+import { msPerBeat } from '@/utils/rhythm'
+import type { DrumPad as DrumPadType, Exercise, ExerciseResult, InstrumentType, PracticeSettings, TapResult } from '@/types'
 
 interface PracticeScreenProps {
   exercise: Exercise
@@ -18,6 +23,14 @@ interface PracticeScreenProps {
 }
 
 export function PracticeScreen({ exercise, instrument, onFinish, onBack }: PracticeScreenProps) {
+  const [settings, setSettings] = useState<PracticeSettings>({
+    metronomeOn: true,
+    tapSoundOn: true,
+    strictMode: false,
+  })
+
+  const { playDrum, playMetronomeClick, startAudioContext } = useAudio()
+
   // Ref to hold finalize — breaks circular dependency between useExercise and useTiming
   const finalizeRef = useRef<() => TapResult[]>(() => [])
 
@@ -49,16 +62,43 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack }: Pract
 
   const {
     lastTapFeedback,
+    lastFeedbackPad,
     beatJudgments,
     recordTap,
     finalize,
     reset,
-  } = useTiming({ exercise, bpm, phase, elapsedMsRef })
+  } = useTiming({ exercise, bpm, phase, elapsedMsRef, strictMode: settings.strictMode })
 
   // Keep ref up to date so handleDone always calls the latest finalize
-  finalizeRef.current = finalize
+  useEffect(() => {
+    finalizeRef.current = finalize
+  })
 
   const isIdle = phase === 'idle'
+
+  // Derive active pads and next expected pad for drums
+  const activePads = useMemo(() => exerciseDrumPads(exercise), [exercise])
+
+  const nextExpectedPad = useMemo((): DrumPadType | null => {
+    for (let i = 0; i < exercise.beats.length; i++) {
+      if (!beatJudgments.has(i)) {
+        return exercise.beats[i].note as DrumPadType
+      }
+    }
+    return null
+  }, [exercise.beats, beatJudgments])
+
+  // Drum tap handler
+  const handleDrumTap = useCallback((pad: DrumPadType) => {
+    if (settings.tapSoundOn) playDrum(pad)
+    recordTap(pad)
+  }, [settings.tapSoundOn, playDrum, recordTap])
+
+  // Start with audio context
+  const handleStart = useCallback(async () => {
+    await startAudioContext()
+    startExercise()
+  }, [startAudioContext, startExercise])
 
   const handleStop = () => {
     stopExercise()
@@ -71,9 +111,63 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack }: Pract
     onBack()
   }
 
+  // Metronome — countdown clicks
+  const playMetronomeClickRef = useRef(playMetronomeClick)
+  useEffect(() => {
+    playMetronomeClickRef.current = playMetronomeClick
+  })
+  const prevCountdownRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (phase !== 'countdown') {
+      prevCountdownRef.current = null
+      return
+    }
+    // Fire on each distinct countdownValue change during countdown
+    if (prevCountdownRef.current !== countdownValue) {
+      prevCountdownRef.current = countdownValue
+      if (settings.metronomeOn) {
+        playMetronomeClickRef.current(true)
+      }
+    }
+  }, [phase, countdownValue, settings.metronomeOn])
+
+  // Metronome — beat clicks during playing
+  useEffect(() => {
+    if (phase !== 'playing' || !settings.metronomeOn) return
+
+    const beatMs = msPerBeat(bpm)
+    let lastClickedBeat = -1
+    let rafId: number
+
+    const tick = () => {
+      const elapsed = elapsedMsRef.current
+      const currentBeat = Math.floor(elapsed / beatMs)
+
+      if (currentBeat > lastClickedBeat) {
+        lastClickedBeat = currentBeat
+        const [beatsPerMeasure] = exercise.timeSignature
+        const isDownbeat = currentBeat % beatsPerMeasure === 0
+        playMetronomeClickRef.current(isDownbeat)
+      }
+
+      rafId = requestAnimationFrame(tick)
+    }
+
+    rafId = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(rafId)
+  }, [phase, settings.metronomeOn, bpm, elapsedMsRef, exercise.timeSignature])
+
   return (
     <Layout>
-      <Navigation title={exercise.name} onBack={handleBack} />
+      <div className="flex items-center justify-between">
+        <Navigation title={exercise.name} onBack={handleBack} />
+        <SettingsPopover
+          settings={settings}
+          onSettingsChange={setSettings}
+          disabled={!isIdle}
+        />
+      </div>
 
       {/* Exercise info */}
       <p className="mb-4 text-center text-gray-500">
@@ -110,22 +204,34 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack }: Pract
           progress={progress}
           bpm={bpm}
           beatJudgments={beatJudgments}
+          instrument={instrument}
         />
       </div>
 
-      {/* Tap zone */}
+      {/* Tap input area */}
       <div className="mb-6">
-        <TapZone
-          onTap={recordTap}
-          lastFeedback={lastTapFeedback}
-          disabled={phase !== 'playing'}
-        />
+        {instrument === 'drums' ? (
+          <DrumPad
+            onTap={handleDrumTap}
+            lastFeedback={lastTapFeedback}
+            lastFeedbackPad={lastFeedbackPad}
+            disabled={phase !== 'playing'}
+            activePads={activePads}
+            nextExpectedPad={nextExpectedPad}
+          />
+        ) : (
+          <TapZone
+            onTap={recordTap}
+            lastFeedback={lastTapFeedback}
+            disabled={phase !== 'playing'}
+          />
+        )}
       </div>
 
       {/* Action area */}
       <div className="flex justify-center">
         {isIdle && (
-          <Button size="lg" onClick={startExercise}>
+          <Button size="lg" onClick={handleStart}>
             Start
           </Button>
         )}

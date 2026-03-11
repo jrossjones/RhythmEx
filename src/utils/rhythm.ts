@@ -1,4 +1,4 @@
-import type { Exercise } from '@/types'
+import type { DrumPad, Exercise } from '@/types'
 
 /**
  * Convert Tone.js transport time "bars:beats:sixteenths" to absolute ms at a given BPM.
@@ -33,4 +33,15 @@ export function exerciseDurationMs(exercise: Exercise): number {
  */
 export function beatTimesMs(exercise: Exercise): number[] {
   return exercise.beats.map((beat) => transportTimeToMs(beat.time, exercise.bpm))
+}
+
+/**
+ * Get deduplicated array of drum pad names used in an exercise.
+ */
+export function exerciseDrumPads(exercise: Exercise): DrumPad[] {
+  const pads = new Set<DrumPad>()
+  for (const beat of exercise.beats) {
+    pads.add(beat.note as DrumPad)
+  }
+  return [...pads]
 }

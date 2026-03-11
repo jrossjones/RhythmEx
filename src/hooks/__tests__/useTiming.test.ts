@@ -19,14 +19,30 @@ const testExercise: Exercise = {
   ],
 }
 
-function createOptions(overrides: { phase?: ExercisePhase; elapsedMs?: number } = {}) {
+const drumExercise: Exercise = {
+  id: 'test-drums',
+  name: 'Test Drums',
+  difficulty: 'beginner',
+  timeSignature: [4, 4],
+  bpm: 120,
+  measures: 1,
+  beats: [
+    { time: '0:0:0', duration: '4n', note: 'kick' },
+    { time: '0:1:0', duration: '4n', note: 'snare' },
+    { time: '0:2:0', duration: '4n', note: 'kick' },
+    { time: '0:3:0', duration: '4n', note: 'snare' },
+  ],
+}
+
+function createOptions(overrides: { phase?: ExercisePhase; elapsedMs?: number; strictMode?: boolean; exercise?: Exercise } = {}) {
   const phase = overrides.phase ?? 'playing'
   const elapsedMsRef = { current: overrides.elapsedMs ?? 0 }
   return {
-    exercise: testExercise,
+    exercise: overrides.exercise ?? testExercise,
     bpm: 120,
     phase,
     elapsedMsRef,
+    strictMode: overrides.strictMode,
   }
 }
 
@@ -210,5 +226,69 @@ describe('useTiming', () => {
     expect(result.current.tapResultsRef.current).toEqual([])
     expect(result.current.lastTapFeedback).toBeNull()
     expect(result.current.beatJudgments.size).toBe(0)
+  })
+
+  // --- Drum pad and strict mode tests ---
+
+  it('recordTap with pad in free mode attaches pad to result', () => {
+    const elapsedMsRef = { current: 20 }
+    const options = { exercise: drumExercise, bpm: 120, phase: 'playing' as const, elapsedMsRef }
+    const { result } = renderHook(() => useTiming(options))
+
+    act(() => { result.current.recordTap('kick') })
+
+    expect(result.current.tapResultsRef.current).toHaveLength(1)
+    expect(result.current.tapResultsRef.current[0].pad).toBe('kick')
+    expect(result.current.tapResultsRef.current[0].judgment).toBe('on-time')
+  })
+
+  it('recordTap with wrong pad in strict mode results in miss', () => {
+    const elapsedMsRef = { current: 20 }
+    // Beat 0 expects 'kick'
+    const options = { exercise: drumExercise, bpm: 120, phase: 'playing' as const, elapsedMsRef, strictMode: true }
+    const { result } = renderHook(() => useTiming(options))
+
+    act(() => { result.current.recordTap('snare') })
+
+    expect(result.current.tapResultsRef.current).toHaveLength(1)
+    expect(result.current.tapResultsRef.current[0].judgment).toBe('miss')
+    expect(result.current.tapResultsRef.current[0].expectedPad).toBe('kick')
+  })
+
+  it('recordTap with correct pad in strict mode uses normal timing judgment', () => {
+    const elapsedMsRef = { current: 20 }
+    // Beat 0 expects 'kick'
+    const options = { exercise: drumExercise, bpm: 120, phase: 'playing' as const, elapsedMsRef, strictMode: true }
+    const { result } = renderHook(() => useTiming(options))
+
+    act(() => { result.current.recordTap('kick') })
+
+    expect(result.current.tapResultsRef.current).toHaveLength(1)
+    expect(result.current.tapResultsRef.current[0].judgment).toBe('on-time')
+    expect(result.current.tapResultsRef.current[0].expectedPad).toBeUndefined()
+  })
+
+  it('recordTap with no pad in strict mode still works (backward compat)', () => {
+    const elapsedMsRef = { current: 20 }
+    const options = { exercise: drumExercise, bpm: 120, phase: 'playing' as const, elapsedMsRef, strictMode: true }
+    const { result } = renderHook(() => useTiming(options))
+
+    act(() => { result.current.recordTap() })
+
+    expect(result.current.tapResultsRef.current).toHaveLength(1)
+    expect(result.current.tapResultsRef.current[0].judgment).toBe('on-time')
+    expect(result.current.tapResultsRef.current[0].pad).toBeUndefined()
+  })
+
+  it('lastFeedbackPad is set on tap and cleared on reset', () => {
+    const elapsedMsRef = { current: 20 }
+    const options = { exercise: drumExercise, bpm: 120, phase: 'playing' as const, elapsedMsRef }
+    const { result } = renderHook(() => useTiming(options))
+
+    act(() => { result.current.recordTap('kick') })
+    expect(result.current.lastFeedbackPad).toBe('kick')
+
+    act(() => { result.current.reset() })
+    expect(result.current.lastFeedbackPad).toBeNull()
   })
 })

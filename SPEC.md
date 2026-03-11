@@ -39,10 +39,10 @@ Young practicing musicians, ages 5 and up. The UI must be simple, colorful, and 
 - Best score saved per exercise in localStorage
 
 ### 5. Virtual Instruments
-- **Drums** — Kick, snare, hi-hat, toms (mapped to keyboard keys or on-screen pads)
-- **Handpan** — Pitched notes in a circular layout (inspired by yishama.com virtual pantam)
+- **Drums** — Kick, snare, hi-hat, tom1, tom2 with Tone.js synth sounds (MembraneSynth, NoiseSynth, MetalSynth). On-screen pads with keyboard shortcuts (f/d/j/k/l). Adaptive grid layout based on exercise difficulty.
+- **Handpan** — Pitched notes in a circular layout (inspired by yishama.com virtual pantam) — *not yet implemented*
 - Instrument selection screen; user picks before starting an exercise
-- High-quality samples loaded via Tone.js Sampler
+- Settings popover on practice screen: metronome toggle, tap sound toggle, strict/free mode
 
 ### 6. Exercise Library
 - Pre-built rhythm exercises organized by difficulty:
@@ -78,11 +78,12 @@ Young practicing musicians, ages 5 and up. The UI must be simple, colorful, and 
   "bpm": 80,
   "measures": 4,
   "beats": [
-    { "time": "0:0:0", "duration": "4n", "note": "C4" },
-    { "time": "0:1:0", "duration": "4n", "note": "C4" }
+    { "time": "0:0:0", "duration": "4n", "note": "kick" },
+    { "time": "0:1:0", "duration": "4n", "note": "snare" }
   ]
 }
 ```
+Note: `beat.note` uses drum pad names (`kick`, `snare`, `hihat`, `tom1`, `tom2`) for drum exercises.
 
 ## Key UX Flows
 1. **Home** → Pick instrument → Pick exercise → Practice → See results (stars)
@@ -128,18 +129,17 @@ Young practicing musicians, ages 5 and up. The UI must be simple, colorful, and 
 - `ExerciseSelectScreen` shows per-instrument best scores
 - 89 tests passing (74 existing + 15 new)
 
-### Phase 5a — Audio Engine & Drums (Not Started)
-- **Audio engine (`useAudio` hook):** Tone.js synths as default sound source (MembraneSynth for kick, NoiseSynth for snare, MetalSynth for hihat, etc.). Architecture supports swapping in real `.wav` samples later without changing the hook API.
-- **Exercise data update:** Change `Beat.note` from generic note names (`"C4"`) to explicit drum pad names (`"kick"`, `"snare"`, `"hihat"`, `"tom1"`, `"tom2"`) across all 7 exercises.
-- **Drum pad UI (`DrumPad` component):** Instrument-specific tap zone replacing the generic `TapZone` when instrument is drums. 4–5 on-screen pads (kick, snare, hihat, tom1, tom2), each plays its synth sound on tap. Keyboard shortcuts mapped to each pad.
-- **Beat timeline color-coding:** Beats on the timeline are color-coded by drum type (e.g. kick = blue, snare = orange) so the player can see which drum to hit next.
-- **Strict / Free mode toggle:** User-toggled on the practice screen settings popover.
-  - **Free mode:** Any drum pad counts as a valid tap for timing scoring. Visual color-coding still shown as a learning aid.
-  - **Strict mode:** Player must tap the correct drum pad. Wrong pad = miss.
-- **Metronome:** Toggleable click track (default on). Ticks during the 3-2-1 countdown to help the player feel the tempo before the exercise starts.
-- **Tap sound toggle:** Option to mute instrument sounds on tap (metronome and scoring still function).
-- **Settings popover:** Gear icon button on the practice screen opens a small popover with toggles for: metronome on/off, tap sounds on/off, strict/free mode.
-- **Scoring integration:** `useTiming` updated so in strict mode, each tap carries pad identity and `judgeTap` checks pad correctness in addition to timing.
+### Phase 5a — Audio Engine & Drums (Complete)
+- **Audio engine (`useAudio` hook):** Tone.js synths — MembraneSynth (kick/toms), NoiseSynth (snare), MetalSynth (hihat), triangle Synth (metronome). Lazy creation on `startAudioContext()` user gesture. Synths disposed on unmount.
+- **Exercise data update:** `Beat.note` changed from `"C4"` to drum pad names (`"kick"`, `"snare"`, `"hihat"`, `"tom1"`, `"tom2"`). Beginner uses kick+snare, intermediate adds hihat, advanced adds toms.
+- **Drum pad UI (`DrumPad` component):** Replaces `TapZone` when instrument is drums. Adaptive grid layout (2/3/5 pads). Keyboard shortcuts: f=kick, d=snare, j=hihat, k=tom1, l=tom2, Space=next expected pad. Color-coded pads with judgment flash feedback.
+- **Beat timeline color-coding:** Drum beats color-coded by pad type (kick=red, snare=orange, hihat=cyan, tom1=purple, tom2=pink). Falls back to duration-based colors for non-drum instruments.
+- **Strict / Free mode toggle:** Free mode (default) accepts any pad for timing-only scoring. Strict mode requires correct pad — wrong pad = miss with `expectedPad` tracked.
+- **Metronome:** Toggleable click track (default on). Clicks on countdown ticks (3-2-1-Go) and during playing via RAF loop tracking beat crossings. Accent (C5) on downbeats, normal (G4) on other beats.
+- **Tap sound toggle:** Mutes instrument sounds on tap while metronome and scoring still function.
+- **Settings popover:** Gear icon button opens popover with 3 toggle switches: metronome on/off, tap sounds on/off, strict/free mode. Toggles disabled during active exercise.
+- **Scoring integration:** `useTiming` accepts optional `pad` argument and `strictMode` option. Wrong pad in strict mode overrides judgment to miss. `TapResult` extended with `pad` and `expectedPad` fields.
+- 129 tests passing (89 existing + 40 new)
 
 ### Phase 5b — Handpan & Circular Pad UI (Not Started)
 - **Handpan synth:** Tone.js FM/AM synth voices tuned to handpan scale (7 notes, C4–B4). Swappable with real samples later.

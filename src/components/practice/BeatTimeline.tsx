@@ -1,4 +1,4 @@
-import type { Exercise, TimingJudgment } from '@/types'
+import type { Exercise, InstrumentType, TimingJudgment } from '@/types'
 import { beatTimesMs, exerciseDurationMs, msPerBeat } from '@/utils/rhythm'
 
 interface BeatTimelineProps {
@@ -6,6 +6,7 @@ interface BeatTimelineProps {
   progress: number
   bpm: number
   beatJudgments?: Map<number, TimingJudgment>
+  instrument?: InstrumentType
 }
 
 const durationColors: Record<string, string> = {
@@ -16,6 +17,14 @@ const durationColors: Record<string, string> = {
   '1n': 'bg-amber-500',
 }
 
+const drumPadColors: Record<string, string> = {
+  kick: 'bg-red-400',
+  snare: 'bg-orange-400',
+  hihat: 'bg-cyan-400',
+  tom1: 'bg-purple-400',
+  tom2: 'bg-pink-400',
+}
+
 const judgmentColors: Record<TimingJudgment, string> = {
   'on-time': 'bg-green-400',
   early: 'bg-yellow-400',
@@ -23,7 +32,7 @@ const judgmentColors: Record<TimingJudgment, string> = {
   miss: 'bg-red-400',
 }
 
-export function BeatTimeline({ exercise, progress, bpm, beatJudgments }: BeatTimelineProps) {
+export function BeatTimeline({ exercise, progress, bpm, beatJudgments, instrument }: BeatTimelineProps) {
   const exerciseWithBpm = { ...exercise, bpm }
   const durationMs = exerciseDurationMs(exerciseWithBpm)
   const times = beatTimesMs(exerciseWithBpm)
@@ -56,7 +65,10 @@ export function BeatTimeline({ exercise, progress, bpm, beatJudgments }: BeatTim
       {exercise.beats.map((beat, i) => {
         const pct = durationMs > 0 ? (times[i] / durationMs) * 100 : 0
         const judgment = beatJudgments?.get(i)
-        const color = judgment ? judgmentColors[judgment] : (durationColors[beat.duration] ?? 'bg-gray-400')
+        const baseColor = instrument === 'drums'
+          ? (drumPadColors[beat.note] ?? 'bg-gray-400')
+          : (durationColors[beat.duration] ?? 'bg-gray-400')
+        const color = judgment ? judgmentColors[judgment] : baseColor
         const isNext = i === nextBeatIndex && !judgment
         const isJudged = !!judgment
         return (
