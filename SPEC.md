@@ -67,6 +67,7 @@ Young practicing musicians, ages 5 and up. The UI must be simple, colorful, and 
 6. **Ear training** — Identify key, detect tempo from audio
 7. **Auto beat detection** — Analyze YouTube audio for rhythm
 8. **Music theory lessons** — Integrated theory reference
+9. **Custom exercises** — User-created exercises via a builder UI, saved to localStorage. The `Exercise` JSON data model already supports this.
 
 ## Data Model (Exercise)
 ```json
@@ -140,6 +141,46 @@ Note: `beat.note` uses drum pad names (`kick`, `snare`, `hihat`, `tom1`, `tom2`)
 - **Settings popover:** Gear icon button opens popover with 3 toggle switches: metronome on/off, tap sounds on/off, strict/free mode. Toggles disabled during active exercise.
 - **Scoring integration:** `useTiming` accepts optional `pad` argument and `strictMode` option. Wrong pad in strict mode overrides judgment to miss. `TapResult` extended with `pad` and `expectedPad` fields.
 - 129 tests passing (89 existing + 40 new)
+
+### Phase 5a.1 — Multi-Lane Timeline, Scrolling, Speed Trainer (Not Started)
+
+#### Multi-lane beat timeline
+Replace the single-row `BeatTimeline` with a multi-lane view for drums. Each drum pad gets its own horizontal lane stacked vertically, so the player can see at a glance which pad to hit at each time position.
+
+- **Always 5 lanes** (hihat, tom1, tom2, snare, kick — top to bottom), matching the `DrumPad` grid layout for intuitive spatial mapping. Lanes for unused pads are present but empty.
+- Each lane has a **colored label strip** on the left showing the pad name and color.
+- Beat markers sit in their respective lane at the correct horizontal time position.
+- **Playhead** is a full-height vertical line spanning all lanes.
+- Measure dividers span all lanes.
+- Non-drum instruments (handpan, future) continue using the single-row layout.
+- Simultaneous beats on different pads are supported — markers simply appear in their respective lanes at the same horizontal position.
+
+#### Drum pad idle colors
+When the exercise is in `idle` phase, drum pads show **muted/desaturated** versions of their pad colors instead of plain gray. This lets the player associate pad colors with timeline lane colors before starting.
+
+#### Scrolling viewport for long exercises
+When an exercise is long enough that beats would be too densely packed, the timeline becomes a scrolling viewport:
+- **Playhead fixed at ~30% from the left** edge of the visible area. Beats approach from the right and scroll left as the exercise progresses.
+- The full timeline is rendered at a consistent horizontal density (e.g. a fixed number of pixels per beat), and a CSS `overflow: hidden` container clips the view.
+- The container's scroll offset is driven by `elapsedMs` / `progress`, translated to pixel offset.
+- Short exercises (where all beats fit comfortably at the chosen density) render the same as today — no scrolling, beats spread across the full width.
+- Threshold for scrolling: if the rendered width exceeds the container width, scrolling activates.
+
+#### Longer exercises
+- **Intermediate — "Extended Groove" (8 measures, 90 BPM):** kick/hihat/snare pattern, ~21 seconds. Long enough to require scrolling.
+- **Advanced — "Endurance Run" (16 measures, 85 BPM):** Full kit pattern with toms, ~45 seconds. A proper endurance challenge.
+
+#### Speed Trainer mode
+A toggle in the `SettingsPopover` (default off). When enabled:
+- After completing an exercise with **≥95% accuracy**, the next run automatically starts at **+5 BPM** above the previous run's tempo.
+- The BPM increase is applied when navigating from results back to the practice screen (or on "Retry").
+- If accuracy is below 95%, BPM stays the same (no decrease).
+- The player can still manually adjust BPM at any time, which resets the speed trainer baseline.
+- A small badge or indicator on the practice screen shows "Speed Trainer" when active.
+- Add `speedTrainerOn` to `PracticeSettings`.
+
+#### Custom exercises (future consideration)
+The `Exercise` data model is intentionally plain JSON with no logic, making it straightforward for a future "Create Exercise" screen. No UI or storage design is specified yet — this is noted as a future feature.
 
 ### Phase 5b — Handpan & Circular Pad UI (Not Started)
 - **Handpan synth:** Tone.js FM/AM synth voices tuned to handpan scale (7 notes, C4–B4). Swappable with real samples later.
