@@ -128,8 +128,24 @@ Young practicing musicians, ages 5 and up. The UI must be simple, colorful, and 
 - `ExerciseSelectScreen` shows per-instrument best scores
 - 89 tests passing (74 existing + 15 new)
 
-### Phase 5 — Virtual Instruments & Audio (Not Started)
-- Tone.js integration with sample loading
-- Drum pad UI with keyboard mapping
-- Handpan circular layout UI
-- Audio sample playback on tap
+### Phase 5a — Audio Engine & Drums (Not Started)
+- **Audio engine (`useAudio` hook):** Tone.js synths as default sound source (MembraneSynth for kick, NoiseSynth for snare, MetalSynth for hihat, etc.). Architecture supports swapping in real `.wav` samples later without changing the hook API.
+- **Exercise data update:** Change `Beat.note` from generic note names (`"C4"`) to explicit drum pad names (`"kick"`, `"snare"`, `"hihat"`, `"tom1"`, `"tom2"`) across all 7 exercises.
+- **Drum pad UI (`DrumPad` component):** Instrument-specific tap zone replacing the generic `TapZone` when instrument is drums. 4–5 on-screen pads (kick, snare, hihat, tom1, tom2), each plays its synth sound on tap. Keyboard shortcuts mapped to each pad.
+- **Beat timeline color-coding:** Beats on the timeline are color-coded by drum type (e.g. kick = blue, snare = orange) so the player can see which drum to hit next.
+- **Strict / Free mode toggle:** User-toggled on the practice screen settings popover.
+  - **Free mode:** Any drum pad counts as a valid tap for timing scoring. Visual color-coding still shown as a learning aid.
+  - **Strict mode:** Player must tap the correct drum pad. Wrong pad = miss.
+- **Metronome:** Toggleable click track (default on). Ticks during the 3-2-1 countdown to help the player feel the tempo before the exercise starts.
+- **Tap sound toggle:** Option to mute instrument sounds on tap (metronome and scoring still function).
+- **Settings popover:** Gear icon button on the practice screen opens a small popover with toggles for: metronome on/off, tap sounds on/off, strict/free mode.
+- **Scoring integration:** `useTiming` updated so in strict mode, each tap carries pad identity and `judgeTap` checks pad correctness in addition to timing.
+
+### Phase 5b — Handpan & Circular Pad UI (Not Started)
+- **Handpan synth:** Tone.js FM/AM synth voices tuned to handpan scale (7 notes, C4–B4). Swappable with real samples later.
+- **Circular pad layout (`HandpanPad` component):** Instrument-specific tap zone replacing `TapZone` when instrument is handpan. 7–9 note pads arranged in a circle (center ding + surrounding tone fields), inspired by yishama.com virtual pantam. Each pad produces a distinct pitched tone.
+- **Handpan exercises:** New exercises (or existing ones adapted) with note-specific beats for handpan.
+- **Strict / Free mode (same toggle as drums):**
+  - **Free mode:** Any pad counts as a valid tap. Different pads just produce different tones.
+  - **Strict mode:** Player must tap the correct note pad as specified by the beat. Wrong pad = miss.
+- **Beat timeline note indicators:** Timeline beats labeled or color-coded by target note for strict mode.
