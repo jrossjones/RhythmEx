@@ -39,7 +39,7 @@ src/
       timelineConstants.ts  # Shared color maps, lane order/labels, scroll constants (PX_PER_BEAT etc.)
       CountdownOverlay.tsx # Full-screen 3-2-1-Go! countdown overlay (ticks at tempo)
       TapZone.tsx       # Large tap target with keyboard/touch/click input, judgment flash feedback
-      SettingsPopover.tsx # Gear icon popover: metronome, tap sounds, strict mode, speed trainer toggles
+      SettingsPopover.tsx # Gear icon popover: metronome, tap sounds, strict mode, speed trainer, loop mode toggles
   hooks/
     useExercise.ts      # Exercise lifecycle (idle/countdown/playing/done), playhead, BPM
     useAudio.ts         # Tone.js synth engine: drum sounds (kick/snare/hihat/toms) + metronome click
@@ -130,8 +130,17 @@ src/
 - **Speed trainer:** `speedTrainerBpm` state in `App.tsx`. On completion: ≥95% accuracy → +5 BPM (cap 200), <95% → same BPM, speed trainer off → null. Manual BPM change resets. "Speed Trainer" badge on practice screen. Reset on exercise select.
 - **Drum pad idle colors:** Disabled pads use muted pad-colored backgrounds (`DRUM_PAD_MUTED_COLORS` from `timelineConstants.ts`) instead of gray, for visual association with timeline lane colors.
 
+## Upcoming Phases (see SPEC.md for full detail)
+- **Phase 5a.2 — Tap Placement Markers, Loop Mode, Speed Trainer Polish:** Tick marks on timeline at exact tap position (visual early/late feedback). Loop mode toggle for infinite repeats with brief results flash or seamless looping. Speed trainer BPM step presets (+2/+5/+10). `loopMode`, `seamlessLoop`, `speedTrainerStep` added to `PracticeSettings`. New `ResultsOverlay` component. `useExercise` gains `restart()`.
+- **Phase 5b — Handpan:** Circular pad layout (`HandpanPad`), FM/AM synth voices (7–9 notes), note-specific exercises, `SingleRowTimeline` with note-colored markers.
+- **Phase 6 — Strumming:** New instrument type. `StrumZone` component (vertical swipe + tap buttons + arrow keys). PluckSynth chord voicings (`src/data/chords.ts`). Exercises support single-chord patterns and chord progressions (`beat.note` = `down`/`up`, `beat.chord` = chord name).
+- **Phase 7 — Free Play:** Dedicated `FreePlayScreen` — instrument pads + optional metronome, no timeline/scoring. Entry from exercise select. Future home for YouTube video playback.
+- **Phase 8 — Microphone Input:** `useMicrophone` + `useOnsetDetector` + `usePitchDetector` hooks. Drums: onset detection (amplitude threshold). Handpan: autocorrelation pitch detection. Guitar: root note detection (phase 1), ML chord classification (phase 2 future). Mic runs alongside virtual pads.
+
 ## Important Notes
 - Target audience is young children (5+): keep UI simple, colorful, and forgiving
 - All audio must be triggered by user interaction (no autoplay)
 - Performance matters: rhythm apps need <10ms input latency where possible
 - Exercises are data-driven — adding new exercises should only require adding JSON
+- `beat.note` convention varies by instrument: drum pad names for drums, note names (C4, D4) for handpan, strum direction (down/up) for strumming
+- Three planned instrument types: `drums` (implemented), `handpan` (planned), `strumming` (planned)
