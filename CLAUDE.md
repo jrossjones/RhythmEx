@@ -1,7 +1,7 @@
 # CLAUDE.md — RhythmEx
 
 ## Spec Change Protocol
-When `SPEC.md` is updated, prompt the user to review and update the following files:
+When `SPEC.md` is updated or a phase is completed, prompt the user to review and update the following files:
 - **`MANUAL_TESTS.md`** — Add/revise manual test cases covering the new or changed features.
 - **`CLAUDE.md`** — Update architecture decisions, project structure, and conventions to reflect the changes.
 

@@ -9,10 +9,13 @@ interface Synths {
   tom1: Tone.MembraneSynth
   tom2: Tone.MembraneSynth
   metronome: Tone.Synth
+  handpan: Tone.PolySynth
+  reverb: Tone.Reverb
 }
 
 export interface UseAudioReturn {
   playDrum: (pad: DrumPad) => void
+  playHandpan: (note: string) => void
   playMetronomeClick: (accent?: boolean) => void
   startAudioContext: () => Promise<void>
   isAudioReady: boolean
@@ -22,7 +25,7 @@ export function useAudio(): UseAudioReturn {
   const [isAudioReady, setIsAudioReady] = useState(false)
   const synthsRef = useRef<Synths | null>(null)
 
-  const createSynths = useCallback((): Synths => {
+  const createSynths = useCallback(async (): Promise<Synths> => {
     const kick = new Tone.MembraneSynth({
       pitchDecay: 0.05,
       octaves: 6,
@@ -61,13 +64,24 @@ export function useAudio(): UseAudioReturn {
     }).toDestination()
     metronome.volume.value = -12
 
-    return { kick, snare, hihat, tom1, tom2, metronome }
+    const reverb = new Tone.Reverb({ decay: 3, wet: 0.35 })
+    reverb.toDestination()
+
+    const handpan = new Tone.PolySynth(Tone.FMSynth, {
+      harmonicity: 2.01,
+      modulationIndex: 12,
+      envelope: { attack: 0.08, decay: 1.5, sustain: 0.4, release: 2.5 },
+      modulation: { type: 'sine' },
+    }).connect(reverb)
+    handpan.volume.value = -6
+
+    return { kick, snare, hihat, tom1, tom2, metronome, handpan, reverb }
   }, [])
 
   const startAudioContext = useCallback(async () => {
     if (synthsRef.current) return
     await Tone.start()
-    synthsRef.current = createSynths()
+    synthsRef.current = await createSynths()
     setIsAudioReady(true)
   }, [createSynths])
 
@@ -95,6 +109,13 @@ export function useAudio(): UseAudioReturn {
     }
   }, [])
 
+  const playHandpan = useCallback((note: string) => {
+    const synths = synthsRef.current
+    if (!synths) return
+
+    synths.handpan.triggerAttackRelease(note, '0.8', Tone.now())
+  }, [])
+
   const playMetronomeClick = useCallback((accent?: boolean) => {
     const synths = synthsRef.current
     if (!synths) return
@@ -113,10 +134,12 @@ export function useAudio(): UseAudioReturn {
         synths.tom1.dispose()
         synths.tom2.dispose()
         synths.metronome.dispose()
+        synths.handpan.dispose()
+        synths.reverb.dispose()
         synthsRef.current = null
       }
     }
   }, [])
 
-  return { playDrum, playMetronomeClick, startAudioContext, isAudioReady }
+  return { playDrum, playHandpan, playMetronomeClick, startAudioContext, isAudioReady }
 }

@@ -5,6 +5,7 @@ function createMockSynth() {
   return {
     triggerAttackRelease: vi.fn(),
     toDestination: vi.fn().mockReturnThis(),
+    connect: vi.fn().mockReturnThis(),
     dispose: vi.fn(),
     volume: { value: 0 },
   }
@@ -45,6 +46,25 @@ function MockSynth(this: ReturnType<typeof createMockSynth>) {
 }
 MockSynth.prototype.toDestination = function () { return this }
 
+function MockReverb(this: ReturnType<typeof createMockSynth>) {
+  const synth = createMockSynth()
+  Object.assign(this, synth)
+  createdSynths.reverb.push(this)
+  return this
+}
+MockReverb.prototype.toDestination = function () { return this }
+
+function MockPolySynth(this: ReturnType<typeof createMockSynth>) {
+  const synth = createMockSynth()
+  Object.assign(this, synth)
+  createdSynths.polySynth.push(this)
+  return this
+}
+MockPolySynth.prototype.connect = function () { return this }
+
+// Mock FMSynth — used as argument to PolySynth, not constructed directly
+function MockFMSynth() {}
+
 vi.mock('tone', () => ({
   start: vi.fn().mockResolvedValue(undefined),
   now: vi.fn().mockReturnValue(0),
@@ -52,6 +72,9 @@ vi.mock('tone', () => ({
   NoiseSynth: MockNoiseSynth,
   MetalSynth: MockMetalSynth,
   Synth: MockSynth,
+  Reverb: MockReverb,
+  PolySynth: MockPolySynth,
+  FMSynth: MockFMSynth,
 }))
 
 import { useAudio } from '../useAudio'
@@ -60,7 +83,7 @@ import * as Tone from 'tone'
 describe('useAudio', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    createdSynths = { membrane: [], noise: [], metal: [], synth: [] }
+    createdSynths = { membrane: [], noise: [], metal: [], synth: [], reverb: [], polySynth: [] }
   })
 
   afterEach(() => {
@@ -182,6 +205,31 @@ describe('useAudio', () => {
     expect(createdSynths.synth).toHaveLength(0)
   })
 
+  it('playHandpan is no-op before startAudioContext', () => {
+    const { result } = renderHook(() => useAudio())
+
+    act(() => {
+      result.current.playHandpan('D3')
+    })
+
+    expect(createdSynths.polySynth).toHaveLength(0)
+  })
+
+  it('playHandpan triggers PolySynth after startAudioContext', async () => {
+    const { result } = renderHook(() => useAudio())
+
+    await act(async () => {
+      await result.current.startAudioContext()
+    })
+
+    act(() => {
+      result.current.playHandpan('D3')
+    })
+
+    const handpanInstance = createdSynths.polySynth[0]
+    expect(handpanInstance.triggerAttackRelease).toHaveBeenCalledWith('D3', '0.8', 0)
+  })
+
   it('disposes synths on unmount', async () => {
     const { result, unmount } = renderHook(() => useAudio())
 
@@ -193,6 +241,8 @@ describe('useAudio', () => {
     const snareInstance = createdSynths.noise[0]
     const hihatInstance = createdSynths.metal[0]
     const metronomeInstance = createdSynths.synth[0]
+    const handpanInstance = createdSynths.polySynth[0]
+    const reverbInstance = createdSynths.reverb[0]
 
     unmount()
 
@@ -200,5 +250,7 @@ describe('useAudio', () => {
     expect(snareInstance.dispose).toHaveBeenCalled()
     expect(hihatInstance.dispose).toHaveBeenCalled()
     expect(metronomeInstance.dispose).toHaveBeenCalled()
+    expect(handpanInstance.dispose).toHaveBeenCalled()
+    expect(reverbInstance.dispose).toHaveBeenCalled()
   })
 })

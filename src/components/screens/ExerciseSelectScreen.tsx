@@ -22,7 +22,7 @@ const difficultyColors: Record<Difficulty, string> = {
 
 export function ExerciseSelectScreen({ instrument, onSelect, onBack }: ExerciseSelectScreenProps) {
   const [activeDifficulty, setActiveDifficulty] = useState<Difficulty>('beginner')
-  const exercises = exercisesByDifficulty(activeDifficulty)
+  const exercises = exercisesByDifficulty(activeDifficulty, instrument)
 
   return (
     <Layout>

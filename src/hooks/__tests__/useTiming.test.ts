@@ -341,6 +341,86 @@ describe('useTiming', () => {
     expect(result.current.tapMarkersRef.current).toHaveLength(0)
   })
 
+  // --- Handpan note tests ---
+
+  it('recordTap with handpan note string attaches note to result', () => {
+    const handpanExercise: Exercise = {
+      id: 'test-handpan',
+      name: 'Test Handpan',
+      difficulty: 'beginner',
+      timeSignature: [4, 4],
+      bpm: 120,
+      measures: 1,
+      beats: [
+        { time: '0:0:0', duration: '4n', note: 'D3' },
+        { time: '0:1:0', duration: '4n', note: 'A3' },
+        { time: '0:2:0', duration: '4n', note: 'C4' },
+        { time: '0:3:0', duration: '4n', note: 'D4' },
+      ],
+    }
+    const elapsedMsRef = { current: 20 }
+    const options = { exercise: handpanExercise, bpm: 120, phase: 'playing' as const, elapsedMsRef }
+    const { result } = renderHook(() => useTiming(options))
+
+    act(() => { result.current.recordTap('D3') })
+
+    expect(result.current.tapResultsRef.current).toHaveLength(1)
+    expect(result.current.tapResultsRef.current[0].pad).toBe('D3')
+    expect(result.current.tapResultsRef.current[0].judgment).toBe('on-time')
+  })
+
+  it('strict mode with handpan: wrong note = miss', () => {
+    const handpanExercise: Exercise = {
+      id: 'test-handpan',
+      name: 'Test Handpan',
+      difficulty: 'beginner',
+      timeSignature: [4, 4],
+      bpm: 120,
+      measures: 1,
+      beats: [
+        { time: '0:0:0', duration: '4n', note: 'D3' },
+        { time: '0:1:0', duration: '4n', note: 'A3' },
+        { time: '0:2:0', duration: '4n', note: 'C4' },
+        { time: '0:3:0', duration: '4n', note: 'D4' },
+      ],
+    }
+    const elapsedMsRef = { current: 20 }
+    const options = { exercise: handpanExercise, bpm: 120, phase: 'playing' as const, elapsedMsRef, strictMode: true }
+    const { result } = renderHook(() => useTiming(options))
+
+    act(() => { result.current.recordTap('A3') }) // Expected D3
+
+    expect(result.current.tapResultsRef.current).toHaveLength(1)
+    expect(result.current.tapResultsRef.current[0].judgment).toBe('miss')
+    expect(result.current.tapResultsRef.current[0].expectedPad).toBe('D3')
+  })
+
+  it('strict mode with handpan: correct note uses timing judgment', () => {
+    const handpanExercise: Exercise = {
+      id: 'test-handpan',
+      name: 'Test Handpan',
+      difficulty: 'beginner',
+      timeSignature: [4, 4],
+      bpm: 120,
+      measures: 1,
+      beats: [
+        { time: '0:0:0', duration: '4n', note: 'D3' },
+        { time: '0:1:0', duration: '4n', note: 'A3' },
+        { time: '0:2:0', duration: '4n', note: 'C4' },
+        { time: '0:3:0', duration: '4n', note: 'D4' },
+      ],
+    }
+    const elapsedMsRef = { current: 20 }
+    const options = { exercise: handpanExercise, bpm: 120, phase: 'playing' as const, elapsedMsRef, strictMode: true }
+    const { result } = renderHook(() => useTiming(options))
+
+    act(() => { result.current.recordTap('D3') }) // Correct
+
+    expect(result.current.tapResultsRef.current).toHaveLength(1)
+    expect(result.current.tapResultsRef.current[0].judgment).toBe('on-time')
+    expect(result.current.tapResultsRef.current[0].expectedPad).toBeUndefined()
+  })
+
   it('strict mode wrong pad includes expectedPad and expectedMs in marker', () => {
     const elapsedMsRef = { current: 20 }
     // Beat 0 expects 'kick'

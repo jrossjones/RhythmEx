@@ -10,6 +10,8 @@ import {
   TAP_MARKER_COLORS,
   DRUM_LANE_ORDER,
   DRUM_LANE_LABELS,
+  HANDPAN_NOTE_COLORS,
+  pitchClass,
   PX_PER_BEAT,
   PLAYHEAD_POSITION,
   LANE_HEIGHT,
@@ -74,9 +76,12 @@ export function BeatTimeline({ exercise, progress, bpm, beatJudgments, instrumen
     const frac = durationMs > 0 ? times[i] / durationMs : 0
     const position = isScrolling ? frac * renderedWidth : frac * 100
     const judgment = beatJudgments?.get(i)
+    const isHandpan = instrument === 'handpan'
     const baseColor = isDrum
       ? (DRUM_PAD_COLORS[beat.note as keyof typeof DRUM_PAD_COLORS] ?? 'bg-gray-400')
-      : (DURATION_COLORS[beat.duration] ?? 'bg-gray-400')
+      : isHandpan
+        ? (HANDPAN_NOTE_COLORS[pitchClass(beat.note)] ?? 'bg-gray-400')
+        : (DURATION_COLORS[beat.duration] ?? 'bg-gray-400')
     const color = judgment ? JUDGMENT_COLORS[judgment] : baseColor
     const isNext = i === nextBeatIndex && !judgment
     const isJudged = !!judgment

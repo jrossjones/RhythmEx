@@ -18,7 +18,7 @@ interface TapFeedback {
 
 export function useTiming({ exercise, bpm, phase, elapsedMsRef, strictMode }: UseTimingOptions) {
   const [lastTapFeedback, setLastTapFeedback] = useState<TapFeedback | null>(null)
-  const [lastFeedbackPad, setLastFeedbackPad] = useState<DrumPad | null>(null)
+  const [lastFeedbackPad, setLastFeedbackPad] = useState<DrumPad | string | null>(null)
   const [beatJudgments, setBeatJudgments] = useState<Map<number, TimingJudgment>>(new Map())
 
   const tapResultsRef = useRef<TapResult[]>([])
@@ -35,7 +35,7 @@ export function useTiming({ exercise, bpm, phase, elapsedMsRef, strictMode }: Us
     return times
   }, [exercise, bpm])
 
-  const recordTap = useCallback((pad?: DrumPad) => {
+  const recordTap = useCallback((pad?: DrumPad | string) => {
     if (phase !== 'playing') return
 
     const tapMs = elapsedMsRef.current

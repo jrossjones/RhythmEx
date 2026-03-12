@@ -45,3 +45,19 @@ export function exerciseDrumPads(exercise: Exercise): DrumPad[] {
   }
   return [...pads]
 }
+
+/**
+ * Get deduplicated array of note names used in a handpan exercise.
+ * Preserves order of first appearance.
+ */
+export function exerciseHandpanNotes(exercise: Exercise): string[] {
+  const seen = new Set<string>()
+  const notes: string[] = []
+  for (const beat of exercise.beats) {
+    if (!seen.has(beat.note)) {
+      seen.add(beat.note)
+      notes.push(beat.note)
+    }
+  }
+  return notes
+}

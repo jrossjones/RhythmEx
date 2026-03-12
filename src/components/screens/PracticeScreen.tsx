@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button'
 import { BeatTimeline } from '@/components/practice/BeatTimeline'
 import { TapZone } from '@/components/practice/TapZone'
 import { DrumPad } from '@/components/instruments/DrumPad'
+import { HandpanPad } from '@/components/instruments/HandpanPad'
 import { CountdownOverlay } from '@/components/practice/CountdownOverlay'
 import { ResultsOverlay } from '@/components/practice/ResultsOverlay'
 import { SettingsPopover } from '@/components/practice/SettingsPopover'
@@ -12,8 +13,8 @@ import { useExercise } from '@/hooks/useExercise'
 import { useTiming } from '@/hooks/useTiming'
 import { useAudio } from '@/hooks/useAudio'
 import { calculateAccuracy, calculateStars } from '@/utils/scoring'
-import { exerciseDrumPads } from '@/utils/rhythm'
-import { msPerBeat } from '@/utils/rhythm'
+import { exerciseDrumPads, msPerBeat } from '@/utils/rhythm'
+import { getScale, DEFAULT_HANDPAN_SCALE } from '@/data/handpan/scales'
 import { saveResult } from '@/utils/storage'
 import type { DrumPad as DrumPadType, Exercise, ExerciseResult, InstrumentType, PracticeSettings, StarRating, TapResult } from '@/types'
 
@@ -45,7 +46,7 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
   } | null>(null)
   const [lastLoopResult, setLastLoopResult] = useState<ExerciseResult | null>(null)
 
-  const { playDrum, playMetronomeClick, startAudioContext } = useAudio()
+  const { playDrum, playHandpan, playMetronomeClick, startAudioContext } = useAudio()
 
   // Refs to break circular dependency between useExercise and useTiming/settings
   const finalizeRef = useRef<() => TapResult[]>(() => [])
@@ -173,11 +174,33 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
     return null
   }, [exercise.beats, beatJudgments])
 
+  // Derive handpan notes and next expected note
+  const handpanScaleNotes = useMemo(() => {
+    const scaleId = exercise.scale ?? DEFAULT_HANDPAN_SCALE
+    const scale = getScale(scaleId)
+    return scale?.notes ?? []
+  }, [exercise.scale])
+
+  const nextExpectedNote = useMemo((): string | null => {
+    for (let i = 0; i < exercise.beats.length; i++) {
+      if (!beatJudgments.has(i)) {
+        return exercise.beats[i].note
+      }
+    }
+    return null
+  }, [exercise.beats, beatJudgments])
+
   // Drum tap handler
   const handleDrumTap = useCallback((pad: DrumPadType) => {
     if (settings.tapSoundOn) playDrum(pad)
     recordTap(pad)
   }, [settings.tapSoundOn, playDrum, recordTap])
+
+  // Handpan tap handler
+  const handleHandpanTap = useCallback((note: string) => {
+    if (settings.tapSoundOn) playHandpan(note)
+    recordTap(note)
+  }, [settings.tapSoundOn, playHandpan, recordTap])
 
   // Start with audio context
   const handleStart = useCallback(async () => {
@@ -325,10 +348,19 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
           <DrumPad
             onTap={handleDrumTap}
             lastFeedback={lastTapFeedback}
-            lastFeedbackPad={lastFeedbackPad}
+            lastFeedbackPad={lastFeedbackPad as DrumPadType | null}
             disabled={phase !== 'playing'}
             activePads={activePads}
             nextExpectedPad={nextExpectedPad}
+          />
+        ) : instrument === 'handpan' ? (
+          <HandpanPad
+            onTap={handleHandpanTap}
+            lastFeedback={lastTapFeedback}
+            lastFeedbackPad={lastFeedbackPad}
+            disabled={phase !== 'playing'}
+            scaleNotes={handpanScaleNotes}
+            nextExpectedNote={nextExpectedNote}
           />
         ) : (
           <TapZone

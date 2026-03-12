@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { transportTimeToMs, msPerBeat, exerciseDurationMs, beatTimesMs } from '../rhythm'
+import { transportTimeToMs, msPerBeat, exerciseDurationMs, beatTimesMs, exerciseHandpanNotes } from '../rhythm'
 import type { Exercise } from '@/types'
 
 describe('msPerBeat', () => {
@@ -100,5 +100,38 @@ describe('beatTimesMs', () => {
       beats: [],
     }
     expect(beatTimesMs(exercise)).toEqual([])
+  })
+})
+
+describe('exerciseHandpanNotes', () => {
+  it('returns deduplicated notes in order of first appearance', () => {
+    const exercise: Exercise = {
+      id: 'test',
+      name: 'Test',
+      difficulty: 'beginner',
+      timeSignature: [4, 4],
+      bpm: 120,
+      measures: 1,
+      beats: [
+        { time: '0:0:0', duration: '4n', note: 'D3' },
+        { time: '0:1:0', duration: '4n', note: 'A3' },
+        { time: '0:2:0', duration: '4n', note: 'D3' },
+        { time: '0:3:0', duration: '4n', note: 'C4' },
+      ],
+    }
+    expect(exerciseHandpanNotes(exercise)).toEqual(['D3', 'A3', 'C4'])
+  })
+
+  it('returns empty array for exercise with no beats', () => {
+    const exercise: Exercise = {
+      id: 'test',
+      name: 'Test',
+      difficulty: 'beginner',
+      timeSignature: [4, 4],
+      bpm: 120,
+      measures: 1,
+      beats: [],
+    }
+    expect(exerciseHandpanNotes(exercise)).toEqual([])
   })
 })

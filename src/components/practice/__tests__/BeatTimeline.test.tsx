@@ -136,4 +136,48 @@ describe('BeatTimeline', () => {
     )
     expect(screen.getByTestId('tap-marker')).toBeInTheDocument()
   })
+
+  // Handpan note color tests
+
+  it('uses handpan note colors when instrument is handpan', () => {
+    const handpanExercise: Exercise = {
+      id: 'handpan-test',
+      name: 'Handpan Test',
+      difficulty: 'beginner',
+      timeSignature: [4, 4],
+      bpm: 120,
+      measures: 1,
+      instrument: 'handpan',
+      beats: [
+        { time: '0:0:0', duration: '4n', note: 'D3' },
+        { time: '0:1:0', duration: '4n', note: 'A3' },
+        { time: '0:2:0', duration: '4n', note: 'C4' },
+        { time: '0:3:0', duration: '4n', note: 'Bb3' },
+      ],
+    }
+    render(<BeatTimeline exercise={handpanExercise} progress={0} bpm={120} instrument="handpan" />)
+    const markers = screen.getAllByTestId('beat-marker')
+    expect(markers[0].className).toContain('bg-orange-400')   // D
+    expect(markers[1].className).toContain('bg-blue-400')     // A
+    expect(markers[2].className).toContain('bg-red-400')      // C
+    expect(markers[3].className).toContain('bg-violet-400')   // Bb
+  })
+
+  it('does not render lane labels for handpan exercise', () => {
+    const handpanExercise: Exercise = {
+      id: 'handpan-test',
+      name: 'Handpan Test',
+      difficulty: 'beginner',
+      timeSignature: [4, 4],
+      bpm: 120,
+      measures: 1,
+      instrument: 'handpan',
+      beats: [
+        { time: '0:0:0', duration: '4n', note: 'D3' },
+        { time: '0:1:0', duration: '4n', note: 'A3' },
+      ],
+    }
+    render(<BeatTimeline exercise={handpanExercise} progress={0} bpm={120} instrument="handpan" />)
+    expect(screen.queryByTestId('drum-lane-labels')).not.toBeInTheDocument()
+  })
 })

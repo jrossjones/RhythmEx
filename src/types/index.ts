@@ -20,6 +20,8 @@ export interface Exercise {
   bpm: number
   measures: number
   beats: Beat[]
+  instrument?: InstrumentType  // which instrument this exercise is for
+  scale?: string               // handpan scale preset id, e.g. 'd-kurd'
 }
 
 // Available instrument types
@@ -37,14 +39,14 @@ export interface TapResult {
   actualMs: number
   deltaMs: number
   judgment: TimingJudgment
-  pad?: DrumPad          // which pad was tapped
-  expectedPad?: string   // which pad was expected (strict mode)
+  pad?: DrumPad | string  // which pad was tapped (drum pad name or handpan note)
+  expectedPad?: string    // which pad was expected (strict mode)
 }
 
 // A tap placement marker for timeline visualization
 export interface TapMarker {
   ms: number
-  pad?: DrumPad
+  pad?: DrumPad | string  // drum pad name or handpan note
   judgment: TimingJudgment
   expectedPad?: string
   expectedMs?: number
