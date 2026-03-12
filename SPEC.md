@@ -39,10 +39,11 @@ Young practicing musicians, ages 5 and up. The UI must be simple, colorful, and 
 - Best score saved per exercise in localStorage
 
 ### 5. Virtual Instruments
-- **Drums** — Kick, snare, hi-hat, tom1, tom2 with Tone.js synth sounds (MembraneSynth, NoiseSynth, MetalSynth). On-screen pads with keyboard shortcuts (f/d/j/k/l). Adaptive grid layout based on exercise difficulty.
+- **Drums** — Kick, snare, hi-hat, tom1, tom2 with Tone.js synth sounds (MembraneSynth, NoiseSynth, MetalSynth). On-screen pads with keyboard shortcuts (f/d/j/k/l). Adaptive grid layout based on exercise difficulty. Multi-lane timeline.
 - **Handpan** — Pitched notes in a circular layout (inspired by yishama.com virtual pantam) — *not yet implemented*
+- **Strumming** — Guitar/ukulele strum patterns with chord display. Swipe zone (mobile) + arrow keys (desktop) for up/down strum direction — *not yet implemented*
 - Instrument selection screen; user picks before starting an exercise
-- Settings popover on practice screen: metronome toggle, tap sound toggle, strict/free mode
+- Settings popover on practice screen: metronome toggle, tap sound toggle, strict/free mode, speed trainer, loop mode
 
 ### 6. Exercise Library
 - Pre-built rhythm exercises organized by difficulty:
@@ -59,15 +60,18 @@ Young practicing musicians, ages 5 and up. The UI must be simple, colorful, and 
 - No login required — fully client-side
 
 ## Future Features (Post-MVP, in rough priority order)
-1. **Guitar Hero mode** — Scrolling note highway for sight-reading practice
-2. **Polyrhythm practice** — Two simultaneous rhythms, tap both hands
-3. **Guitar/Ukulele strumming** — Strum pattern exercises with chord display
-4. **Play known melodies** — Show lyrics + beat patterns for familiar songs
-5. **YouTube integration** — Play YouTube videos, practice along
-6. **Ear training** — Identify key, detect tempo from audio
-7. **Auto beat detection** — Analyze YouTube audio for rhythm
-8. **Music theory lessons** — Integrated theory reference
-9. **Custom exercises** — User-created exercises via a builder UI, saved to localStorage. The `Exercise` JSON data model already supports this.
+1. **Tap placement markers** — Show exactly where each tap landed on the timeline
+2. **Loop mode & speed trainer auto-restart** — Infinite looping with configurable BPM stepping
+3. **Handpan instrument** — Circular pad layout with pitched FM synth voices
+4. **Strumming instrument** — Swipe/key-based strum input with chord progressions
+5. **Free Play mode** — Open-ended instrument play without exercises or scoring
+6. **Microphone input** — Real instrument detection (onset for drums, pitch for handpan, root note for guitar)
+7. **Guitar Hero mode** — Scrolling note highway for sight-reading practice
+8. **Polyrhythm practice** — Two simultaneous rhythms, tap both hands
+9. **YouTube integration** — Play YouTube videos, practice along with embedded audio
+10. **Custom exercises** — User-created exercises via a builder UI, saved to localStorage
+11. **Ear training** — Identify key, detect tempo from audio
+12. **Music theory lessons** — Integrated theory reference
 
 ## Data Model (Exercise)
 ```json
@@ -84,12 +88,21 @@ Young practicing musicians, ages 5 and up. The UI must be simple, colorful, and 
   ]
 }
 ```
-Note: `beat.note` uses drum pad names (`kick`, `snare`, `hihat`, `tom1`, `tom2`) for drum exercises.
+
+Notes on `beat.note` by instrument:
+- **Drums:** Pad names — `kick`, `snare`, `hihat`, `tom1`, `tom2`
+- **Handpan:** Note names — `C4`, `D4`, `E4`, etc.
+- **Strumming:** Strum direction — `down`, `up`. Also includes `beat.chord` (e.g. `"G"`, `"Am"`) for chord progression exercises.
+
+Strumming exercises may additionally include top-level `key` and `chords` fields.
 
 ## Key UX Flows
 1. **Home** → Pick instrument → Pick exercise → Practice → See results (stars)
 2. **Practice screen**: Shows beat grid + playhead + instrument pads, tap to play
 3. **Results screen**: Stars, accuracy %, option to retry or pick new exercise
+4. **Loop mode**: Practice → brief results flash → auto-restart (skip results screen)
+5. **Speed trainer loop**: Practice → accuracy ≥95% → BPM +N → auto-restart
+6. **Free Play**: Pick instrument → Free Play → open-ended play with optional metronome
 
 ## Implementation Status
 
@@ -152,17 +165,166 @@ Note: `beat.note` uses drum pad names (`kick`, `snare`, `hihat`, `tom1`, `tom2`)
 - **`useExercise` initialBpm:** Accepts optional `initialBpm` parameter for speed trainer BPM persistence across retries.
 - 145 tests passing (129 existing + 16 new)
 
-#### Future: Speed Trainer auto-restart
-When Speed Trainer is active, the app should optionally auto-restart the next run instead of requiring the player to navigate Results → Retry → Start. After a run completes, briefly flash the results (accuracy, stars) for ~2 seconds, then automatically begin the countdown at the next BPM. This removes friction for tempo progression practice, especially for younger players. Implementation: add a brief results overlay in `PracticeScreen` (skip `ResultsScreen` entirely), then call `startExercise()` with the new BPM after the display timeout.
+### Phase 5a.2 — Tap Placement Markers, Loop Mode, Speed Trainer Polish (Not Started)
 
-#### Custom exercises (future consideration)
-The `Exercise` data model is intentionally plain JSON with no logic, making it straightforward for a future "Create Exercise" screen. No UI or storage design is specified yet — this is noted as a future feature.
+#### Tap placement markers on timeline
+After each tap, show exactly where the player hit relative to the expected beat. This provides intuitive visual feedback for how early/late each tap was, beyond just the color change.
+
+- **Tick mark at tap position:** A thin vertical line (2px) placed at the exact horizontal position corresponding to the tap timestamp. Color-coded: green for on-time, yellow for early/late, red for miss.
+- **Beat marker color change (existing):** The beat dot still changes color as before.
+- **Pad indicator on tick:** For drums, the tick mark includes a small colored dot matching the tapped pad, so the player can see if they hit the right pad.
+- **Correct pad shown on miss (strict mode):** When a wrong pad is tapped in strict mode, show the expected pad color as a hollow/outline dot at the beat position, and the actual tapped pad as a filled dot at the tap position.
+- **Persistence:** Tick marks remain visible for the duration of the exercise (not cleared after 300ms like the flash feedback). Stored as an array of `{ ms: number, pad?: string, judgment: TimingJudgment }` in a ref.
+- **Implementation:** `BeatTimeline` accepts a new `tapMarkers` prop. `SingleRowTimeline` and `DrumLaneTimeline` render tick marks in the appropriate lane/row. `useTiming` exposes a `tapPositions` ref alongside the existing `beatJudgments`.
+
+#### Loop mode
+Exercises can loop infinitely, avoiding the results screen between runs. Combined with the speed trainer for continuous tempo progression.
+
+- **Toggle:** New `loopMode` boolean in `PracticeSettings`, toggled via `SettingsPopover`. Default off.
+- **Behavior when loop mode is on:**
+  - When the exercise ends (`phase → done`), instead of calling `onFinish` and navigating to results, the `PracticeScreen` handles the transition internally.
+  - **Brief flash (default):** A compact results overlay appears within the practice screen for ~2 seconds showing accuracy % and stars. Then the exercise auto-restarts with a count-in.
+  - **Seamless option:** A sub-toggle `seamlessLoop` (default off). When on, the exercise restarts immediately with zero gap and no count-in — the playhead wraps back to the start as if the exercise is one continuous loop.
+  - If speed trainer is also on, BPM adjusts between loops per the speed trainer rules.
+  - If speed trainer is off, BPM stays the same.
+  - Scores are still saved to localStorage on each loop completion (so personal bests update even in loop mode).
+  - **Stop:** The player presses Stop or Back to exit loop mode. On stop, the most recent run's results are shown on the results screen as normal.
+- **Implementation:** New `ResultsOverlay` component (lightweight, inline in practice screen — not the full `ResultsScreen`). `useExercise` gains a `restart()` method that resets elapsed time and re-enters countdown (or immediately starts if seamless). `PracticeScreen` orchestrates the loop: `handleDone` → show overlay → timeout → `restart()`.
+
+#### Speed trainer BPM increment presets
+Replace the hardcoded +5 BPM increment with selectable presets.
+
+- **UI:** When speed trainer is on, show a small row of preset buttons in the settings popover: **+2** / **+5** / **+10**. Default: +5. Selected preset is highlighted.
+- **Type:** Add `speedTrainerStep: number` to `PracticeSettings` (default 5).
+- **Logic:** On completion with ≥95% accuracy, increment by `speedTrainerStep` instead of hardcoded 5. Cap at 200 BPM.
 
 ### Phase 5b — Handpan & Circular Pad UI (Not Started)
-- **Handpan synth:** Tone.js FM/AM synth voices tuned to handpan scale (7 notes, C4–B4). Swappable with real samples later.
-- **Circular pad layout (`HandpanPad` component):** Instrument-specific tap zone replacing `TapZone` when instrument is handpan. 7–9 note pads arranged in a circle (center ding + surrounding tone fields), inspired by yishama.com virtual pantam. Each pad produces a distinct pitched tone.
-- **Handpan exercises:** New exercises (or existing ones adapted) with note-specific beats for handpan.
+- **Handpan synth:** Tone.js FM/AM synth voices tuned to handpan scale (7–9 notes). Center "ding" (lowest) + surrounding tone fields in ascending pitch. Swappable with real samples later.
+- **Circular pad layout (`HandpanPad` component):** Instrument-specific tap zone replacing `TapZone` when instrument is handpan. Pads arranged in a circle: center ding + 6–8 surrounding tone fields. Each pad produces a distinct pitched tone. Touch, click, and keyboard input (number keys 1–9). Color-coded by note.
+- **Handpan exercises:** New exercises with note-specific beats (e.g. `beat.note = "D4"`). Beginner: simple patterns on 2–3 notes. Intermediate: scale runs. Advanced: complex melodic patterns.
 - **Strict / Free mode (same toggle as drums):**
   - **Free mode:** Any pad counts as a valid tap. Different pads just produce different tones.
   - **Strict mode:** Player must tap the correct note pad as specified by the beat. Wrong pad = miss.
-- **Beat timeline note indicators:** Timeline beats labeled or color-coded by target note for strict mode.
+- **Beat timeline:** `SingleRowTimeline` used (not multi-lane). Markers color-coded by target note. Each note gets a distinct color from the handpan color palette.
+- **Exercise data:** `beat.note` uses note names (e.g. `"C4"`, `"D4"`) for handpan, distinct from drum pad names.
+
+### Phase 6 — Strumming Instrument (Not Started)
+
+#### Overview
+A new instrument type (`strumming`) for practicing guitar/ukulele strum patterns. Supports both pattern-only exercises (single chord, focus on rhythm) and chord progression exercises (chord changes at specific beats).
+
+#### Strum input
+- **Mobile:** A tall vertical swipe zone. Swipe down = downstrum, swipe up = upstrum. Fallback tap buttons (↓ and ↑) visible below the swipe zone for younger players or accessibility.
+- **Desktop:** Down arrow key = downstrum, Up arrow key = upstrum.
+- **Auto-detect:** The component detects whether the user is swiping or tapping and adapts. Both interaction styles always available simultaneously.
+- **Component:** `StrumZone.tsx` in `src/components/instruments/`.
+
+#### Strum synth
+- **Audio:** Tone.js `PluckSynth` or `PolySynth` configured to strum chord voicings. Downstrum plays notes low-to-high in rapid succession (~20ms per string). Upstrum plays high-to-low.
+- **Chord voicings:** A chord library mapping chord names (e.g. `"G"`, `"Am"`, `"C"`) to arrays of frequencies/notes. Stored in `src/data/chords.ts`.
+- **Key selection:** Exercises specify a key. The chord library provides voicings relative to the key.
+
+#### Exercise data model extension
+```json
+{
+  "id": "basic-down-strum",
+  "name": "Basic Down Strum",
+  "difficulty": "beginner",
+  "instrument": "strumming",
+  "timeSignature": [4, 4],
+  "bpm": 80,
+  "measures": 4,
+  "key": "G",
+  "chords": ["G"],
+  "beats": [
+    { "time": "0:0:0", "duration": "4n", "note": "down", "chord": "G" },
+    { "time": "0:1:0", "duration": "4n", "note": "down", "chord": "G" }
+  ]
+}
+```
+- `beat.note` is `"down"` or `"up"` for strum direction.
+- `beat.chord` specifies which chord is active at that beat.
+- Single-chord exercises omit `beat.chord` (uses the first entry in `chords`).
+- Chord progression exercises include `beat.chord` to indicate chord changes.
+
+#### Exercise types
+- **Pattern-only (beginner):** Single chord, practice strum patterns. E.g. "Down-Down-Up-Up-Down-Up" on G.
+- **Chord progressions (intermediate+):** Chord changes at measure boundaries. E.g. "G - D - Em - C" with a consistent strum pattern.
+- **Mixed patterns (advanced):** Chord changes mid-measure, varied strum patterns per chord.
+
+#### Beat timeline for strumming
+- Single-row layout (like handpan).
+- Markers show strum direction: ↓ for downstrum, ↑ for upstrum.
+- Chord name displayed above the timeline at chord change positions.
+- Color-coded: downstrum = one color, upstrum = another.
+
+#### Strict / Free mode
+- **Free mode:** Any strum direction counts. Timing-only scoring.
+- **Strict mode:** Must match strum direction (down/up). Wrong direction = miss.
+
+### Phase 7 — Free Play Mode (Not Started)
+
+#### Overview
+A dedicated screen for open-ended instrument play without exercises, timelines, or scoring. Accessible from the exercise select screen as a "Free Play" option.
+
+#### Navigation
+- **Entry point:** "Free Play" button on the `ExerciseSelectScreen`, displayed prominently above/below the exercise list.
+- **Screen:** New `FreePlayScreen.tsx` in `src/components/screens/`.
+- **App state:** New screen type `'free-play'` added to the `Screen` union. `AppState` carries `selectedInstrument` to the free play screen.
+
+#### Features
+- **Instrument pads:** The full instrument UI (`DrumPad`, `HandpanPad`, or `StrumZone`) rendered without a timeline or scoring system.
+- **Optional metronome:** Metronome toggle + BPM controls available. Player can set a tempo and play along to clicks without any exercise structure.
+- **No scoring:** No timing judgments, no stars, no results. Pure play.
+- **YouTube integration (future):** This screen is the natural home for embedded YouTube video playback. A future enhancement would add a URL input field and an embedded YouTube player, allowing the player to play along with any video. The instrument pads + optional metronome would overlay or sit below the video.
+
+### Phase 8 — Microphone Input (Not Started)
+
+#### Overview
+Replace screen tapping with real instrument audio detection via the browser's `getUserMedia` API and Web Audio API analysis. Each instrument type has a different detection strategy.
+
+#### Drums — Onset detection
+- **Approach:** Web Audio API `AnalyserNode` monitoring amplitude. When the signal exceeds a configurable threshold and the previous frame was below it, register a tap event.
+- **Debounce:** Minimum 50ms between detected onsets to avoid double-triggers from reverb/sustain.
+- **Output:** Each detected onset fires the same `recordTap()` callback used by the virtual pads. In free mode, it maps to a generic tap. In strict mode, onset detection alone cannot identify which drum was hit — all onsets map to the "next expected pad" (same as the Space key behavior).
+- **Sensitivity control:** A sensitivity slider in settings (maps to the amplitude threshold). Default tuned for close-mic'd practice pad hits.
+- **Fallback:** Virtual pads remain visible and functional alongside mic input. The player can mix mic + tapping.
+
+#### Handpan — Pitch detection
+- **Approach:** Autocorrelation-based pitch detection on the Web Audio API `AnalyserNode` time-domain data. Detect the fundamental frequency of each struck note and map it to the nearest handpan pad note.
+- **Note mapping:** The detected frequency is compared against the handpan's configured scale (e.g. D3, A3, Bb3, C4, D4, E4, F4, A4). Closest match within a ±50 cent tolerance is accepted.
+- **Onset + pitch:** First detect an onset (amplitude spike), then within a short window (~30ms) analyze pitch. This avoids continuous pitch tracking and reduces CPU usage.
+- **Strict mode:** With pitch detection, strict mode becomes meaningful with a real handpan — the app can verify the player hit the correct note.
+- **Fallback:** Virtual pads still work alongside mic input.
+
+#### Guitar — Root note detection (start simple, upgrade later)
+- **Phase 1 — Root note detection:** After detecting a strum onset, use autocorrelation or FFT to identify the fundamental frequency of the chord. Map to the nearest note name (e.g. "E", "A", "G"). Compare against the exercise's expected chord root. This verifies the player is playing roughly the right chord but cannot distinguish major from minor or detect extensions.
+- **Phase 2 (future) — ML chord classification:** Train or use a pre-trained small model (TensorFlow.js or ONNX runtime) on guitar chord spectrograms. Input: short FFT window after strum onset. Output: chord label (Am, C, G, D, Em, etc.). More accurate than root-only but adds a model dependency (~1–5MB). This is a future enhancement once root detection proves insufficient.
+- **Strum direction:** Not detected from audio (extremely unreliable). Direction still comes from swipe/key input even when mic is active. If the player uses mic only, strum direction scoring is disabled (timing-only).
+
+#### Shared infrastructure
+- **`useMicrophone` hook:** Manages `getUserMedia` permission, `AudioContext` + `AnalyserNode` setup, and per-frame analysis in a `requestAnimationFrame` loop. Exposes `startMic()`, `stopMic()`, `isListening`, and an `onOnset` callback.
+- **Permission UX:** A "Use Microphone" button appears in settings when available. First click triggers browser permission prompt. State persisted in settings so the mic auto-connects on subsequent sessions.
+- **`useOnsetDetector` hook:** Wraps amplitude threshold logic. Configurable threshold and debounce.
+- **`usePitchDetector` hook:** Wraps autocorrelation pitch detection. Returns detected frequency and nearest note name.
+- **Settings:** New `micEnabled` boolean in `PracticeSettings`. When on, mic input runs alongside virtual pads. A sensitivity slider (0–100) maps to the onset threshold.
+
+### Future Phases (Not Yet Planned in Detail)
+
+#### Guitar Hero mode
+Scrolling note highway for sight-reading practice. Notes scroll vertically (or horizontally) toward a hit line. Player must tap/strum at the right moment. Visual style inspired by Guitar Hero / Rock Band. Could reuse the existing exercise data model with a different renderer.
+
+#### Polyrhythm practice
+Two simultaneous rhythm patterns, one per hand. Split the screen into left/right tap zones. Each zone has its own beat pattern and timeline. Scoring evaluates both hands independently. Useful for advanced drummers and percussionists.
+
+#### YouTube integration
+Embed a YouTube video player on the Free Play screen. Player enters a URL, video plays, and they play along using the instrument pads. Optional: sync metronome to video BPM (manual input or auto-detection). Auto beat detection via Web Audio API analysis of the video's audio stream (complex — requires `captureStream()` or `AudioContext.createMediaElementSource()`).
+
+#### Custom exercises
+User-created exercises via a builder UI. The `Exercise` JSON data model already supports this. Builder would provide: measure count selector, BPM picker, beat grid editor (click to place/remove beats), instrument/pad selector per beat. Saved to localStorage. Shareable via JSON export/import or URL encoding.
+
+#### Ear training
+Identify musical elements by ear: key detection, interval recognition, tempo identification. Could use Tone.js to generate audio prompts and the scoring system to evaluate responses.
+
+#### Music theory lessons
+Integrated reference material: note values, time signatures, rhythm notation. Could be a static content section or interactive mini-lessons.
