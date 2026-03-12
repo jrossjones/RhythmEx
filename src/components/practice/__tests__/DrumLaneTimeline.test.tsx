@@ -140,4 +140,65 @@ describe('DrumLaneTimeline', () => {
     const measureLine = container.querySelector('.bg-gray-200')
     expect(measureLine).toBeInTheDocument()
   })
+
+  // --- Tap marker tests ---
+
+  it('renders tap marker ticks in correct lanes', () => {
+    const tapMarkers = [
+      { position: 20, color: 'bg-green-500', lane: 'kick', pad: 'kick', judgment: 'on-time' },
+      { position: 40, color: 'bg-yellow-500', lane: 'snare', pad: 'snare', judgment: 'early' },
+    ]
+
+    render(
+      <DrumLaneTimeline
+        markers={[]}
+        measureLines={[]}
+        playheadPosition={0}
+        isScrolling={false}
+        tapMarkers={tapMarkers}
+      />
+    )
+
+    const tapMarkerElements = screen.getAllByTestId('tap-marker')
+    expect(tapMarkerElements).toHaveLength(2)
+  })
+
+  it('renders tap markers with correct judgment colors', () => {
+    const tapMarkers = [
+      { position: 20, color: 'bg-green-500', lane: 'kick', pad: 'kick', judgment: 'on-time' },
+      { position: 40, color: 'bg-red-500', lane: 'snare', pad: 'snare', judgment: 'miss' },
+    ]
+
+    render(
+      <DrumLaneTimeline
+        markers={[]}
+        measureLines={[]}
+        playheadPosition={0}
+        isScrolling={false}
+        tapMarkers={tapMarkers}
+      />
+    )
+
+    const tapMarkerElements = screen.getAllByTestId('tap-marker')
+    expect(tapMarkerElements[0].className).toContain('bg-green-500')
+    expect(tapMarkerElements[1].className).toContain('bg-red-500')
+  })
+
+  it('renders expected marker for strict mode wrong pad', () => {
+    const tapMarkers = [
+      { position: 20, color: 'bg-red-500', lane: 'snare', pad: 'snare', judgment: 'miss', expectedPad: 'kick', expectedPosition: 15 },
+    ]
+
+    render(
+      <DrumLaneTimeline
+        markers={[]}
+        measureLines={[]}
+        playheadPosition={0}
+        isScrolling={false}
+        tapMarkers={tapMarkers}
+      />
+    )
+
+    expect(screen.getByTestId('expected-marker')).toBeInTheDocument()
+  })
 })

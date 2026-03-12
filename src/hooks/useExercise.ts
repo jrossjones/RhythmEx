@@ -13,10 +13,39 @@ export function useExercise(exercise: Exercise, onDone: () => void, initialBpm?:
   const rafIdRef = useRef(0)
   const timeoutIdsRef = useRef<number[]>([])
   const onDoneRef = useRef(onDone)
-  onDoneRef.current = onDone
+  const durationMsRef = useRef(0)
+  const tickRef = useRef<() => void>(() => {})
 
   // Build an exercise-like object with the current BPM for duration calc
   const durationMs = exerciseDurationMs({ ...exercise, bpm })
+
+  // Keep refs in sync via useEffect
+  useEffect(() => {
+    onDoneRef.current = onDone
+  })
+  useEffect(() => {
+    durationMsRef.current = durationMs
+  })
+  useEffect(() => {
+    tickRef.current = () => {
+      const now = performance.now()
+      const elapsed = now - startTimeRef.current
+      const dur = durationMsRef.current
+
+      elapsedMsRef.current = elapsed
+
+      if (elapsed >= dur) {
+        elapsedMsRef.current = dur
+        setElapsedMs(dur)
+        setPhase('done')
+        onDoneRef.current()
+        return
+      }
+
+      setElapsedMs(elapsed)
+      rafIdRef.current = requestAnimationFrame(tickRef.current)
+    }
+  })
 
   const cleanup = useCallback(() => {
     if (rafIdRef.current) {
@@ -29,30 +58,13 @@ export function useExercise(exercise: Exercise, onDone: () => void, initialBpm?:
     timeoutIdsRef.current = []
   }, [])
 
-  const tick = useCallback(() => {
-    const now = performance.now()
-    const elapsed = now - startTimeRef.current
-    elapsedMsRef.current = elapsed
-
-    if (elapsed >= durationMs) {
-      elapsedMsRef.current = durationMs
-      setElapsedMs(durationMs)
-      setPhase('done')
-      onDoneRef.current()
-      return
-    }
-
-    setElapsedMs(elapsed)
-    rafIdRef.current = requestAnimationFrame(tick)
-  }, [durationMs])
-
   const startPlaying = useCallback(() => {
     startTimeRef.current = performance.now()
     elapsedMsRef.current = 0
     setElapsedMs(0)
     setPhase('playing')
-    rafIdRef.current = requestAnimationFrame(tick)
-  }, [tick])
+    rafIdRef.current = requestAnimationFrame(tickRef.current)
+  }, [])
 
   const startExercise = useCallback(() => {
     if (phase !== 'idle') return
@@ -80,6 +92,28 @@ export function useExercise(exercise: Exercise, onDone: () => void, initialBpm?:
     elapsedMsRef.current = 0
   }, [cleanup])
 
+  const restart = useCallback((options?: { seamless?: boolean; newBpm?: number }) => {
+    cleanup()
+    if (options?.newBpm !== undefined) {
+      setBpmState(options.newBpm)
+    }
+    if (options?.seamless) {
+      startPlaying()
+    } else {
+      const effectiveBpm = options?.newBpm ?? bpm
+      const beatInterval = msPerBeat(effectiveBpm)
+      setPhase('countdown')
+      setCountdownValue(3)
+      const t1 = window.setTimeout(() => setCountdownValue(2), beatInterval)
+      const t2 = window.setTimeout(() => setCountdownValue(1), beatInterval * 2)
+      const t3 = window.setTimeout(() => {
+        setCountdownValue(0)
+        startPlaying()
+      }, beatInterval * 3)
+      timeoutIdsRef.current = [t1, t2, t3]
+    }
+  }, [cleanup, startPlaying, bpm])
+
   const setBpm = useCallback((newBpm: number) => {
     if (phase !== 'idle') return
     setBpmState(newBpm)
@@ -100,5 +134,6 @@ export function useExercise(exercise: Exercise, onDone: () => void, initialBpm?:
     setBpm,
     startExercise,
     stopExercise,
+    restart,
   }
 }

@@ -291,4 +291,69 @@ describe('useTiming', () => {
     act(() => { result.current.reset() })
     expect(result.current.lastFeedbackPad).toBeNull()
   })
+
+  // --- Tap markers tests ---
+
+  it('tapMarkersRef accumulates on tap with correct data', () => {
+    const elapsedMsRef = { current: 20 }
+    const options = { exercise: testExercise, bpm: 120, phase: 'playing' as const, elapsedMsRef }
+    const { result } = renderHook(() => useTiming(options))
+
+    act(() => { result.current.recordTap() })
+
+    expect(result.current.tapMarkersRef.current).toHaveLength(1)
+    const marker = result.current.tapMarkersRef.current[0]
+    expect(marker.ms).toBe(20)
+    expect(marker.judgment).toBe('on-time')
+    expect(marker.expectedMs).toBe(0)
+  })
+
+  it('tapMarkersRef includes pad info for drum taps', () => {
+    const elapsedMsRef = { current: 20 }
+    const options = { exercise: drumExercise, bpm: 120, phase: 'playing' as const, elapsedMsRef }
+    const { result } = renderHook(() => useTiming(options))
+
+    act(() => { result.current.recordTap('kick') })
+
+    expect(result.current.tapMarkersRef.current).toHaveLength(1)
+    expect(result.current.tapMarkersRef.current[0].pad).toBe('kick')
+  })
+
+  it('tapMarkersRef clears on reset', () => {
+    const elapsedMsRef = { current: 20 }
+    const options = { exercise: testExercise, bpm: 120, phase: 'playing' as const, elapsedMsRef }
+    const { result } = renderHook(() => useTiming(options))
+
+    act(() => { result.current.recordTap() })
+    expect(result.current.tapMarkersRef.current).toHaveLength(1)
+
+    act(() => { result.current.reset() })
+    expect(result.current.tapMarkersRef.current).toHaveLength(0)
+  })
+
+  it('stray taps do not create tap markers', () => {
+    const elapsedMsRef = { current: 250 } // >240ms from any beat
+    const options = { exercise: testExercise, bpm: 120, phase: 'playing' as const, elapsedMsRef }
+    const { result } = renderHook(() => useTiming(options))
+
+    act(() => { result.current.recordTap() })
+
+    expect(result.current.tapMarkersRef.current).toHaveLength(0)
+  })
+
+  it('strict mode wrong pad includes expectedPad and expectedMs in marker', () => {
+    const elapsedMsRef = { current: 20 }
+    // Beat 0 expects 'kick'
+    const options = { exercise: drumExercise, bpm: 120, phase: 'playing' as const, elapsedMsRef, strictMode: true }
+    const { result } = renderHook(() => useTiming(options))
+
+    act(() => { result.current.recordTap('snare') })
+
+    expect(result.current.tapMarkersRef.current).toHaveLength(1)
+    const marker = result.current.tapMarkersRef.current[0]
+    expect(marker.judgment).toBe('miss')
+    expect(marker.expectedPad).toBe('kick')
+    expect(marker.expectedMs).toBe(0)
+    expect(marker.pad).toBe('snare')
+  })
 })

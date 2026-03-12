@@ -115,4 +115,25 @@ describe('BeatTimeline', () => {
     render(<BeatTimeline exercise={testExercise} progress={0} bpm={120} />)
     expect(screen.queryByTestId('drum-lane-kick')).not.toBeInTheDocument()
   })
+
+  it('passes tapMarkers prop through to drum timeline', () => {
+    const tapMarkers = [
+      { ms: 20, pad: 'kick' as const, judgment: 'on-time' as const, expectedMs: 0 },
+    ]
+    render(
+      <BeatTimeline exercise={drumExercise} progress={0} bpm={120} instrument="drums" tapMarkers={tapMarkers} />
+    )
+    // Tap marker should render in the drum lane timeline
+    expect(screen.getByTestId('tap-marker')).toBeInTheDocument()
+  })
+
+  it('passes tapMarkers prop through to single row timeline', () => {
+    const tapMarkers = [
+      { ms: 20, judgment: 'on-time' as const, expectedMs: 0 },
+    ]
+    render(
+      <BeatTimeline exercise={testExercise} progress={0} bpm={120} tapMarkers={tapMarkers} />
+    )
+    expect(screen.getByTestId('tap-marker')).toBeInTheDocument()
+  })
 })

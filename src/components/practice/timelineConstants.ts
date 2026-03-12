@@ -41,6 +41,21 @@ export const DRUM_LANE_LABELS: Record<DrumPad, string> = {
   kick: 'KK',
 }
 
+export const TAP_MARKER_COLORS: Record<TimingJudgment, string> = {
+  'on-time': 'bg-green-500',
+  early: 'bg-yellow-500',
+  late: 'bg-yellow-500',
+  miss: 'bg-red-500',
+}
+
+export const DRUM_PAD_BORDER_COLORS: Record<DrumPad, string> = {
+  kick: 'border-red-400',
+  snare: 'border-orange-400',
+  hihat: 'border-cyan-400',
+  tom1: 'border-purple-400',
+  tom2: 'border-pink-400',
+}
+
 export const PX_PER_BEAT = 60
 export const PLAYHEAD_POSITION = 0.3
 export const LANE_HEIGHT = 28

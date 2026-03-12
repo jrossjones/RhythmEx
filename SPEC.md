@@ -60,18 +60,16 @@ Young practicing musicians, ages 5 and up. The UI must be simple, colorful, and 
 - No login required — fully client-side
 
 ## Future Features (Post-MVP, in rough priority order)
-1. **Tap placement markers** — Show exactly where each tap landed on the timeline
-2. **Loop mode & speed trainer auto-restart** — Infinite looping with configurable BPM stepping
-3. **Handpan instrument** — Circular pad layout with pitched FM synth voices
-4. **Strumming instrument** — Swipe/key-based strum input with chord progressions
-5. **Free Play mode** — Open-ended instrument play without exercises or scoring
-6. **Microphone input** — Real instrument detection (onset for drums, pitch for handpan, root note for guitar)
-7. **Guitar Hero mode** — Scrolling note highway for sight-reading practice
-8. **Polyrhythm practice** — Two simultaneous rhythms, tap both hands
-9. **YouTube integration** — Play YouTube videos, practice along with embedded audio
-10. **Custom exercises** — User-created exercises via a builder UI, saved to localStorage
-11. **Ear training** — Identify key, detect tempo from audio
-12. **Music theory lessons** — Integrated theory reference
+1. **Handpan instrument** — Circular pad layout with pitched FM synth voices
+2. **Strumming instrument** — Swipe/key-based strum input with chord progressions
+3. **Free Play mode** — Open-ended instrument play without exercises or scoring
+4. **Microphone input** — Real instrument detection (onset for drums, pitch for handpan, root note for guitar)
+5. **Guitar Hero mode** — Scrolling note highway for sight-reading practice
+6. **Polyrhythm practice** — Two simultaneous rhythms, tap both hands
+7. **YouTube integration** — Play YouTube videos, practice along with embedded audio
+8. **Custom exercises** — User-created exercises via a builder UI, saved to localStorage
+9. **Ear training** — Identify key, detect tempo from audio
+10. **Music theory lessons** — Integrated theory reference
 
 ## Data Model (Exercise)
 ```json
@@ -165,38 +163,17 @@ Strumming exercises may additionally include top-level `key` and `chords` fields
 - **`useExercise` initialBpm:** Accepts optional `initialBpm` parameter for speed trainer BPM persistence across retries.
 - 145 tests passing (129 existing + 16 new)
 
-### Phase 5a.2 — Tap Placement Markers, Loop Mode, Speed Trainer Polish (Not Started)
-
-#### Tap placement markers on timeline
-After each tap, show exactly where the player hit relative to the expected beat. This provides intuitive visual feedback for how early/late each tap was, beyond just the color change.
-
-- **Tick mark at tap position:** A thin vertical line (2px) placed at the exact horizontal position corresponding to the tap timestamp. Color-coded: green for on-time, yellow for early/late, red for miss.
-- **Beat marker color change (existing):** The beat dot still changes color as before.
-- **Pad indicator on tick:** For drums, the tick mark includes a small colored dot matching the tapped pad, so the player can see if they hit the right pad.
-- **Correct pad shown on miss (strict mode):** When a wrong pad is tapped in strict mode, show the expected pad color as a hollow/outline dot at the beat position, and the actual tapped pad as a filled dot at the tap position.
-- **Persistence:** Tick marks remain visible for the duration of the exercise (not cleared after 300ms like the flash feedback). Stored as an array of `{ ms: number, pad?: string, judgment: TimingJudgment }` in a ref.
-- **Implementation:** `BeatTimeline` accepts a new `tapMarkers` prop. `SingleRowTimeline` and `DrumLaneTimeline` render tick marks in the appropriate lane/row. `useTiming` exposes a `tapPositions` ref alongside the existing `beatJudgments`.
-
-#### Loop mode
-Exercises can loop infinitely, avoiding the results screen between runs. Combined with the speed trainer for continuous tempo progression.
-
-- **Toggle:** New `loopMode` boolean in `PracticeSettings`, toggled via `SettingsPopover`. Default off.
-- **Behavior when loop mode is on:**
-  - When the exercise ends (`phase → done`), instead of calling `onFinish` and navigating to results, the `PracticeScreen` handles the transition internally.
-  - **Brief flash (default):** A compact results overlay appears within the practice screen for ~2 seconds showing accuracy % and stars. Then the exercise auto-restarts with a count-in.
-  - **Seamless option:** A sub-toggle `seamlessLoop` (default off). When on, the exercise restarts immediately with zero gap and no count-in — the playhead wraps back to the start as if the exercise is one continuous loop.
-  - If speed trainer is also on, BPM adjusts between loops per the speed trainer rules.
-  - If speed trainer is off, BPM stays the same.
-  - Scores are still saved to localStorage on each loop completion (so personal bests update even in loop mode).
-  - **Stop:** The player presses Stop or Back to exit loop mode. On stop, the most recent run's results are shown on the results screen as normal.
-- **Implementation:** New `ResultsOverlay` component (lightweight, inline in practice screen — not the full `ResultsScreen`). `useExercise` gains a `restart()` method that resets elapsed time and re-enters countdown (or immediately starts if seamless). `PracticeScreen` orchestrates the loop: `handleDone` → show overlay → timeout → `restart()`.
-
-#### Speed trainer BPM increment presets
-Replace the hardcoded +5 BPM increment with selectable presets.
-
-- **UI:** When speed trainer is on, show a small row of preset buttons in the settings popover: **+2** / **+5** / **+10**. Default: +5. Selected preset is highlighted.
-- **Type:** Add `speedTrainerStep: number` to `PracticeSettings` (default 5).
-- **Logic:** On completion with ≥95% accuracy, increment by `speedTrainerStep` instead of hardcoded 5. Cap at 200 BPM.
+### Phase 5a.2 — Tap Placement Markers, Loop Mode, Speed Trainer Polish (Complete)
+- **`TapMarker` type:** New interface `{ ms, pad?, judgment, expectedPad?, expectedMs? }` for recording tap positions on the timeline.
+- **`PracticeSettings` extended:** Three new fields — `loopMode: boolean` (default false), `seamlessLoop: boolean` (default false), `speedTrainerStep: number` (default 5).
+- **Tap marker collection (`useTiming`):** `tapMarkersRef` accumulates a `TapMarker` on each matched tap with exact ms, pad, judgment, expectedPad, and expectedMs. Stray taps (>240ms) produce no marker. Clears on `reset()`. Returns both `tapMarkers` (value, for render) and `tapMarkersRef`.
+- **Tap marker rendering on timeline:** `BeatTimeline` accepts `tapMarkers` prop, converts each marker's ms to pixel/percent position, passes processed markers to child timelines. `DrumLaneTimeline` renders each as a 2px vertical tick line (full lane height) with opacity 0.7, color-coded by judgment (green/yellow/red), plus a 6px filled dot at lane center. Strict mode wrong-pad entries additionally render a hollow outline dot at the expected beat position in the expected pad's lane, border-colored by expected pad. `SingleRowTimeline` renders tick lines spanning full row height. Constants `TAP_MARKER_COLORS` and `DRUM_PAD_BORDER_COLORS` added to `timelineConstants.ts`.
+- **`useExercise` restart method:** `restart(options?: { seamless?, newBpm? })` calls `cleanup()`, optionally sets new BPM, then either starts playing immediately (seamless) or runs a 3-2-1 countdown at the effective BPM. `tick` function refactored to use `durationMsRef` (updated via `useEffect`) to avoid stale closure on BPM changes during restart. All ref assignments moved to `useEffect` for lint compliance.
+- **`ResultsOverlay` component:** Lightweight full-screen overlay (`fixed inset-0 z-50`) showing `StarDisplay`, accuracy %, optional "Next: {bpm} BPM" hint. Auto-dismisses after 2 seconds via `setTimeout(onDismiss, 2000)` with cleanup on unmount.
+- **`SettingsPopover` updates:** Loop Mode toggle (5th toggle after Speed Trainer). When loop mode on: indented Seamless sub-toggle. When speed trainer on: row of +2 / +5 / +10 preset buttons below toggle, selected one highlighted in emerald. Step buttons are disabled during playing.
+- **`PracticeScreen` orchestration:** Default settings include `loopMode`, `seamlessLoop`, `speedTrainerStep`. `handleDone` uses `speedTrainerStep` (not hardcoded 5) for BPM progression. Loop mode: saves result directly via `saveResult()`, stores `lastLoopResult`, shows `ResultsOverlay` (or seamless instant restart). Overlay dismissal triggers `reset()` + `restart({ newBpm })`. Stop during loop mode: if `lastLoopResult` exists, navigates to full results via `onShowResults` (no double-save). "Loop" badge displayed alongside Speed Trainer badge.
+- **`App.tsx` update:** New `showResults(result)` function navigates to results screen without calling `saveResult`. Passed as `onShowResults` prop to `PracticeScreen`.
+- 172 tests passing (145 existing + 27 new)
 
 ### Phase 5b — Handpan & Circular Pad UI (Not Started)
 - **Handpan synth:** Tone.js FM/AM synth voices tuned to handpan scale (7–9 notes). Center "ding" (lowest) + surrounding tone fields in ascending pitch. Swappable with real samples later.

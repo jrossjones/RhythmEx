@@ -101,6 +101,45 @@ export function SettingsPopover({ settings, onSettingsChange, disabled }: Settin
               onChange={(val) => onSettingsChange({ ...settings, speedTrainerOn: val })}
               disabled={disabled}
             />
+            {settings.speedTrainerOn && (
+              <div className="ml-4 flex items-center gap-1.5">
+                <span className="text-xs text-gray-500">Step:</span>
+                {[2, 5, 10].map((step) => (
+                  <button
+                    key={step}
+                    type="button"
+                    data-testid={`step-${step}`}
+                    disabled={disabled}
+                    onClick={() => onSettingsChange({ ...settings, speedTrainerStep: step })}
+                    className={`rounded-md px-2 py-0.5 text-xs font-bold transition-colors ${
+                      disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                    } ${
+                      settings.speedTrainerStep === step
+                        ? 'bg-emerald-500 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    +{step}
+                  </button>
+                ))}
+              </div>
+            )}
+            <Toggle
+              label="Loop Mode"
+              checked={settings.loopMode}
+              onChange={(val) => onSettingsChange({ ...settings, loopMode: val })}
+              disabled={disabled}
+            />
+            {settings.loopMode && (
+              <div className="ml-4">
+                <Toggle
+                  label="Seamless"
+                  checked={settings.seamlessLoop}
+                  onChange={(val) => onSettingsChange({ ...settings, seamlessLoop: val })}
+                  disabled={disabled}
+                />
+              </div>
+            )}
           </div>
         </div>
       )}

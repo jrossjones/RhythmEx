@@ -1,4 +1,6 @@
-import { DRUM_LANE_ORDER, LANE_HEIGHT } from './timelineConstants'
+import type { ProcessedTapMarker } from './BeatTimeline'
+import { DRUM_LANE_ORDER, DRUM_PAD_BORDER_COLORS, LANE_HEIGHT } from './timelineConstants'
+import type { DrumPad } from '@/types'
 
 interface Marker {
   position: number
@@ -13,9 +15,10 @@ interface DrumLaneTimelineProps {
   measureLines: number[]
   playheadPosition: number
   isScrolling: boolean
+  tapMarkers?: ProcessedTapMarker[]
 }
 
-export function DrumLaneTimeline({ markers, measureLines, playheadPosition, isScrolling }: DrumLaneTimelineProps) {
+export function DrumLaneTimeline({ markers, measureLines, playheadPosition, isScrolling, tapMarkers = [] }: DrumLaneTimelineProps) {
   const totalHeight = DRUM_LANE_ORDER.length * LANE_HEIGHT
 
   return (
@@ -57,6 +60,55 @@ export function DrumLaneTimeline({ markers, measureLines, playheadPosition, isSc
               height: 10,
             }}
           />
+        )
+      })}
+
+      {/* Tap markers — tick lines showing where taps landed */}
+      {tapMarkers.map((tm, i) => {
+        const laneIdx = tm.lane ? DRUM_LANE_ORDER.indexOf(tm.lane as typeof DRUM_LANE_ORDER[number]) : -1
+        if (laneIdx === -1) return null
+        const centerY = laneIdx * LANE_HEIGHT + LANE_HEIGHT / 2
+
+        return (
+          <div key={`tap-${i}`}>
+            {/* Vertical tick line */}
+            <div
+              data-testid="tap-marker"
+              className={`absolute w-0.5 ${tm.color} opacity-70`}
+              style={{
+                left: isScrolling ? tm.position : `${tm.position}%`,
+                top: laneIdx * LANE_HEIGHT,
+                height: LANE_HEIGHT,
+              }}
+            />
+            {/* Small dot at center of lane */}
+            <div
+              className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full ${tm.color}`}
+              style={{
+                left: isScrolling ? tm.position : `${tm.position}%`,
+                top: centerY,
+                width: 6,
+                height: 6,
+              }}
+            />
+            {/* Strict mode: hollow outline dot at expected position for wrong pad */}
+            {tm.expectedPad && tm.expectedPosition !== undefined && (
+              <div
+                data-testid="expected-marker"
+                className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full border-2 ${DRUM_PAD_BORDER_COLORS[tm.expectedPad as DrumPad] ?? 'border-gray-400'}`}
+                style={{
+                  left: isScrolling ? tm.expectedPosition : `${tm.expectedPosition}%`,
+                  top: (() => {
+                    const eLaneIdx = DRUM_LANE_ORDER.indexOf(tm.expectedPad as typeof DRUM_LANE_ORDER[number])
+                    return eLaneIdx !== -1 ? eLaneIdx * LANE_HEIGHT + LANE_HEIGHT / 2 : centerY
+                  })(),
+                  width: 8,
+                  height: 8,
+                  backgroundColor: 'transparent',
+                }}
+              />
+            )}
+          </div>
         )
       })}
 

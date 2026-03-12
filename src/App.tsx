@@ -36,6 +36,10 @@ export function App() {
     setState((prev) => ({ ...prev, lastResult: result, screen: 'results' }))
   }
 
+  const showResults = (result: ExerciseResult) => {
+    setState((prev) => ({ ...prev, lastResult: result, screen: 'results' }))
+  }
+
   switch (state.screen) {
     case 'home':
       return <HomeScreen onStart={() => navigate('instrument-select')} />
@@ -66,6 +70,7 @@ export function App() {
           onBack={() => navigate('exercise-select')}
           initialBpm={speedTrainerBpm ?? undefined}
           onSpeedTrainerBpmChange={setSpeedTrainerBpm}
+          onShowResults={showResults}
         />
       )
 

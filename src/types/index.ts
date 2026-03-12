@@ -41,12 +41,24 @@ export interface TapResult {
   expectedPad?: string   // which pad was expected (strict mode)
 }
 
+// A tap placement marker for timeline visualization
+export interface TapMarker {
+  ms: number
+  pad?: DrumPad
+  judgment: TimingJudgment
+  expectedPad?: string
+  expectedMs?: number
+}
+
 // Practice session settings
 export interface PracticeSettings {
   metronomeOn: boolean
   tapSoundOn: boolean
   strictMode: boolean
   speedTrainerOn: boolean
+  loopMode: boolean
+  seamlessLoop: boolean
+  speedTrainerStep: number
 }
 
 // Star rating (1-3)

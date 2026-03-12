@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { Exercise, InstrumentType, TimingJudgment } from '@/types'
+import type { Exercise, InstrumentType, TapMarker, TimingJudgment } from '@/types'
 import { beatTimesMs, exerciseDurationMs, msPerBeat } from '@/utils/rhythm'
 import { SingleRowTimeline } from './SingleRowTimeline'
 import { DrumLaneTimeline } from './DrumLaneTimeline'
@@ -7,6 +7,7 @@ import {
   DRUM_PAD_COLORS,
   DURATION_COLORS,
   JUDGMENT_COLORS,
+  TAP_MARKER_COLORS,
   DRUM_LANE_ORDER,
   DRUM_LANE_LABELS,
   PX_PER_BEAT,
@@ -15,15 +16,26 @@ import {
   LABEL_WIDTH,
 } from './timelineConstants'
 
+export interface ProcessedTapMarker {
+  position: number
+  color: string
+  lane?: string
+  pad?: string
+  judgment: string
+  expectedPosition?: number
+  expectedPad?: string
+}
+
 interface BeatTimelineProps {
   exercise: Exercise
   progress: number
   bpm: number
   beatJudgments?: Map<number, TimingJudgment>
   instrument?: InstrumentType
+  tapMarkers?: TapMarker[]
 }
 
-export function BeatTimeline({ exercise, progress, bpm, beatJudgments, instrument }: BeatTimelineProps) {
+export function BeatTimeline({ exercise, progress, bpm, beatJudgments, instrument, tapMarkers }: BeatTimelineProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerWidth, setContainerWidth] = useState(0)
 
@@ -81,6 +93,27 @@ export function BeatTimeline({ exercise, progress, bpm, beatJudgments, instrumen
     scrollOffset = Math.max(0, Math.min(playheadPx - visibleWidth * PLAYHEAD_POSITION, renderedWidth - visibleWidth))
   }
 
+  // Process tap markers
+  const processedTapMarkers: ProcessedTapMarker[] = (tapMarkers ?? []).map((tm) => {
+    const frac = durationMs > 0 ? tm.ms / durationMs : 0
+    const position = isScrolling ? frac * renderedWidth : frac * 100
+    const color = TAP_MARKER_COLORS[tm.judgment]
+    let expectedPosition: number | undefined
+    if (tm.expectedPad && tm.expectedMs !== undefined) {
+      const eFrac = durationMs > 0 ? tm.expectedMs / durationMs : 0
+      expectedPosition = isScrolling ? eFrac * renderedWidth : eFrac * 100
+    }
+    return {
+      position,
+      color,
+      lane: tm.pad,
+      pad: tm.pad,
+      judgment: tm.judgment,
+      expectedPosition,
+      expectedPad: tm.expectedPad,
+    }
+  })
+
   // ResizeObserver to measure container
   useEffect(() => {
     const el = containerRef.current
@@ -128,6 +161,7 @@ export function BeatTimeline({ exercise, progress, bpm, beatJudgments, instrumen
               measureLines={measureLines}
               playheadPosition={playheadPos}
               isScrolling={isScrolling}
+              tapMarkers={processedTapMarkers}
             />
           ) : (
             <SingleRowTimeline
@@ -135,6 +169,7 @@ export function BeatTimeline({ exercise, progress, bpm, beatJudgments, instrumen
               measureLines={measureLines}
               playheadPosition={playheadPos}
               isScrolling={isScrolling}
+              tapMarkers={processedTapMarkers}
             />
           )}
         </div>

@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react'
-import type { DrumPad, Exercise, ExercisePhase, TapResult, TimingJudgment } from '@/types'
+import type { DrumPad, Exercise, ExercisePhase, TapMarker, TapResult, TimingJudgment } from '@/types'
 import { beatTimesMs } from '@/utils/rhythm'
 import { judgeTap } from '@/utils/scoring'
 
@@ -22,6 +22,7 @@ export function useTiming({ exercise, bpm, phase, elapsedMsRef, strictMode }: Us
   const [beatJudgments, setBeatJudgments] = useState<Map<number, TimingJudgment>>(new Map())
 
   const tapResultsRef = useRef<TapResult[]>([])
+  const tapMarkersRef = useRef<TapMarker[]>([])
   const matchedBeatsRef = useRef<Set<number>>(new Set())
   const beatTimesRef = useRef<number[]>([])
   const feedbackTimeoutRef = useRef<number>(0)
@@ -73,6 +74,13 @@ export function useTiming({ exercise, bpm, phase, elapsedMsRef, strictMode }: Us
     }
 
     tapResultsRef.current.push(result)
+    tapMarkersRef.current.push({
+      ms: tapMs,
+      pad: pad,
+      judgment: result.judgment,
+      expectedPad: result.expectedPad,
+      expectedMs: times[nearestIndex],
+    })
     matchedBeatsRef.current.add(nearestIndex)
 
     // Update beat judgments map (drives UI)
@@ -121,6 +129,7 @@ export function useTiming({ exercise, bpm, phase, elapsedMsRef, strictMode }: Us
 
   const reset = useCallback(() => {
     tapResultsRef.current = []
+    tapMarkersRef.current = []
     matchedBeatsRef.current = new Set()
     setLastTapFeedback(null)
     setLastFeedbackPad(null)
@@ -130,6 +139,8 @@ export function useTiming({ exercise, bpm, phase, elapsedMsRef, strictMode }: Us
   return {
     tapResults: tapResultsRef.current,
     tapResultsRef,
+    tapMarkers: tapMarkersRef.current,
+    tapMarkersRef,
     lastTapFeedback,
     lastFeedbackPad,
     beatJudgments,

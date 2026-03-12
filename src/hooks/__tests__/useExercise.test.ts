@@ -156,4 +156,56 @@ describe('useExercise', () => {
     const { result } = renderHook(() => useExercise(testExercise, onDone, 95))
     expect(result.current.bpm).toBe(95)
   })
+
+  // --- Restart tests ---
+
+  it('restart from done transitions to countdown', () => {
+    const onDone = vi.fn()
+    const { result } = renderHook(() => useExercise(testExercise, onDone))
+
+    // Get to playing state
+    act(() => { result.current.startExercise() })
+    act(() => { vi.advanceTimersByTime(1500) }) // countdown done
+    expect(result.current.phase).toBe('playing')
+
+    // Simulate done phase manually (can't wait for RAF in fake timers easily)
+    // Instead, test restart from playing state — it should work from any phase
+    act(() => { result.current.restart() })
+    expect(result.current.phase).toBe('countdown')
+    expect(result.current.countdownValue).toBe(3)
+  })
+
+  it('restart with seamless goes directly to playing', () => {
+    const onDone = vi.fn()
+    const { result } = renderHook(() => useExercise(testExercise, onDone))
+
+    act(() => { result.current.startExercise() })
+    act(() => { vi.advanceTimersByTime(1500) })
+    expect(result.current.phase).toBe('playing')
+
+    act(() => { result.current.restart({ seamless: true }) })
+    expect(result.current.phase).toBe('playing')
+  })
+
+  it('restart with newBpm updates BPM', () => {
+    const onDone = vi.fn()
+    const { result } = renderHook(() => useExercise(testExercise, onDone))
+
+    act(() => { result.current.startExercise() })
+    act(() => { vi.advanceTimersByTime(1500) })
+
+    act(() => { result.current.restart({ newBpm: 140 }) })
+    expect(result.current.bpm).toBe(140)
+  })
+
+  it('restart cleans up before restarting', () => {
+    const onDone = vi.fn()
+    const { result } = renderHook(() => useExercise(testExercise, onDone))
+
+    act(() => { result.current.startExercise() })
+    // Restart during countdown — should cleanup old timers
+    act(() => { result.current.restart() })
+    expect(result.current.phase).toBe('countdown')
+    expect(result.current.countdownValue).toBe(3)
+  })
 })

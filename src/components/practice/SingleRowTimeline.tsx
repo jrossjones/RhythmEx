@@ -1,3 +1,5 @@
+import type { ProcessedTapMarker } from './BeatTimeline'
+
 interface Marker {
   position: number
   color: string
@@ -10,9 +12,10 @@ interface SingleRowTimelineProps {
   measureLines: number[]
   playheadPosition: number
   isScrolling: boolean
+  tapMarkers?: ProcessedTapMarker[]
 }
 
-export function SingleRowTimeline({ markers, measureLines, playheadPosition, isScrolling }: SingleRowTimelineProps) {
+export function SingleRowTimeline({ markers, measureLines, playheadPosition, isScrolling, tapMarkers = [] }: SingleRowTimelineProps) {
   return (
     <div className="relative h-16">
       {/* Measure dividers */}
@@ -35,6 +38,16 @@ export function SingleRowTimeline({ markers, measureLines, playheadPosition, isS
             width: 12,
             height: 12,
           }}
+        />
+      ))}
+
+      {/* Tap markers */}
+      {tapMarkers.map((tm, i) => (
+        <div
+          key={`tap-${i}`}
+          data-testid="tap-marker"
+          className={`absolute top-0 bottom-0 w-0.5 ${tm.color} opacity-70`}
+          style={{ left: isScrolling ? tm.position : `${tm.position}%` }}
         />
       ))}
 

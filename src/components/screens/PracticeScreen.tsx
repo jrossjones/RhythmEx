@@ -6,6 +6,7 @@ import { BeatTimeline } from '@/components/practice/BeatTimeline'
 import { TapZone } from '@/components/practice/TapZone'
 import { DrumPad } from '@/components/instruments/DrumPad'
 import { CountdownOverlay } from '@/components/practice/CountdownOverlay'
+import { ResultsOverlay } from '@/components/practice/ResultsOverlay'
 import { SettingsPopover } from '@/components/practice/SettingsPopover'
 import { useExercise } from '@/hooks/useExercise'
 import { useTiming } from '@/hooks/useTiming'
@@ -13,7 +14,8 @@ import { useAudio } from '@/hooks/useAudio'
 import { calculateAccuracy, calculateStars } from '@/utils/scoring'
 import { exerciseDrumPads } from '@/utils/rhythm'
 import { msPerBeat } from '@/utils/rhythm'
-import type { DrumPad as DrumPadType, Exercise, ExerciseResult, InstrumentType, PracticeSettings, TapResult } from '@/types'
+import { saveResult } from '@/utils/storage'
+import type { DrumPad as DrumPadType, Exercise, ExerciseResult, InstrumentType, PracticeSettings, StarRating, TapResult } from '@/types'
 
 interface PracticeScreenProps {
   exercise: Exercise
@@ -22,20 +24,33 @@ interface PracticeScreenProps {
   onBack: () => void
   initialBpm?: number
   onSpeedTrainerBpmChange?: (nextBpm: number | null) => void
+  onShowResults?: (result: ExerciseResult) => void
 }
 
-export function PracticeScreen({ exercise, instrument, onFinish, onBack, initialBpm, onSpeedTrainerBpmChange }: PracticeScreenProps) {
+export function PracticeScreen({ exercise, instrument, onFinish, onBack, initialBpm, onSpeedTrainerBpmChange, onShowResults }: PracticeScreenProps) {
   const [settings, setSettings] = useState<PracticeSettings>({
     metronomeOn: true,
     tapSoundOn: true,
     strictMode: false,
     speedTrainerOn: false,
+    loopMode: false,
+    seamlessLoop: false,
+    speedTrainerStep: 5,
   })
+
+  const [loopOverlay, setLoopOverlay] = useState<{
+    accuracy: number
+    stars: StarRating
+    nextBpm?: number
+  } | null>(null)
+  const [lastLoopResult, setLastLoopResult] = useState<ExerciseResult | null>(null)
 
   const { playDrum, playMetronomeClick, startAudioContext } = useAudio()
 
   // Refs to break circular dependency between useExercise and useTiming/settings
   const finalizeRef = useRef<() => TapResult[]>(() => [])
+  const resetRef = useRef<() => void>(() => {})
+  const restartRef = useRef<(options?: { seamless?: boolean; newBpm?: number }) => void>(() => {})
   const settingsRef = useRef(settings)
   const currentBpmRef = useRef(0)
   const onSpeedTrainerBpmChangeRef = useRef(onSpeedTrainerBpmChange)
@@ -44,28 +59,62 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
     const tapResults = finalizeRef.current()
     const accuracy = calculateAccuracy(tapResults)
     const stars = calculateStars(accuracy)
-
-    // Speed trainer BPM progression
     const bpmNow = currentBpmRef.current
     const callback = onSpeedTrainerBpmChangeRef.current
-    if (settingsRef.current.speedTrainerOn && callback) {
+    const currentSettings = settingsRef.current
+
+    // Compute speed trainer next BPM
+    let nextBpm: number | undefined
+    if (currentSettings.speedTrainerOn) {
       if (accuracy >= 95) {
-        callback(Math.min(bpmNow + 5, 200))
+        nextBpm = Math.min(bpmNow + currentSettings.speedTrainerStep, 200)
       } else {
-        callback(bpmNow)
+        nextBpm = bpmNow
       }
-    } else if (callback) {
-      callback(null)
     }
 
-    onFinish({
-      exerciseId: exercise.id,
-      instrument,
-      accuracy,
-      stars,
-      tapResults,
-      timestamp: Date.now(),
-    })
+    if (currentSettings.loopMode) {
+      // Loop mode: save result directly, restart
+      const result: ExerciseResult = {
+        exerciseId: exercise.id,
+        instrument,
+        accuracy,
+        stars,
+        tapResults,
+        timestamp: Date.now(),
+      }
+      saveResult(result)
+      setLastLoopResult(result)
+
+      // Update speed trainer BPM in App
+      if (currentSettings.speedTrainerOn && callback) {
+        callback(nextBpm!)
+      }
+
+      if (currentSettings.seamlessLoop) {
+        resetRef.current()
+        restartRef.current({ seamless: true, newBpm: nextBpm })
+      } else {
+        setLoopOverlay({ accuracy, stars, nextBpm })
+        // Overlay auto-dismisses after 2s, then restart
+      }
+    } else {
+      // Normal mode: navigate to results
+      if (currentSettings.speedTrainerOn && callback) {
+        callback(nextBpm!)
+      } else if (callback) {
+        callback(null)
+      }
+
+      onFinish({
+        exerciseId: exercise.id,
+        instrument,
+        accuracy,
+        stars,
+        tapResults,
+        timestamp: Date.now(),
+      })
+    }
   }
 
   const {
@@ -77,6 +126,7 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
     elapsedMsRef,
     startExercise,
     stopExercise,
+    restart,
   } = useExercise(exercise, handleDone, initialBpm)
 
   // Keep refs in sync — must be in useEffect per react-hooks/refs rule
@@ -90,15 +140,24 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
     lastTapFeedback,
     lastFeedbackPad,
     beatJudgments,
+    tapMarkers,
     recordTap,
     finalize,
     reset,
   } = useTiming({ exercise, bpm, phase, elapsedMsRef, strictMode: settings.strictMode })
 
-  // Keep ref up to date so handleDone always calls the latest finalize
+  // Keep refs up to date so handleDone always calls the latest versions
   useEffect(() => {
     finalizeRef.current = finalize
+    resetRef.current = reset
+    restartRef.current = restart
   })
+
+  const handleLoopOverlayDismiss = useCallback(() => {
+    setLoopOverlay(null)
+    resetRef.current()
+    restartRef.current({ newBpm: loopOverlay?.nextBpm })
+  }, [loopOverlay?.nextBpm])
 
   const isIdle = phase === 'idle'
 
@@ -129,6 +188,11 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
   const handleStop = () => {
     stopExercise()
     reset()
+    // If we have a last loop result, show full results screen
+    if (lastLoopResult && onShowResults) {
+      onShowResults(lastLoopResult)
+      return
+    }
   }
 
   const handleBack = () => {
@@ -197,6 +261,11 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
       <div className="flex items-center justify-between">
         <Navigation title={exercise.name} onBack={handleBack} />
         <div className="flex items-center gap-2">
+          {settings.loopMode && (
+            <span className="rounded-full bg-blue-100 px-3 py-0.5 text-xs font-bold text-blue-700">
+              Loop
+            </span>
+          )}
           {settings.speedTrainerOn && (
             <span className="rounded-full bg-emerald-100 px-3 py-0.5 text-xs font-bold text-emerald-700">
               Speed Trainer
@@ -246,6 +315,7 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
           bpm={bpm}
           beatJudgments={beatJudgments}
           instrument={instrument}
+          tapMarkers={tapMarkers}
         />
       </div>
 
@@ -285,6 +355,16 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
 
       {/* Countdown overlay */}
       {phase === 'countdown' && <CountdownOverlay value={countdownValue} />}
+
+      {/* Loop results overlay */}
+      {loopOverlay && (
+        <ResultsOverlay
+          accuracy={loopOverlay.accuracy}
+          stars={loopOverlay.stars}
+          onDismiss={handleLoopOverlayDismiss}
+          speedTrainerNextBpm={loopOverlay.nextBpm}
+        />
+      )}
     </Layout>
   )
 }
