@@ -341,3 +341,73 @@ Run `npm run dev` and open the app in a browser to execute these tests.
 - [ ] When speed trainer is active: shows "Next: X BPM" hint
 - [ ] When speed trainer is off: no BPM hint shown
 - [ ] Auto-dismisses after approximately 2 seconds
+
+---
+
+## Phase 5b — Handpan Instrument
+
+### 5b.1 Exercise Selection (Handpan)
+- [ ] Select "Handpan" on the Instrument Select screen
+- [ ] Exercise Select shows only handpan exercises (not drum exercises)
+- [ ] Beginner section shows 3 exercises: Ding Pulse, Two-Note Melody, Ascending Scale
+- [ ] Intermediate section shows 3 exercises: Kurd Flow, Ding & Ring, Cascade
+- [ ] Advanced section shows 3 exercises: Handpan Rain, Syncopated Groove, Endurance Flow
+- [ ] Back button returns to Instrument Select
+- [ ] Select "Drums" — only drum exercises shown (no handpan exercises)
+
+### 5b.2 HandpanPad UI
+- [ ] When instrument is Handpan, circular pad layout replaces drum pads
+- [ ] Center pad (ding) is larger (64×64px) than surrounding pads (52×52px)
+- [ ] Surrounding tone field pads arranged in a circle around the center ding
+- [ ] Each pad is color-coded by pitch class (e.g., D=orange, A=blue, Bb=violet)
+- [ ] Pad labels show note names (e.g., "D3", "A3", "Bb3")
+- [ ] Number of pads matches the exercise scale (8 or 9 pads for D Kurd)
+- [ ] Pads are disabled during idle/countdown phases
+- [ ] Disabled pads show muted versions of their color (not gray)
+
+### 5b.3 Handpan Audio
+- [ ] Tapping a pad produces a pitched FM synth tone (warm, resonant)
+- [ ] Each pad produces a distinct pitch matching its note name
+- [ ] Notes have natural sustain and decay (not abrupt cutoff)
+- [ ] Reverb effect is audible on all handpan tones
+- [ ] Multiple rapid taps produce overlapping tones (polyphonic)
+- [ ] "Tap Sounds" off: tapping registers timing but plays no handpan sound
+- [ ] No audio plays before user interaction (browser autoplay policy)
+
+### 5b.4 Handpan Keyboard Input
+- [ ] Number keys 1–9 trigger pads in order (1=ding/center, 2–9=tone fields)
+- [ ] Space key triggers the next expected note during playing
+- [ ] Space key triggers the first note (ding) when no note is expected
+- [ ] Holding a key does not repeat-fire (event.repeat guard)
+- [ ] Keys do not respond during idle/countdown phases
+
+### 5b.5 Handpan Timeline
+- [ ] Handpan exercises use single-row timeline (not multi-lane)
+- [ ] Beat markers are color-coded by note pitch class
+  - D = orange, A = blue, Bb = violet, C = red, E = amber, F = green, G = teal, etc.
+- [ ] Colors on timeline markers match the pad colors
+- [ ] Playhead scrolls smoothly during playback
+- [ ] Short exercises (4 measures): no scrolling, percentage positioning
+- [ ] Long exercises (Cascade 8 measures, Endurance Flow 16 measures): scrolling timeline
+- [ ] Tap markers (vertical tick lines) appear at tap positions, color-coded by judgment
+
+### 5b.6 Handpan Strict Mode
+- [ ] Default is Free mode: any pad tap counts for timing-only scoring
+  - Tap D3 when A3 expected → judges timing only, no penalty
+- [ ] Enable Strict mode in settings
+  - Tap D3 when A3 expected → miss judgment regardless of timing
+  - Tap the correct note → normal timing judgment applies
+- [ ] Strict mode only changeable in idle phase
+
+### 5b.7 Handpan with Practice Features
+- [ ] **Metronome:** Clicks during countdown and playback, same as drums
+- [ ] **BPM controls:** +/- buttons work, range 40–200, disabled during playing
+- [ ] **Speed Trainer:** BPM increments on ≥95% accuracy, badge shown, "Next: X BPM" on results
+- [ ] **Loop Mode:** Exercise auto-restarts after brief results overlay
+- [ ] **Seamless Loop:** Exercise restarts immediately with no countdown/overlay
+- [ ] **Score persistence:** Handpan scores saved independently from drum scores
+  - Complete an exercise on Handpan, note the score
+  - Switch to Drums — handpan score not shown (per-instrument isolation)
+  - Switch back to Handpan — score preserved
+- [ ] **Tap placement markers:** Tick marks appear at tap positions on single-row timeline
+- [ ] **Results screen:** Shows stars, accuracy, tap breakdown, personal best comparison

@@ -40,7 +40,7 @@ Young practicing musicians, ages 5 and up. The UI must be simple, colorful, and 
 
 ### 5. Virtual Instruments
 - **Drums** — Kick, snare, hi-hat, tom1, tom2 with Tone.js synth sounds (MembraneSynth, NoiseSynth, MetalSynth). On-screen pads with keyboard shortcuts (f/d/j/k/l). Adaptive grid layout based on exercise difficulty. Multi-lane timeline.
-- **Handpan** — Pitched notes in a circular layout (inspired by yishama.com virtual pantam) — *not yet implemented*
+- **Handpan** — Pitched FM synth notes in a circular pad layout (center ding + surrounding tone fields). 3 scale presets (D Kurd, C Amara, F Pygmy). Keyboard shortcuts (1–9 keys). Note-colored timeline markers. 9 exercises across 3 difficulty levels.
 - **Strumming** — Guitar/ukulele strum patterns with chord display. Swipe zone (mobile) + arrow keys (desktop) for up/down strum direction — *not yet implemented*
 - Instrument selection screen; user picks before starting an exercise
 - Settings popover on practice screen: metronome toggle, tap sound toggle, strict/free mode, speed trainer, loop mode
@@ -60,16 +60,15 @@ Young practicing musicians, ages 5 and up. The UI must be simple, colorful, and 
 - No login required — fully client-side
 
 ## Future Features (Post-MVP, in rough priority order)
-1. **Handpan instrument** — Circular pad layout with pitched FM synth voices
-2. **Strumming instrument** — Swipe/key-based strum input with chord progressions
-3. **Free Play mode** — Open-ended instrument play without exercises or scoring
-4. **Microphone input** — Real instrument detection (onset for drums, pitch for handpan, root note for guitar)
-5. **Guitar Hero mode** — Scrolling note highway for sight-reading practice
-6. **Polyrhythm practice** — Two simultaneous rhythms, tap both hands
-7. **YouTube integration** — Play YouTube videos, practice along with embedded audio
-8. **Custom exercises** — User-created exercises via a builder UI, saved to localStorage
-9. **Ear training** — Identify key, detect tempo from audio
-10. **Music theory lessons** — Integrated theory reference
+1. **Strumming instrument** — Swipe/key-based strum input with chord progressions
+2. **Free Play mode** — Open-ended instrument play without exercises or scoring
+3. **Microphone input** — Real instrument detection (onset for drums, pitch for handpan, root note for guitar)
+4. **Guitar Hero mode** — Scrolling note highway for sight-reading practice
+5. **Polyrhythm practice** — Two simultaneous rhythms, tap both hands
+6. **YouTube integration** — Play YouTube videos, practice along with embedded audio
+7. **Custom exercises** — User-created exercises via a builder UI, saved to localStorage
+8. **Ear training** — Identify key, detect tempo from audio
+9. **Music theory lessons** — Integrated theory reference
 
 ## Data Model (Exercise)
 ```json
@@ -175,15 +174,33 @@ Strumming exercises may additionally include top-level `key` and `chords` fields
 - **`App.tsx` update:** New `showResults(result)` function navigates to results screen without calling `saveResult`. Passed as `onShowResults` prop to `PracticeScreen`.
 - 172 tests passing (145 existing + 27 new)
 
-### Phase 5b — Handpan & Circular Pad UI (Not Started)
-- **Handpan synth:** Tone.js FM/AM synth voices tuned to handpan scale (7–9 notes). Center "ding" (lowest) + surrounding tone fields in ascending pitch. Swappable with real samples later.
-- **Circular pad layout (`HandpanPad` component):** Instrument-specific tap zone replacing `TapZone` when instrument is handpan. Pads arranged in a circle: center ding + 6–8 surrounding tone fields. Each pad produces a distinct pitched tone. Touch, click, and keyboard input (number keys 1–9). Color-coded by note.
-- **Handpan exercises:** New exercises with note-specific beats (e.g. `beat.note = "D4"`). Beginner: simple patterns on 2–3 notes. Intermediate: scale runs. Advanced: complex melodic patterns.
-- **Strict / Free mode (same toggle as drums):**
-  - **Free mode:** Any pad counts as a valid tap. Different pads just produce different tones.
-  - **Strict mode:** Player must tap the correct note pad as specified by the beat. Wrong pad = miss.
-- **Beat timeline:** `SingleRowTimeline` used (not multi-lane). Markers color-coded by target note. Each note gets a distinct color from the handpan color palette.
-- **Exercise data:** `beat.note` uses note names (e.g. `"C4"`, `"D4"`) for handpan, distinct from drum pad names.
+### Phase 5b — Handpan Instrument (Complete)
+- **Handpan synth:** Tone.js `PolySynth(FMSynth)` with reverb (decay 3s, wet 0.35). Harmonicity 2.01, modulation index 12, warm envelope (attack 0.08s, decay 1.5s, sustain 0.4, release 2.5s). 800ms note duration. `playHandpan(note)` function exposed by `useAudio` hook.
+- **Scale presets:** 3 handpan scales in `src/data/handpan/scales.ts`: D Kurd (9 notes), C Amara (8 notes), F Pygmy (9 notes). Default: D Kurd. Exercises reference scale via `exercise.scale` field.
+- **Circular pad layout (`HandpanPad` component):** Center ding pad (64×64px) + surrounding tone field pads (52×52px) in circular arrangement. Supports up to 9 pads. Touch, click, and keyboard input (number keys 1–9, Space = next expected note). Color-coded by pitch class. Muted colors when disabled.
+- **Handpan exercises:** 9 exercises (3 per difficulty), all D Kurd scale. Beginner: ding pulse, two-note melody, ascending scale. Intermediate: flowing eighths, dotted rhythms, 8-measure cascade. Advanced: sixteenth cascades, syncopation, 16-measure endurance flow.
+- **Strict / Free mode:** Same toggle as drums. Free mode: any pad counts for timing-only. Strict mode: must tap correct note pad — wrong note = miss.
+- **Beat timeline:** `SingleRowTimeline` with note-colored markers. Each pitch class gets a distinct color via `HANDPAN_NOTE_COLORS` map (12 chromatic colors).
+- **Exercise data model:** `Exercise.instrument` field (`'drums' | 'handpan'`) added. `Exercise.scale` optional field for handpan scale preset ID. `exercisesByDifficulty()` accepts optional instrument filter. 18 total exercises (9 drums + 9 handpan).
+- **Exercise selection filtering:** `ExerciseSelectScreen` filters exercises by selected instrument. Only shows exercises matching the current instrument.
+- 215 tests passing (172 existing + 43 new)
+
+### Planned Improvements (Pre-Phase 6)
+Enhancements to ship before the next instrument phase:
+
+- **Vertical timeline with pad-aligned lanes:** Replace horizontal scrolling timeline with a vertical note highway (inspired by Guitar Hero / DDR). Notes scroll downward toward the instrument pads, with each lane aligned directly above its corresponding pad. This creates a direct spatial connection between "what's coming" and "where to tap" — more intuitive for young children than color-matching across a horizontal lane. Applies to both drums (5 lanes above 5 pads) and handpan (lanes above circular pads). Replaces `DrumLaneTimeline` and `SingleRowTimeline` with a unified `VerticalTimeline` component. Playhead becomes a horizontal hit line near the bottom.
+
+- **Shape-differentiated markers:** Unique marker shape per drum pad for redundant encoding (color + lane + shape). Satisfies WCAG 1.4.1 (color not the only visual means). Drum shapes: kick = circle, snare = diamond (rotated square via CSS `rotate-45`), hihat = triangle (references cymbal), tom1 = square, tom2 = rounded rectangle. For handpan, shapes encode pitch register (low = circle, mid = diamond, high = triangle) since 9 unique shapes would be excessive. Increase base marker size from 10px to ~16px for ages 5+ readability (fits within lane height).
+
+- **Text labels inside markers:** Single-character abbreviations rendered inside the larger markers: K (kick), S (snare), H (hihat), T1, T2. Provides a fourth encoding channel. For handpan, show note name (e.g. "D", "A", "Bb"). Requires markers at 14px+ to be legible (~8px white text).
+
+- **Hollow/filled marker states:** Upcoming beats are filled (solid). Already-judged beats transition to hollow outlines, reducing visual clutter behind the hit line and making upcoming beats more prominent.
+
+- **Listen/Demo mode:** A "Listen" button on the practice screen that plays back the full exercise audio at the current BPM without requiring any taps. The playhead animates along the timeline and instrument sounds fire at each beat time automatically. Useful for learning a new rhythm before attempting it. Reuses existing `useExercise` lifecycle + `useAudio` playback. No scoring or tap input during demo. Option to stop early.
+
+- **Tap debounce:** Prevent double-triggers on fast taps.
+
+- **Handpan idle pad indicators:** Visual cue on idle pads (similar to drum pad muted colors).
 
 ### Phase 6 — Strumming Instrument (Not Started)
 
@@ -253,6 +270,8 @@ A dedicated screen for open-ended instrument play without exercises, timelines, 
 - **Instrument pads:** The full instrument UI (`DrumPad`, `HandpanPad`, or `StrumZone`) rendered without a timeline or scoring system.
 - **Optional metronome:** Metronome toggle + BPM controls available. Player can set a tempo and play along to clicks without any exercise structure.
 - **No scoring:** No timing judgments, no stars, no results. Pure play.
+- **Drum customization:** Pad count selector (2, 3, or 5 pads). 2 pads = kick + snare, 3 = kick + snare + hihat, 5 = all. Reuses the existing adaptive grid layout from `DrumPad`. Persisted in localStorage. Default: 5 (all pads).
+- **Handpan customization:** Scale/key selector (choose from presets: D Kurd, C Amara, F Pygmy, etc.) and note count selector (e.g., play with 5, 7, or all 9 notes). Fewer notes simplifies the pad layout for younger players or beginners exploring the instrument. Selected scale and note count persist in localStorage. Default: D Kurd, all notes.
 - **YouTube integration (future):** This screen is the natural home for embedded YouTube video playback. A future enhancement would add a URL input field and an embedded YouTube player, allowing the player to play along with any video. The instrument pads + optional metronome would overlay or sit below the video.
 
 ### Phase 8 — Microphone Input (Not Started)

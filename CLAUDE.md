@@ -37,6 +37,7 @@ src/
       StarDisplay.tsx   # 1-3 filled/unfilled stars
     instruments/        # Virtual instrument UIs
       DrumPad.tsx       # Grid of color-coded drum pads with keyboard shortcuts (f/d/j/k/l)
+      HandpanPad.tsx    # Circular pad layout: center ding + surrounding tone fields, keyboard 1-9
     practice/           # Practice UI components
       BeatTimeline.tsx  # Container/orchestrator: scrolling, lane labels, delegates to DrumLane or SingleRow
       DrumLaneTimeline.tsx  # 5-lane stacked drum timeline (hihat/tom1/tom2/snare/kick)
@@ -47,18 +48,23 @@ src/
       SettingsPopover.tsx # Gear icon popover: metronome, tap sounds, strict mode, speed trainer, loop mode toggles
   hooks/
     useExercise.ts      # Exercise lifecycle (idle/countdown/playing/done), playhead, BPM
-    useAudio.ts         # Tone.js synth engine: drum sounds (kick/snare/hihat/toms) + metronome click
+    useAudio.ts         # Tone.js synth engine: drum sounds + handpan FM synth + metronome click
     useTiming.ts        # Tap detection, beat matching, result accumulation, finalize/reset
   data/
     exercises/          # Exercise definitions by difficulty
-      beginner.ts       # 3 exercises: quarter notes, half notes, whole notes
-      intermediate.ts   # 3 exercises: eighth notes, dotted rhythms, extended groove (8 measures)
-      advanced.ts       # 3 exercises: sixteenth notes, syncopation, endurance run (16 measures)
-      index.ts          # Aggregator: allExercises, exercisesByDifficulty(), exerciseById()
+      beginner.ts       # 3 drum exercises: quarter notes, half notes, whole notes
+      intermediate.ts   # 3 drum exercises: eighth notes, dotted rhythms, extended groove (8 measures)
+      advanced.ts       # 3 drum exercises: sixteenth notes, syncopation, endurance run (16 measures)
+      handpan-beginner.ts    # 3 handpan exercises: ding pulse, two-note melody, ascending scale
+      handpan-intermediate.ts # 3 handpan exercises: kurd flow, ding & ring, cascade (8 measures)
+      handpan-advanced.ts    # 3 handpan exercises: handpan rain, syncopated groove, endurance flow (16 measures)
+      index.ts          # Aggregator: allExercises (18), exercisesByDifficulty(diff, instrument?), exerciseById()
+    handpan/
+      scales.ts         # HandpanScale type, 3 presets (D Kurd, C Amara, F Pygmy), getScale()
     samples/
       index.ts          # Audio sample path manifests (placeholder paths)
   utils/
-    rhythm.ts           # transportTimeToMs, msPerBeat, exerciseDurationMs, beatTimesMs, exerciseDrumPads
+    rhythm.ts           # transportTimeToMs, msPerBeat, exerciseDurationMs, beatTimesMs, exerciseDrumPads, pitchClass
     scoring.ts          # TIMING_WINDOWS, judgeTap, calculateAccuracy, calculateStars
     storage.ts          # localStorage CRUD: compound key per instrument, attempt tracking, getAllScores
     __tests__/          # Vitest unit tests
@@ -77,12 +83,20 @@ src/
     instruments/
       __tests__/
         DrumPad.test.tsx
+        HandpanPad.test.tsx
     practice/
       __tests__/
         BeatTimeline.test.tsx
         DrumLaneTimeline.test.tsx
         TapZone.test.tsx
         SettingsPopover.test.tsx
+  data/
+    exercises/
+      __tests__/
+        index.test.ts       # Exercise aggregator: 18 exercises, instrument filtering
+    handpan/
+      __tests__/
+        scales.test.ts      # Scale presets, lookup, defaults
   test/
     setup.ts            # Vitest setup — @testing-library/jest-dom + ResizeObserver mock
 ```
@@ -120,9 +134,9 @@ src/
 - **Transport time format:** Tone.js `"measure:beat:sixteenth"` — parsed by `utils/rhythm.ts`
 - **Exercise lifecycle:** `idle → countdown (3-2-1) → playing → done` managed by `useExercise` hook. Uses `requestAnimationFrame` for smooth playhead animation and `performance.now()` for timing. BPM adjustable only in idle phase. Accepts optional `initialBpm` parameter for speed trainer persistence.
 - **Tap matching:** `useTiming` hook matches each tap to the nearest unmatched beat via `judgeTap()`. Stray taps beyond 240ms from any beat are silently ignored (kid-friendly). `finalize()` fills unmatched beats as misses. Uses refs for tap data (performance), state only for UI feedback. Feedback auto-clears after 300ms via internal timeout.
-- **Tap input:** `TapZone` supports Space key (`keydown` with `event.repeat` guard), `onTouchStart` (lower latency), and `onClick` (desktop fallback). Flashes green/yellow/red for 300ms per judgment. Used for handpan (no audio yet).
+- **Tap input:** `TapZone` supports Space key (`keydown` with `event.repeat` guard), `onTouchStart` (lower latency), and `onClick` (desktop fallback). Flashes green/yellow/red for 300ms per judgment.
 - **Drum pads:** `DrumPad` component replaces `TapZone` when instrument is drums. Grid layout adapts to active pad count (2/3/5). Keyboard shortcuts: `f`=kick, `d`=snare, `j`=hihat, `k`=tom1, `l`=tom2. Space maps to next expected pad. Each pad color-coded (kick=red, snare=orange, hihat=cyan, tom1=purple, tom2=pink).
-- **Audio engine:** `useAudio` hook creates Tone.js synths lazily on first `startAudioContext()` call (user gesture). MembraneSynth for kick/toms, NoiseSynth for snare, MetalSynth for hihat, triangle Synth for metronome. All synths stored in ref, disposed on unmount. `playDrum`/`playMetronomeClick` are no-ops before audio context is ready.
+- **Audio engine:** `useAudio` hook creates Tone.js synths lazily on first `startAudioContext()` call (user gesture). Drums: MembraneSynth for kick/toms, NoiseSynth for snare, MetalSynth for hihat. Handpan: `PolySynth(FMSynth)` with reverb (decay 3s, wet 0.35), harmonicity 2.01, modulation index 12, 800ms note duration. Triangle Synth for metronome. All synths stored in ref, disposed on unmount. `playDrum`/`playHandpan`/`playMetronomeClick` are no-ops before audio context is ready.
 - **Metronome:** Clicks during countdown (on each 3-2-1-Go tick) and during playing (RAF loop tracks beat crossings from `elapsedMsRef`). Accent on downbeats (C5) vs normal beats (G4). Toggleable via settings.
 - **Tempo-aligned count-in:** Countdown ticks use `msPerBeat(bpm)` intervals (not fixed 1s), so the 3-2-1-Go aligns with the exercise tempo and metronome clicks.
 - **Practice settings:** `PracticeSettings` type with `metronomeOn`, `tapSoundOn`, `strictMode`, `speedTrainerOn`. Managed as state in `PracticeScreen`, controlled via `SettingsPopover` gear icon. Settings only changeable in idle phase.
@@ -134,12 +148,15 @@ src/
 - **Timeline scrolling:** GPU-accelerated `translateX` on inner content. Playhead pinned at ~30% from left. 60px per beat density. Short exercises use percentage positioning (no scroll). Threshold: rendered width > container width.
 - **Speed trainer:** `speedTrainerBpm` state in `App.tsx`. On completion: ≥95% accuracy → +5 BPM (cap 200), <95% → same BPM, speed trainer off → null. Manual BPM change resets. "Speed Trainer" badge on practice screen. Reset on exercise select.
 - **Drum pad idle colors:** Disabled pads use muted pad-colored backgrounds (`DRUM_PAD_MUTED_COLORS` from `timelineConstants.ts`) instead of gray, for visual association with timeline lane colors.
+- **Handpan scales:** `HandpanScale` type in `src/data/handpan/scales.ts` with 3 presets: D Kurd (9 notes), C Amara (8 notes), F Pygmy (9 notes). Default: `d-kurd`. `getScale(id)` lookup. Exercises reference scale via `exercise.scale` field.
+- **Handpan pad layout:** `HandpanPad` component with circular arrangement — center ding (64×64px) + surrounding tone fields (52×52px). Color-coded by pitch class via `HANDPAN_PAD_COLORS`. Keyboard: 1–9 for notes, Space for next expected note. Muted idle colors via `HANDPAN_PAD_MUTED_COLORS`.
+- **Handpan note colors:** `HANDPAN_NOTE_COLORS` in `timelineConstants.ts` maps 12 chromatic pitch classes to Tailwind colors (C=red, D=orange, E=amber, F=green, G=teal, A=blue, Bb=violet, etc.). `pitchClass()` helper extracts pitch class from note string (e.g. `"D3"` → `"D"`, `"Bb4"` → `"Bb"`). Used for both timeline markers and pad colors.
+- **Exercise instrument filtering:** `Exercise.instrument` field (`'drums' | 'handpan'`) added to type. `exercisesByDifficulty()` accepts optional instrument filter. `ExerciseSelectScreen` filters by selected instrument. 18 total exercises (9 drums + 9 handpan).
 
 ## Upcoming Phases (see SPEC.md for full detail)
-- **Phase 5a.2 — Tap Placement Markers, Loop Mode, Speed Trainer Polish:** Tick marks on timeline at exact tap position (visual early/late feedback). Loop mode toggle for infinite repeats with brief results flash or seamless looping. Speed trainer BPM step presets (+2/+5/+10). `loopMode`, `seamlessLoop`, `speedTrainerStep` added to `PracticeSettings`. New `ResultsOverlay` component. `useExercise` gains `restart()`.
-- **Phase 5b — Handpan:** Circular pad layout (`HandpanPad`), FM/AM synth voices (7–9 notes), note-specific exercises, `SingleRowTimeline` with note-colored markers.
+- **Planned improvements:** Vertical timeline with pad-aligned lanes (replaces horizontal; notes scroll down toward pads, unified `VerticalTimeline` component). Shape-differentiated markers (kick=circle, snare=diamond, hihat=triangle, tom1=square, tom2=rounded-rect; handpan uses register-based shapes; base size ~16px). Text labels inside markers (K/S/H/T1/T2 for drums, note names for handpan). Hollow/filled marker states (filled=upcoming, hollow=judged). Listen/Demo mode (auto-playback without taps, reuses `useExercise` + `useAudio`). Tap debounce. Handpan idle pad color indicators.
 - **Phase 6 — Strumming:** New instrument type. `StrumZone` component (vertical swipe + tap buttons + arrow keys). PluckSynth chord voicings (`src/data/chords.ts`). Exercises support single-chord patterns and chord progressions (`beat.note` = `down`/`up`, `beat.chord` = chord name).
-- **Phase 7 — Free Play:** Dedicated `FreePlayScreen` — instrument pads + optional metronome, no timeline/scoring. Entry from exercise select. Future home for YouTube video playback.
+- **Phase 7 — Free Play:** Dedicated `FreePlayScreen` — instrument pads + optional metronome, no timeline/scoring. Entry from exercise select. Drum customization: pad count selector (2/3/5). Handpan customization: scale/key selector + note count selector (5/7/9 notes). Both persisted in localStorage. Future home for YouTube video playback.
 - **Phase 8 — Microphone Input:** `useMicrophone` + `useOnsetDetector` + `usePitchDetector` hooks. Drums: onset detection (amplitude threshold). Handpan: autocorrelation pitch detection. Guitar: root note detection (phase 1), ML chord classification (phase 2 future). Mic runs alongside virtual pads.
 
 ## Important Notes
@@ -148,4 +165,4 @@ src/
 - Performance matters: rhythm apps need <10ms input latency where possible
 - Exercises are data-driven — adding new exercises should only require adding JSON
 - `beat.note` convention varies by instrument: drum pad names for drums, note names (C4, D4) for handpan, strum direction (down/up) for strumming
-- Three planned instrument types: `drums` (implemented), `handpan` (planned), `strumming` (planned)
+- Three planned instrument types: `drums` (implemented), `handpan` (implemented), `strumming` (planned)
