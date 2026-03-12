@@ -1,5 +1,8 @@
 import type { DrumPad, TimingJudgment } from '@/types'
 
+export type MarkerShape = 'circle' | 'diamond' | 'square' | 'triangle' | 'rounded-rect' | 'line'
+export type HandpanRegister = 'low' | 'mid' | 'high'
+
 export const DRUM_PAD_COLORS: Record<DrumPad, string> = {
   kick: 'bg-red-400',
   snare: 'bg-orange-400',
@@ -107,7 +110,61 @@ export function pitchClass(note: string): string {
   return note.replace(/\d+$/, '')
 }
 
+export const JUDGMENT_BORDER_COLORS: Record<TimingJudgment, string> = {
+  'on-time': 'border-green-400',
+  early: 'border-yellow-400',
+  late: 'border-yellow-400',
+  miss: 'border-red-400',
+}
+
+export const DRUM_PAD_SHAPES: Record<DrumPad, MarkerShape> = {
+  kick: 'circle',
+  snare: 'diamond',
+  hihat: 'triangle',
+  tom1: 'square',
+  tom2: 'rounded-rect',
+}
+
+export const DRUM_PAD_MARKER_LABELS: Record<DrumPad, string> = {
+  kick: 'K',
+  snare: 'S',
+  hihat: 'H',
+  tom1: 'T1',
+  tom2: 'T2',
+}
+
+export const HANDPAN_REGISTER_SHAPES: Record<HandpanRegister, MarkerShape> = {
+  low: 'circle',
+  mid: 'diamond',
+  high: 'triangle',
+}
+
+export function handpanNoteRegister(note: string): HandpanRegister {
+  const octave = parseInt(note.replace(/[^0-9]/g, ''), 10)
+  if (octave <= 3) return 'low'
+  if (octave === 4) return 'mid'
+  return 'high'
+}
+
+export const MARKER_SIZE = 16
+
 export const PX_PER_BEAT = 60
 export const PLAYHEAD_POSITION = 0.3
 export const LANE_HEIGHT = 28
 export const LABEL_WIDTH = 48
+
+// Vertical timeline constants
+export const PX_PER_BEAT_VERTICAL = 80
+export const HIT_LINE_POSITION_VERTICAL = 0.7
+export const DRUM_COLUMN_WIDTH = 64
+export const VERTICAL_TIMELINE_HEIGHT = 300
+export const HANDPAN_COLUMN_WIDTH = 160
+
+// Drum column order (left to right, matches visual layout)
+export const DRUM_COLUMN_ORDER: DrumPad[] = ['hihat', 'tom1', 'tom2', 'snare', 'kick']
+
+export function handpanNoteOffset(noteIndex: number, totalToneFields: number): number {
+  if (noteIndex === 0) return 0.5 // ding centered
+  const angle = ((noteIndex - 1) / (totalToneFields - 1)) * 2 * Math.PI - Math.PI / 2
+  return 0.5 + Math.cos(angle) * 0.35 // 0.15 to 0.85 range
+}

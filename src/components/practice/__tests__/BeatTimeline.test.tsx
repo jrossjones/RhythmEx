@@ -81,13 +81,14 @@ describe('BeatTimeline', () => {
 
   it('renders lane labels for drum exercise', () => {
     render(<BeatTimeline exercise={drumExercise} progress={0} bpm={120} instrument="drums" />)
-    const labels = screen.getByTestId('drum-lane-labels')
-    expect(labels).toBeInTheDocument()
-    expect(screen.getByText('HH')).toBeInTheDocument()
-    expect(screen.getByText('SN')).toBeInTheDocument()
-    expect(screen.getByText('KK')).toBeInTheDocument()
-    expect(screen.getByText('T1')).toBeInTheDocument()
-    expect(screen.getByText('T2')).toBeInTheDocument()
+    const labelsContainer = screen.getByTestId('drum-lane-labels')
+    expect(labelsContainer).toBeInTheDocument()
+    // Lane labels are inside the labels container — check within that scope
+    expect(labelsContainer.textContent).toContain('HH')
+    expect(labelsContainer.textContent).toContain('SN')
+    expect(labelsContainer.textContent).toContain('KK')
+    expect(labelsContainer.textContent).toContain('T1')
+    expect(labelsContainer.textContent).toContain('T2')
   })
 
   it('does not render lane labels for non-drum exercise', () => {
@@ -161,6 +162,38 @@ describe('BeatTimeline', () => {
     expect(markers[1].className).toContain('bg-blue-400')     // A
     expect(markers[2].className).toContain('bg-red-400')      // C
     expect(markers[3].className).toContain('bg-violet-400')   // Bb
+  })
+
+  // --- Shape and label tests ---
+
+  it('drum markers have correct shapes', () => {
+    render(<BeatTimeline exercise={drumExercise} progress={0} bpm={120} instrument="drums" />)
+    const markers = screen.getAllByTestId('beat-marker')
+    expect(markers[0].dataset.shape).toBe('circle')      // kick
+    expect(markers[1].dataset.shape).toBe('diamond')      // snare
+    expect(markers[2].dataset.shape).toBe('triangle')     // hihat
+    expect(markers[3].dataset.shape).toBe('square')       // tom1
+  })
+
+  it('drum markers have text labels', () => {
+    render(<BeatTimeline exercise={drumExercise} progress={0} bpm={120} instrument="drums" />)
+    expect(screen.getByText('K')).toBeInTheDocument()
+    expect(screen.getByText('S')).toBeInTheDocument()
+    expect(screen.getByText('H')).toBeInTheDocument()
+  })
+
+  // --- Hollow/filled state tests ---
+
+  it('judged markers become hollow', () => {
+    const judgments = new Map<number, 'on-time' | 'early' | 'late' | 'miss'>()
+    judgments.set(0, 'on-time')
+    render(<BeatTimeline exercise={drumExercise} progress={0.5} bpm={120} instrument="drums" beatJudgments={judgments} />)
+    const markers = screen.getAllByTestId('beat-marker')
+    // First marker (judged) should be hollow
+    expect(markers[0].className).toContain('bg-transparent')
+    expect(markers[0].className).toContain('border-green-400')
+    // Second marker (not judged) should be filled
+    expect(markers[1].className).not.toContain('bg-transparent')
   })
 
   it('does not render lane labels for handpan exercise', () => {

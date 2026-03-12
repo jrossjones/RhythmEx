@@ -116,10 +116,13 @@ describe('useTiming', () => {
     const { result } = renderHook(() => useTiming(options))
 
     // First tap matches beat 0
+    const baseTime = performance.now()
+    vi.spyOn(performance, 'now').mockReturnValue(baseTime)
     elapsedMsRef.current = 10
     act(() => { result.current.recordTap() })
 
-    // Second tap is late for beat 1
+    // Second tap is late for beat 1 (advance wall clock past debounce)
+    vi.spyOn(performance, 'now').mockReturnValue(baseTime + 100)
     elapsedMsRef.current = 570
     act(() => { result.current.recordTap() })
 
@@ -134,9 +137,12 @@ describe('useTiming', () => {
     const { result } = renderHook(() => useTiming(options))
 
     // First tap matches beat 0 (at 0ms)
+    const baseTime = performance.now()
+    vi.spyOn(performance, 'now').mockReturnValue(baseTime)
     act(() => { result.current.recordTap() })
 
     // Second tap close to beat 1 (at 500ms) — should match beat 1, not beat 0
+    vi.spyOn(performance, 'now').mockReturnValue(baseTime + 100)
     elapsedMsRef.current = 490
     act(() => { result.current.recordTap() })
 
@@ -419,6 +425,79 @@ describe('useTiming', () => {
     expect(result.current.tapResultsRef.current).toHaveLength(1)
     expect(result.current.tapResultsRef.current[0].judgment).toBe('on-time')
     expect(result.current.tapResultsRef.current[0].expectedPad).toBeUndefined()
+  })
+
+  // --- Tap debounce tests ---
+
+  it('same-pad taps within 40ms: only first registers', () => {
+    const elapsedMsRef = { current: 20 }
+    const options = { exercise: drumExercise, bpm: 120, phase: 'playing' as const, elapsedMsRef }
+    const { result } = renderHook(() => useTiming(options))
+
+    const baseTime = performance.now()
+    vi.spyOn(performance, 'now').mockReturnValue(baseTime)
+    act(() => { result.current.recordTap('kick') })
+
+    // Second tap on same pad within 40ms
+    vi.spyOn(performance, 'now').mockReturnValue(baseTime + 20)
+    elapsedMsRef.current = 40
+    act(() => { result.current.recordTap('kick') })
+
+    expect(result.current.tapResultsRef.current).toHaveLength(1)
+  })
+
+  it('different-pad taps within 40ms: both register', () => {
+    const elapsedMsRef = { current: 20 }
+    const options = { exercise: drumExercise, bpm: 120, phase: 'playing' as const, elapsedMsRef }
+    const { result } = renderHook(() => useTiming(options))
+
+    const baseTime = performance.now()
+    vi.spyOn(performance, 'now').mockReturnValue(baseTime)
+    act(() => { result.current.recordTap('kick') })
+
+    // Different pad within 40ms
+    vi.spyOn(performance, 'now').mockReturnValue(baseTime + 20)
+    elapsedMsRef.current = 490
+    act(() => { result.current.recordTap('snare') })
+
+    expect(result.current.tapResultsRef.current).toHaveLength(2)
+  })
+
+  it('same-pad taps >40ms apart: both register', () => {
+    const elapsedMsRef = { current: 20 }
+    const options = { exercise: drumExercise, bpm: 120, phase: 'playing' as const, elapsedMsRef }
+    const { result } = renderHook(() => useTiming(options))
+
+    const baseTime = performance.now()
+    vi.spyOn(performance, 'now').mockReturnValue(baseTime)
+    act(() => { result.current.recordTap('kick') })
+
+    // Same pad but >40ms later
+    vi.spyOn(performance, 'now').mockReturnValue(baseTime + 50)
+    elapsedMsRef.current = 490
+    act(() => { result.current.recordTap('kick') })
+
+    expect(result.current.tapResultsRef.current).toHaveLength(2)
+  })
+
+  it('reset clears debounce state', () => {
+    const elapsedMsRef = { current: 20 }
+    const options = { exercise: drumExercise, bpm: 120, phase: 'playing' as const, elapsedMsRef }
+    const { result } = renderHook(() => useTiming(options))
+
+    const baseTime = performance.now()
+    vi.spyOn(performance, 'now').mockReturnValue(baseTime)
+    act(() => { result.current.recordTap('kick') })
+
+    // Reset clears debounce
+    act(() => { result.current.reset() })
+
+    // Same pad, within 40ms of original tap — but after reset, should work
+    vi.spyOn(performance, 'now').mockReturnValue(baseTime + 20)
+    elapsedMsRef.current = 10
+    act(() => { result.current.recordTap('kick') })
+
+    expect(result.current.tapResultsRef.current).toHaveLength(1)
   })
 
   it('strict mode wrong pad includes expectedPad and expectedMs in marker', () => {

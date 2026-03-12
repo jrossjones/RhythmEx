@@ -3,14 +3,20 @@ import type { Exercise, InstrumentType, TapMarker, TimingJudgment } from '@/type
 import { beatTimesMs, exerciseDurationMs, msPerBeat } from '@/utils/rhythm'
 import { SingleRowTimeline } from './SingleRowTimeline'
 import { DrumLaneTimeline } from './DrumLaneTimeline'
+import type { MarkerShape } from './timelineConstants'
 import {
   DRUM_PAD_COLORS,
   DURATION_COLORS,
   JUDGMENT_COLORS,
+  JUDGMENT_BORDER_COLORS,
   TAP_MARKER_COLORS,
   DRUM_LANE_ORDER,
   DRUM_LANE_LABELS,
+  DRUM_PAD_SHAPES,
+  DRUM_PAD_MARKER_LABELS,
   HANDPAN_NOTE_COLORS,
+  HANDPAN_REGISTER_SHAPES,
+  handpanNoteRegister,
   pitchClass,
   PX_PER_BEAT,
   PLAYHEAD_POSITION,
@@ -85,7 +91,23 @@ export function BeatTimeline({ exercise, progress, bpm, beatJudgments, instrumen
     const color = judgment ? JUDGMENT_COLORS[judgment] : baseColor
     const isNext = i === nextBeatIndex && !judgment
     const isJudged = !!judgment
-    return { position, color, isNext, isJudged, lane: beat.note }
+
+    // Shape and label
+    let shape: MarkerShape = 'circle'
+    let label: string | undefined
+    if (isDrum) {
+      const pad = beat.note as keyof typeof DRUM_PAD_SHAPES
+      shape = DRUM_PAD_SHAPES[pad] ?? 'circle'
+      label = DRUM_PAD_MARKER_LABELS[pad]
+    } else if (isHandpan) {
+      shape = HANDPAN_REGISTER_SHAPES[handpanNoteRegister(beat.note)]
+      label = pitchClass(beat.note)
+    }
+
+    const isHollow = !!judgment
+    const borderColor = judgment ? JUDGMENT_BORDER_COLORS[judgment] : undefined
+
+    return { position, color, isNext, isJudged, isHollow, borderColor, lane: beat.note, shape, label }
   })
 
   // Playhead position

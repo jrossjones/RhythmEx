@@ -26,6 +26,7 @@ export function useTiming({ exercise, bpm, phase, elapsedMsRef, strictMode }: Us
   const matchedBeatsRef = useRef<Set<number>>(new Set())
   const beatTimesRef = useRef<number[]>([])
   const feedbackTimeoutRef = useRef<number>(0)
+  const lastTapTimePerPadRef = useRef<Map<string, number>>(new Map())
 
   // Pre-compute beat times whenever exercise/bpm changes
   // We store in ref and recompute on access to keep it current
@@ -37,6 +38,13 @@ export function useTiming({ exercise, bpm, phase, elapsedMsRef, strictMode }: Us
 
   const recordTap = useCallback((pad?: DrumPad | string) => {
     if (phase !== 'playing') return
+
+    // Per-pad debounce: ignore same-pad taps within 40ms
+    const now = performance.now()
+    const padKey = pad ?? '__default__'
+    const lastTime = lastTapTimePerPadRef.current.get(padKey)
+    if (lastTime !== undefined && now - lastTime < 40) return
+    lastTapTimePerPadRef.current.set(padKey, now)
 
     const tapMs = elapsedMsRef.current
     const times = getBeatTimes()
@@ -131,6 +139,7 @@ export function useTiming({ exercise, bpm, phase, elapsedMsRef, strictMode }: Us
     tapResultsRef.current = []
     tapMarkersRef.current = []
     matchedBeatsRef.current = new Set()
+    lastTapTimePerPadRef.current = new Map()
     setLastTapFeedback(null)
     setLastFeedbackPad(null)
     setBeatJudgments(new Map())

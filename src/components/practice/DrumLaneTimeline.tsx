@@ -1,4 +1,6 @@
 import type { ProcessedTapMarker } from './BeatTimeline'
+import { BeatMarker } from './BeatMarker'
+import type { MarkerShape } from './timelineConstants'
 import { DRUM_LANE_ORDER, DRUM_PAD_BORDER_COLORS, LANE_HEIGHT } from './timelineConstants'
 import type { DrumPad } from '@/types'
 
@@ -7,7 +9,11 @@ interface Marker {
   color: string
   isNext: boolean
   isJudged: boolean
+  isHollow?: boolean
+  borderColor?: string
   lane: string
+  shape?: MarkerShape
+  label?: string
 }
 
 interface DrumLaneTimelineProps {
@@ -49,15 +55,19 @@ export function DrumLaneTimeline({ markers, measureLines, playheadPosition, isSc
         const centerY = laneIdx * LANE_HEIGHT + LANE_HEIGHT / 2
 
         return (
-          <div
+          <BeatMarker
             key={`beat-${i}`}
-            data-testid="beat-marker"
-            className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full ${marker.color} ${marker.isNext ? 'animate-pulse scale-125' : ''} ${marker.isJudged ? 'ring-2 ring-white scale-110' : ''}`}
+            shape={marker.shape ?? 'circle'}
+            color={marker.color}
+            borderColor={marker.borderColor}
+            label={marker.label}
+            isNext={marker.isNext}
+            isJudged={marker.isJudged}
+            isHollow={marker.isHollow}
+            className="absolute -translate-x-1/2 -translate-y-1/2"
             style={{
               left: isScrolling ? marker.position : `${marker.position}%`,
               top: centerY,
-              width: 10,
-              height: 10,
             }}
           />
         )

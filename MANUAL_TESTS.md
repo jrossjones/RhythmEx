@@ -411,3 +411,107 @@ Run `npm run dev` and open the app in a browser to execute these tests.
   - Switch back to Handpan — score preserved
 - [ ] **Tap placement markers:** Tick marks appear at tap positions on single-row timeline
 - [ ] **Results screen:** Shows stars, accuracy, tap breakdown, personal best comparison
+
+---
+
+## Pre-Phase 6 — Timeline Overhaul & Practice Improvements
+
+### P6.1 Tap Debounce
+- [ ] Play a drum exercise and very rapidly double-tap the same pad (e.g., mash `f` for kick)
+  - Only one tap should register per beat, no double-triggers within ~40ms
+- [ ] Rapidly tap two different pads in quick succession (e.g., `f` then `d` within 40ms)
+  - Both taps should register (debounce is per-pad, not global)
+- [ ] At 200 BPM with 16th notes (75ms apart), taps on the same pad should all register cleanly
+  - 75ms > 40ms debounce, so no taps should be lost
+- [ ] Handpan: rapidly double-tap the same note pad — only one tap registers
+- [ ] Handpan: rapidly tap two different note pads — both register
+- [ ] After resetting (Stop then Start), debounce state is cleared (first tap always registers)
+
+### P6.2 Beat Marker Shapes
+- [ ] **Drum exercises:** each pad type has a unique marker shape on the timeline:
+  - Kick = circle
+  - Snare = diamond (rotated square)
+  - Hi-hat = triangle (pointing up)
+  - Tom1 = square
+  - Tom2 = rounded rectangle (wider than tall)
+- [ ] Shapes are visually distinct from each other at a glance
+- [ ] All markers are ~16px (larger than previous 10px markers)
+- [ ] **Handpan exercises:** marker shapes are based on register:
+  - Low register (octave ≤3) = circle
+  - Mid register (octave 4) = diamond
+  - High register (octave ≥5) = triangle
+  - Ding (first note in scale) = full-width horizontal line bar
+
+### P6.3 Marker Text Labels
+- [ ] **Drum markers** have single-letter labels inside: K, S, H, T1, T2
+  - Labels are readable (white text, 8px font, bold)
+  - Diamond markers: label text is counter-rotated so it reads normally
+- [ ] **Handpan markers** have pitch class labels inside: D, A, Bb, C, etc.
+  - Labels match the note being played
+- [ ] Labels are visible at default zoom/scale on both mobile and desktop
+- [ ] Line-shape markers (handpan ding) can display a label
+
+### P6.4 Hollow/Filled Marker States
+- [ ] **Before tapping:** all beat markers are solid/filled with their pad/note color
+- [ ] **After tapping a beat:** the marker transitions to a hollow outline
+  - On-time → green border outline
+  - Early/late → yellow border outline
+  - Miss → red border outline
+- [ ] Background becomes transparent when hollow (not the original fill color)
+- [ ] Transition is smooth (not an instant snap — CSS transition visible)
+- [ ] Untapped beats remain solid/filled throughout the exercise
+- [ ] After exercise ends: unfilled beats (missed) also become hollow red outlines
+- [ ] Next upcoming beat retains its pulse animation until it's tapped or passed
+
+### P6.5 Vertical Timeline — General
+- [ ] Timeline is displayed as a vertical note highway above the instrument pads
+  - Notes appear at the top and scroll downward toward a hit line near the bottom
+- [ ] Hit line is a horizontal indigo bar at approximately 70% from the top
+  - Small triangle pointer on the right side of the hit line
+- [ ] During playback, beats scroll smoothly downward past the hit line
+- [ ] Beat markers use the correct shapes, labels, colors, and hollow/filled states
+- [ ] Measure divider lines appear as horizontal gray lines between measures
+- [ ] Timeline has a white rounded card background with shadow
+
+### P6.6 Vertical Timeline — Drums
+- [ ] Drum exercises show equal-width vertical columns (one per active pad)
+  - Beginner (2 pads): 2 columns
+  - Intermediate (3 pads): 3 columns
+  - Advanced (5 pads): 5 columns
+- [ ] Column labels visible at the bottom: HH, T1, T2, SN, KK (matching active pads)
+- [ ] Beat markers are positioned in the correct column for their pad type
+- [ ] Columns are separated by subtle vertical dividers
+- [ ] Tap markers (horizontal tick lines) appear in the correct column
+- [ ] Short exercises: all beats visible without scrolling
+- [ ] Long exercises (8+ measures): smooth vertical scrolling, hit line stays fixed
+
+### P6.7 Vertical Timeline — Handpan
+- [ ] Handpan exercises show a single wide column (~160px)
+- [ ] **Ding notes** render as full-width horizontal bar (line shape) — very distinct
+- [ ] **Other notes** are positioned with horizontal offsets based on their pad position:
+  - Notes spread across the column width (not all stacked in the center)
+  - Different notes at the same time occupy different horizontal positions
+- [ ] Each marker has the correct shape (register-based), color (pitch class), and label (note name)
+- [ ] Tap markers appear as horizontal tick lines
+- [ ] Scrolling works correctly for long handpan exercises (8+ measures)
+
+### P6.8 Listen/Demo Mode
+- [ ] **"Listen" button** appears in the idle state, next to the "Start" button
+- [ ] Pressing "Listen" starts the countdown (same 3-2-1-Go as normal)
+- [ ] After countdown, exercise plays with auto-fired beat sounds:
+  - **Drums:** each drum sound plays at the correct time (kick/snare/hihat/toms audible)
+  - **Handpan:** each pitched note plays at the correct time
+- [ ] Timeline playhead and markers animate during demo (same as normal play)
+- [ ] **Pads are visible but disabled** — cannot tap during demo
+  - Drum pads show muted colors (disabled state)
+  - Handpan pads show muted colors (disabled state)
+- [ ] **"Listening..." badge** appears next to the settings gear during demo playback
+- [ ] **"Stop" button** is visible during demo playback and stops the demo
+- [ ] **Metronome** clicks during demo if metronome is enabled
+- [ ] **On completion:** exercise returns to idle state (no results screen, no scoring)
+- [ ] **After demo completes:** "Start" and "Listen" buttons reappear
+  - Can immediately start a normal practice session or another listen
+- [ ] **BPM controls:** Listen mode uses the current BPM setting
+  - Change BPM to 60 → listen plays at 60 BPM
+  - Change BPM to 180 → listen plays at 180 BPM
+- [ ] Demo mode does not affect score storage (no scores saved)

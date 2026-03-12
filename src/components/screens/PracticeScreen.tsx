@@ -2,7 +2,7 @@ import { useRef, useState, useCallback, useEffect, useMemo } from 'react'
 import { Layout } from '@/components/ui/Layout'
 import { Navigation } from '@/components/ui/Navigation'
 import { Button } from '@/components/ui/Button'
-import { BeatTimeline } from '@/components/practice/BeatTimeline'
+import { VerticalTimeline } from '@/components/practice/VerticalTimeline'
 import { TapZone } from '@/components/practice/TapZone'
 import { DrumPad } from '@/components/instruments/DrumPad'
 import { HandpanPad } from '@/components/instruments/HandpanPad'
@@ -13,7 +13,7 @@ import { useExercise } from '@/hooks/useExercise'
 import { useTiming } from '@/hooks/useTiming'
 import { useAudio } from '@/hooks/useAudio'
 import { calculateAccuracy, calculateStars } from '@/utils/scoring'
-import { exerciseDrumPads, msPerBeat } from '@/utils/rhythm'
+import { beatTimesMs, exerciseDrumPads, msPerBeat } from '@/utils/rhythm'
 import { getScale, DEFAULT_HANDPAN_SCALE } from '@/data/handpan/scales'
 import { saveResult } from '@/utils/storage'
 import type { DrumPad as DrumPadType, Exercise, ExerciseResult, InstrumentType, PracticeSettings, StarRating, TapResult } from '@/types'
@@ -39,6 +39,9 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
     speedTrainerStep: 5,
   })
 
+  const [isDemoMode, setIsDemoMode] = useState(false)
+  const isDemoModeRef = useRef(false)
+
   const [loopOverlay, setLoopOverlay] = useState<{
     accuracy: number
     stars: StarRating
@@ -52,11 +55,21 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
   const finalizeRef = useRef<() => TapResult[]>(() => [])
   const resetRef = useRef<() => void>(() => {})
   const restartRef = useRef<(options?: { seamless?: boolean; newBpm?: number }) => void>(() => {})
+  const stopExerciseRef = useRef<() => void>(() => {})
   const settingsRef = useRef(settings)
   const currentBpmRef = useRef(0)
   const onSpeedTrainerBpmChangeRef = useRef(onSpeedTrainerBpmChange)
 
   const handleDone = () => {
+    // Demo mode: just reset, no scoring
+    if (isDemoModeRef.current) {
+      stopExerciseRef.current()
+      resetRef.current()
+      setIsDemoMode(false)
+      isDemoModeRef.current = false
+      return
+    }
+
     const tapResults = finalizeRef.current()
     const accuracy = calculateAccuracy(tapResults)
     const stars = calculateStars(accuracy)
@@ -135,6 +148,8 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
     settingsRef.current = settings
     currentBpmRef.current = bpm
     onSpeedTrainerBpmChangeRef.current = onSpeedTrainerBpmChange
+    stopExerciseRef.current = stopExercise
+    isDemoModeRef.current = isDemoMode
   })
 
   const {
@@ -208,9 +223,22 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
     startExercise()
   }, [startAudioContext, startExercise])
 
+  // Start listen/demo mode
+  const handleListen = useCallback(async () => {
+    setIsDemoMode(true)
+    isDemoModeRef.current = true
+    await startAudioContext()
+    startExercise()
+  }, [startAudioContext, startExercise])
+
   const handleStop = () => {
     stopExercise()
     reset()
+    if (isDemoMode) {
+      setIsDemoMode(false)
+      isDemoModeRef.current = false
+      return
+    }
     // If we have a last loop result, show full results screen
     if (lastLoopResult && onShowResults) {
       onShowResults(lastLoopResult)
@@ -279,6 +307,40 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
     return () => cancelAnimationFrame(rafId)
   }, [phase, settings.metronomeOn, bpm, elapsedMsRef, exercise.timeSignature])
 
+  // Demo mode — auto-fire beat sounds during playing
+  const playDrumRef = useRef(playDrum)
+  const playHandpanRef = useRef(playHandpan)
+  useEffect(() => {
+    playDrumRef.current = playDrum
+    playHandpanRef.current = playHandpan
+  })
+
+  useEffect(() => {
+    if (phase !== 'playing' || !isDemoMode) return
+
+    const times = beatTimesMs({ ...exercise, bpm })
+    const firedBeats = new Set<number>()
+    let rafId: number
+
+    const tick = () => {
+      const elapsed = elapsedMsRef.current
+      for (let i = 0; i < times.length; i++) {
+        if (!firedBeats.has(i) && elapsed >= times[i]) {
+          firedBeats.add(i)
+          if (instrument === 'drums') {
+            playDrumRef.current(exercise.beats[i].note as DrumPadType)
+          } else if (instrument === 'handpan') {
+            playHandpanRef.current(exercise.beats[i].note)
+          }
+        }
+      }
+      rafId = requestAnimationFrame(tick)
+    }
+
+    rafId = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(rafId)
+  }, [phase, isDemoMode, exercise, bpm, instrument, elapsedMsRef])
+
   return (
     <Layout>
       <div className="flex items-center justify-between">
@@ -292,6 +354,11 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
           {settings.speedTrainerOn && (
             <span className="rounded-full bg-emerald-100 px-3 py-0.5 text-xs font-bold text-emerald-700">
               Speed Trainer
+            </span>
+          )}
+          {isDemoMode && phase !== 'idle' && (
+            <span className="rounded-full bg-purple-100 px-3 py-0.5 text-xs font-bold text-purple-700">
+              Listening...
             </span>
           )}
           <SettingsPopover
@@ -332,13 +399,15 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
 
       {/* Beat timeline */}
       <div className="mb-6">
-        <BeatTimeline
+        <VerticalTimeline
           exercise={exercise}
           progress={progress}
           bpm={bpm}
           beatJudgments={beatJudgments}
           instrument={instrument}
           tapMarkers={tapMarkers}
+          activePads={activePads}
+          scaleNotes={handpanScaleNotes}
         />
       </div>
 
@@ -349,7 +418,7 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
             onTap={handleDrumTap}
             lastFeedback={lastTapFeedback}
             lastFeedbackPad={lastFeedbackPad as DrumPadType | null}
-            disabled={phase !== 'playing'}
+            disabled={phase !== 'playing' || isDemoMode}
             activePads={activePads}
             nextExpectedPad={nextExpectedPad}
           />
@@ -358,7 +427,7 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
             onTap={handleHandpanTap}
             lastFeedback={lastTapFeedback}
             lastFeedbackPad={lastFeedbackPad}
-            disabled={phase !== 'playing'}
+            disabled={phase !== 'playing' || isDemoMode}
             scaleNotes={handpanScaleNotes}
             nextExpectedNote={nextExpectedNote}
           />
@@ -366,17 +435,22 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
           <TapZone
             onTap={recordTap}
             lastFeedback={lastTapFeedback}
-            disabled={phase !== 'playing'}
+            disabled={phase !== 'playing' || isDemoMode}
           />
         )}
       </div>
 
       {/* Action area */}
-      <div className="flex justify-center">
+      <div className="flex justify-center gap-3">
         {isIdle && (
-          <Button size="lg" onClick={handleStart}>
-            Start
-          </Button>
+          <>
+            <Button size="lg" onClick={handleStart}>
+              Start
+            </Button>
+            <Button variant="secondary" size="lg" onClick={handleListen}>
+              Listen
+            </Button>
+          </>
         )}
         {phase === 'playing' && (
           <Button variant="secondary" size="sm" onClick={handleStop}>
