@@ -110,6 +110,33 @@ describe('VerticalTimeline', () => {
     expect(markers[0].dataset.shape).toBe('line')
   })
 
+  it('future beats are above past beats (drop-down direction)', () => {
+    // At progress=0.5, beat 0 (already played) should be below beat 3 (future)
+    render(
+      <VerticalTimeline exercise={drumExercise} progress={0.5} bpm={120} instrument="drums" activePads={['kick', 'snare', 'hihat', 'tom1']} />
+    )
+    const markers = screen.getAllByTestId('beat-marker')
+    const y0 = parseFloat(markers[0].style.top) // beat 0 (time=0, past)
+    const y3 = parseFloat(markers[3].style.top) // beat 3 (time=1500ms, future)
+    // Past beats should have larger Y (lower on screen) than future beats
+    expect(y0).toBeGreaterThan(y3)
+  })
+
+  it('beat at time 0 starts near hit line at progress=0', () => {
+    render(
+      <VerticalTimeline exercise={drumExercise} progress={0} bpm={120} instrument="drums" activePads={['kick', 'snare', 'hihat', 'tom1']} />
+    )
+    // Hit line is at 70% of 300px = 210px. Beat 0 should be near the hit line
+    // (accounting for scroll offset pinning the playhead at the hit line)
+    const scrollContent = screen.getByTestId('vertical-scroll-content')
+    const scrollOffset = parseFloat(scrollContent.style.transform.replace('translateY(-', '').replace('px)', ''))
+    const markers = screen.getAllByTestId('beat-marker')
+    const beat0Y = parseFloat(markers[0].style.top)
+    const visualY = beat0Y - scrollOffset
+    // Should be at or very near the hit line (210px)
+    expect(visualY).toBeCloseTo(210, 0)
+  })
+
   it('renders tap markers', () => {
     const tapMarkers = [
       { ms: 20, pad: 'kick' as const, judgment: 'on-time' as const, expectedMs: 0 },

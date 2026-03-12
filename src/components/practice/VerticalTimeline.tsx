@@ -52,13 +52,17 @@ export function VerticalTimeline({
   const containerHeight = VERTICAL_TIMELINE_HEIGHT
   const hitLineY = containerHeight * HIT_LINE_POSITION_VERTICAL
 
-  // Calculate rendered height based on exercise length
+  // Calculate rendered height with padding so playhead can stay at hit line
+  // for the entire exercise. Beats drop from top toward the hit line.
   const [beatsPerMeasure] = exercise.timeSignature
   const totalBeats = exercise.measures * beatsPerMeasure
-  const renderedHeight = Math.max(totalBeats * PX_PER_BEAT_VERTICAL, containerHeight)
+  const exercisePixels = totalBeats * PX_PER_BEAT_VERTICAL
+  const topPadding = containerHeight - hitLineY  // space above for future beats to enter
+  const bottomPadding = hitLineY                 // space below for past beats to exit
+  const renderedHeight = exercisePixels + topPadding + bottomPadding
 
-  // Playhead position in rendered content (Y axis)
-  const playheadY = progress * renderedHeight
+  // Inverted Y: beat 0 near bottom, last beat near top. Playhead drops from bottom to top.
+  const playheadY = topPadding + (1 - progress) * exercisePixels
 
   // Scroll offset: pin playhead at hit line position
   const scrollOffset = Math.max(
@@ -70,12 +74,12 @@ export function VerticalTimeline({
   const playheadMs = progress * durationMs
   const nextBeatIndex = times.findIndex((t) => t > playheadMs)
 
-  // Measure line positions (Y axis)
+  // Measure line positions (Y axis, inverted)
   const msPerMeasure = beatsPerMeasure * msPerBeat(bpm)
   const measureLines: number[] = []
   for (let i = 1; i < exercise.measures; i++) {
     const frac = (i * msPerMeasure) / durationMs
-    measureLines.push(frac * renderedHeight)
+    measureLines.push(topPadding + (1 - frac) * exercisePixels)
   }
 
   // Build note index lookup for handpan
@@ -88,7 +92,7 @@ export function VerticalTimeline({
   // Build markers
   const markers = exercise.beats.map((beat, i) => {
     const frac = durationMs > 0 ? times[i] / durationMs : 0
-    const yPosition = frac * renderedHeight
+    const yPosition = topPadding + (1 - frac) * exercisePixels
     const judgment = beatJudgments?.get(i)
 
     const baseColor = isDrum
@@ -141,11 +145,11 @@ export function VerticalTimeline({
     }
   })
 
-  // Process tap markers (Y positions)
+  // Process tap markers (Y positions, inverted)
   const processedTapMarkers = (tapMarkers ?? []).map((tm) => {
     const frac = durationMs > 0 ? tm.ms / durationMs : 0
     return {
-      position: frac * renderedHeight,
+      position: topPadding + (1 - frac) * exercisePixels,
       color: TAP_MARKER_COLORS[tm.judgment],
       lane: tm.pad,
       pad: tm.pad,
