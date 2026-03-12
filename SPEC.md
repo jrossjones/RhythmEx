@@ -185,22 +185,15 @@ Strumming exercises may additionally include top-level `key` and `chords` fields
 - **Exercise selection filtering:** `ExerciseSelectScreen` filters exercises by selected instrument. Only shows exercises matching the current instrument.
 - 215 tests passing (172 existing + 43 new)
 
-### Planned Improvements (Pre-Phase 6)
-Enhancements to ship before the next instrument phase:
-
-- **Vertical timeline with pad-aligned lanes:** Replace horizontal scrolling timeline with a vertical note highway (inspired by Guitar Hero / DDR). Notes scroll downward toward the instrument pads, with each lane aligned directly above its corresponding pad. This creates a direct spatial connection between "what's coming" and "where to tap" — more intuitive for young children than color-matching across a horizontal lane. Applies to both drums (5 lanes above 5 pads) and handpan (lanes above circular pads). Replaces `DrumLaneTimeline` and `SingleRowTimeline` with a unified `VerticalTimeline` component. Playhead becomes a horizontal hit line near the bottom.
-
-- **Shape-differentiated markers:** Unique marker shape per drum pad for redundant encoding (color + lane + shape). Satisfies WCAG 1.4.1 (color not the only visual means). Drum shapes: kick = circle, snare = diamond (rotated square via CSS `rotate-45`), hihat = triangle (references cymbal), tom1 = square, tom2 = rounded rectangle. For handpan, shapes encode pitch register (low = circle, mid = diamond, high = triangle) since 9 unique shapes would be excessive. Increase base marker size from 10px to ~16px for ages 5+ readability (fits within lane height).
-
-- **Text labels inside markers:** Single-character abbreviations rendered inside the larger markers: K (kick), S (snare), H (hihat), T1, T2. Provides a fourth encoding channel. For handpan, show note name (e.g. "D", "A", "Bb"). Requires markers at 14px+ to be legible (~8px white text).
-
-- **Hollow/filled marker states:** Upcoming beats are filled (solid). Already-judged beats transition to hollow outlines, reducing visual clutter behind the hit line and making upcoming beats more prominent.
-
-- **Listen/Demo mode:** A "Listen" button on the practice screen that plays back the full exercise audio at the current BPM without requiring any taps. The playhead animates along the timeline and instrument sounds fire at each beat time automatically. Useful for learning a new rhythm before attempting it. Reuses existing `useExercise` lifecycle + `useAudio` playback. No scoring or tap input during demo. Option to stop early.
-
-- **Tap debounce:** Prevent double-triggers on fast taps.
-
-- **Handpan idle pad indicators:** Visual cue on idle pads (similar to drum pad muted colors).
+### Pre-Phase 6 — Timeline Overhaul & Practice Improvements (Complete)
+- **Vertical timeline:** Replaced horizontal scrolling timeline with a Guitar Hero-style vertical note highway. `VerticalTimeline` orchestrator delegates to `VerticalDrumTimeline` (N equal-width columns, one per active pad) or `VerticalSingleTimeline` (single column with angular horizontal offsets for handpan). Future beats appear at the top and drop down toward a hit line at 70% from top. Inverted Y coordinate system with top/bottom padding keeps the playhead pinned at the hit line for the full exercise. GPU-accelerated `translateY` scrolling, 80px per beat vertical density. Handpan ding note renders as a full-width horizontal line bar. Old horizontal components (`BeatTimeline`, `DrumLaneTimeline`, `SingleRowTimeline`) kept for rollback.
+- **Shape-differentiated markers (`BeatMarker` component):** Reusable marker with six CSS-only shapes: kick=circle, snare=diamond (rotated 45deg), hihat=triangle (clip-path), tom1=square, tom2=rounded-rect. Handpan uses register-based shapes (low=circle, mid=diamond, high=triangle). Ding=line (full-width bar). 16px default size. Satisfies WCAG 1.4.1 (color + shape + label redundant encoding).
+- **Text labels inside markers:** K/S/H/T1/T2 for drums, pitch class name (D, A, Bb, etc.) for handpan. White 8px bold text, centered. Diamond labels counter-rotated for readability.
+- **Hollow/filled marker states:** Upcoming beats are solid filled. Judged beats transition to hollow outlines with `border-green-400` (on-time), `border-yellow-400` (early/late), `border-red-400` (miss) via `JUDGMENT_BORDER_COLORS`. Smooth `transition-colors duration-200`.
+- **Listen/Demo mode:** "Listen" button in idle phase starts exercise with auto-fired beat sounds via RAF loop (`playDrum`/`playHandpan` at beat times). Countdown still plays. Pads visible but disabled. "Listening..." badge shown. On completion, resets to idle — no scoring, no results screen.
+- **Tap debounce:** 40ms per-pad debounce in `useTiming` using `performance.now()` and `lastTapTimePerPadRef` map. Different pads are independent. Cleared on `reset()`. At 200 BPM, 16th notes are 75ms apart — safely above the 40ms threshold.
+- **Handpan idle pad indicators:** Already implemented in Phase 5b. `HandpanPad` uses `HANDPAN_PAD_MUTED_COLORS` when disabled.
+- 258 tests passing (215 existing + 43 new)
 
 ### Phase 6 — Strumming Instrument (Not Started)
 
@@ -307,8 +300,8 @@ Replace screen tapping with real instrument audio detection via the browser's `g
 
 ### Future Phases (Not Yet Planned in Detail)
 
-#### Guitar Hero mode
-Scrolling note highway for sight-reading practice. Notes scroll vertically (or horizontally) toward a hit line. Player must tap/strum at the right moment. Visual style inspired by Guitar Hero / Rock Band. Could reuse the existing exercise data model with a different renderer.
+#### Guitar Hero mode enhancements
+The vertical timeline (Pre-Phase 6) already implements the core Guitar Hero-style note highway. Future enhancements: approach animations (osu!-style shrinking rings on next beat), colorblind mode toggle, column-to-pad visual alignment refinements, and sight-reading exercises with note patterns the player hasn't seen before.
 
 #### Polyrhythm practice
 Two simultaneous rhythm patterns, one per hand. Split the screen into left/right tap zones. Each zone has its own beat pattern and timeline. Scoring evaluates both hands independently. Useful for advanced drummers and percussionists.

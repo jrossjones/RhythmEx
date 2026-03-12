@@ -465,10 +465,14 @@ Run `npm run dev` and open the app in a browser to execute these tests.
 
 ### P6.5 Vertical Timeline — General
 - [ ] Timeline is displayed as a vertical note highway above the instrument pads
-  - Notes appear at the top and scroll downward toward a hit line near the bottom
+  - Notes appear at the top and drop downward toward a hit line near the bottom (Guitar Hero style)
 - [ ] Hit line is a horizontal indigo bar at approximately 70% from the top
   - Small triangle pointer on the right side of the hit line
+- [ ] At the start of the exercise, the first beat is at the hit line and future beats are visible above it
 - [ ] During playback, beats scroll smoothly downward past the hit line
+  - Already-played beats disappear below the hit line
+  - Upcoming beats drop in from above
+- [ ] The hit line stays fixed in position throughout the exercise — content scrolls, not the line
 - [ ] Beat markers use the correct shapes, labels, colors, and hollow/filled states
 - [ ] Measure divider lines appear as horizontal gray lines between measures
 - [ ] Timeline has a white rounded card background with shadow
