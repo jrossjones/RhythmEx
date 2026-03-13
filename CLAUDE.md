@@ -47,13 +47,13 @@ src/
       DrumLaneTimeline.tsx  # (Legacy) 5-lane stacked drum timeline
       SingleRowTimeline.tsx # (Legacy) Single-row timeline for non-drum instruments
       timelineConstants.ts  # Shared color maps, shapes, lane order/labels, scroll constants, vertical constants
-      CountdownOverlay.tsx # Full-screen 3-2-1-Go! countdown overlay (ticks at tempo)
       TapZone.tsx       # Large tap target with keyboard/touch/click input, judgment flash feedback
       SettingsPopover.tsx # Gear icon popover: metronome, tap sounds, strict mode, speed trainer, loop mode toggles
   hooks/
-    useExercise.ts      # Exercise lifecycle (idle/countdown/playing/done), playhead, BPM
+    useExercise.ts      # Exercise lifecycle (idle/countdown/playing/done), playhead, BPM, lead-in, outro scroll
     useAudio.ts         # Tone.js synth engine: drum sounds + handpan FM synth + metronome click
     useTiming.ts        # Tap detection, beat matching, result accumulation, finalize/reset
+    useLearnMode.ts     # Learn mode: countdown + step-through beats with smooth scroll animation
   data/
     exercises/          # Exercise definitions by difficulty
       beginner.ts       # 3 drum exercises: quarter notes, half notes, whole notes
@@ -80,6 +80,7 @@ src/
       useExercise.test.ts
       useTiming.test.ts
       useAudio.test.ts
+      useLearnMode.test.ts
   components/
     screens/
       __tests__/
@@ -139,13 +140,15 @@ src/
 - **Timing windows:** On-time ≤50ms, acceptable ≤120ms, beyond = miss (defined in `utils/scoring.ts`)
 - **Star thresholds:** ≥90% → 3 stars, ≥75% → 2 stars, else → 1 star
 - **Transport time format:** Tone.js `"measure:beat:sixteenth"` — parsed by `utils/rhythm.ts`
-- **Exercise lifecycle:** `idle → countdown (3-2-1) → playing → done` managed by `useExercise` hook. Uses `requestAnimationFrame` for smooth playhead animation and `performance.now()` for timing. BPM adjustable only in idle phase. Accepts optional `initialBpm` parameter for speed trainer persistence.
+- **Exercise lifecycle:** `idle → countdown (4-3-2-1) → playing → done` managed by `useExercise` hook. Uses `requestAnimationFrame` for smooth playhead animation and `performance.now()` for timing. BPM adjustable only in idle phase. Accepts optional `initialBpm` parameter for speed trainer persistence.
+- **Timeline lead-in:** RAF starts during countdown with negative elapsed time (`startTimeRef = now + leadInMs`). `elapsedMs` starts negative and reaches 0 when playing begins. `rawProgress` (unclamped) passed to VerticalTimeline for smooth scroll-in animation. Clamped `progress` stays in `[0, 1]` for non-timeline uses. No full-screen overlay — small countdown badge overlaid on timeline corner. `LEAD_IN_BEATS = 4` exported from `useExercise.ts`.
+- **Outro scroll:** After `elapsed >= durationMs`, `setPhase('done')` fires via `phaseDoneFiredRef` (stops taps). `onDone` callback fires at `durationMs + outroDurationMs` via `onDoneFiredRef`. RAF continues for one extra measure so beats animate past the hit line before results/navigation. `rawProgress` exceeds 1.0 during outro.
 - **Tap matching:** `useTiming` hook matches each tap to the nearest unmatched beat via `judgeTap()`. Stray taps beyond 240ms from any beat are silently ignored (kid-friendly). `finalize()` fills unmatched beats as misses. Uses refs for tap data (performance), state only for UI feedback. Feedback auto-clears after 300ms via internal timeout. Per-pad debounce (40ms) prevents double-triggers — uses `performance.now()` and `lastTapTimePerPadRef` map, cleared on `reset()`.
 - **Tap input:** `TapZone` supports Space key (`keydown` with `event.repeat` guard), `onTouchStart` (lower latency), and `onClick` (desktop fallback). Flashes green/yellow/red for 300ms per judgment.
 - **Drum pads:** `DrumPad` component replaces `TapZone` when instrument is drums. Grid layout adapts to active pad count (2/3/5). Keyboard shortcuts: `f`=kick, `d`=snare, `j`=hihat, `k`=tom1, `l`=tom2. Space maps to next expected pad. Each pad color-coded (kick=red, snare=orange, hihat=cyan, tom1=purple, tom2=pink).
 - **Audio engine:** `useAudio` hook creates Tone.js synths lazily on first `startAudioContext()` call (user gesture). Drums: MembraneSynth for kick/toms, NoiseSynth for snare, MetalSynth for hihat. Handpan: `PolySynth(FMSynth)` with reverb (decay 3s, wet 0.35), harmonicity 2.01, modulation index 12, 800ms note duration. Triangle Synth for metronome. All synths stored in ref, disposed on unmount. `playDrum`/`playHandpan`/`playMetronomeClick` are no-ops before audio context is ready.
-- **Metronome:** Clicks during countdown (on each 3-2-1-Go tick) and during playing (RAF loop tracks beat crossings from `elapsedMsRef`). Accent on downbeats (C5) vs normal beats (G4). Toggleable via settings.
-- **Tempo-aligned count-in:** Countdown ticks use `msPerBeat(bpm)` intervals (not fixed 1s), so the 3-2-1-Go aligns with the exercise tempo and metronome clicks.
+- **Metronome:** Clicks during countdown (on each 4-3-2-1 tick) and during playing (RAF loop tracks beat crossings from `elapsedMsRef`). Accent on downbeats (C5) vs normal beats (G4). Toggleable via settings. Also clicks during learn mode countdown.
+- **Tempo-aligned count-in:** 4-beat lead-in using `msPerBeat(bpm)` intervals. Countdown values: 4→3→2→1→0 (Go). Metronome clicks on each tick. Timeline scrolls during lead-in (empty runway, then beats approach hit line).
 - **Practice settings:** `PracticeSettings` type with `metronomeOn`, `tapSoundOn`, `strictMode`, `speedTrainerOn`. Managed as state in `PracticeScreen`, controlled via `SettingsPopover` gear icon. Settings only changeable in idle phase.
 - **Strict mode:** When enabled, `useTiming.recordTap(pad)` compares the tapped pad against `exercise.beats[nearestIndex].note`. Wrong pad overrides judgment to `miss` with `expectedPad` set. Free mode (default) accepts any pad for timing-only scoring.
 - **Exercise drum assignments:** Exercises use drum pad names as `beat.note` — beginner uses kick+snare, intermediate adds hihat, advanced adds tom1+tom2. `exerciseDrumPads()` utility extracts the deduplicated pad set from any exercise.
@@ -156,6 +159,10 @@ src/
 - **BeatMarker component:** Reusable shape-differentiated marker. Six shapes: `circle` (kick/low register), `diamond` (snare/mid register), `triangle` (hihat/high register), `square` (tom1), `rounded-rect` (tom2), `line` (handpan ding). Text labels inside (K/S/H/T1/T2 for drums, pitch class for handpan). 16px default size. `isHollow` prop swaps fill for colored border (judgment-based via `JUDGMENT_BORDER_COLORS`). `isNext` adds pulse, `isJudged` adds ring. CSS-only shapes (clip-path for triangle, rotate for diamond).
 - **Hollow/filled marker states:** Upcoming beats are solid filled. After judgment, markers transition to hollow outlines with `border-green-400` (on-time), `border-yellow-400` (early/late), `border-red-400` (miss). Smooth `transition-colors duration-200`.
 - **Listen/Demo mode:** "Listen" button in idle phase starts exercise lifecycle in demo mode. Auto-fire RAF loop plays `playDrum`/`playHandpan` at beat times during playing phase. Pads visible but disabled. "Listening..." badge shown. On completion, resets to idle — no scoring, no results screen. `isDemoModeRef` checked in `handleDone`.
+- **Learn mode:** "Learn" button in idle phase. `useLearnMode` hook manages step-through state independently of `useExercise`. Phases: `idle → countdown → active → done`. Countdown uses same 4-beat lead-in as exercise (RAF-animated, metronome clicks, countdown badge). During active phase, correct taps trigger smooth ease-out animation to next beat position (tween duration = `msPerBeat(bpm)`, scaling with tempo). Wrong pad flashes red (400ms timeout). "Learning" badge shown. Auto-resets to idle after 600ms when all beats completed. Settings popover disabled during learn mode.
+- **Pad enabled during countdown:** Pads are visually enabled during countdown/lead-in (both exercise and learn mode). Taps are silently ignored by `useTiming` since `phase !== 'playing'`, but pads look ready.
+- **Outro scroll timing:** `setPhase('done')` fires at `durationMs` (stops taps via `phaseDoneFiredRef`). `onDone` callback fires later at `durationMs + outroDurationMs` (after beats scroll past). Fixes seamless loop phase override — `setPhase('done')` before `onDone` means any phase change inside `handleDone` (e.g., seamless restart → `'playing'`) wins the React batch.
+- **Idle timeline position:** In idle, timeline shows lead-in start position (`idleProgress = -(LEAD_IN_BEATS * msPerBeat(bpm)) / durationMs`). No visual jump when Start is pressed — RAF starts from the same position and scrolls smoothly.
 - **Speed trainer:** `speedTrainerBpm` state in `App.tsx`. On completion: ≥95% accuracy → +5 BPM (cap 200), <95% → same BPM, speed trainer off → null. Manual BPM change resets. "Speed Trainer" badge on practice screen. Reset on exercise select.
 - **Drum pad idle colors:** Disabled pads use muted pad-colored backgrounds (`DRUM_PAD_MUTED_COLORS` from `timelineConstants.ts`) instead of gray, for visual association with timeline lane colors.
 - **Handpan scales:** `HandpanScale` type in `src/data/handpan/scales.ts` with 3 presets: D Kurd (9 notes), C Amara (8 notes), F Pygmy (9 notes). Default: `d-kurd`. `getScale(id)` lookup. Exercises reference scale via `exercise.scale` field.

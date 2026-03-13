@@ -118,8 +118,7 @@ Strumming exercises may additionally include top-level `key` and `chords` fields
 ### Phase 2 — Beat Display & Practice UI (Complete)
 - `BeatTimeline` component with color-coded beat markers and measure dividers
 - Animated playhead via `requestAnimationFrame` in `useExercise` hook
-- Exercise lifecycle: idle → countdown (3-2-1) → playing → done
-- `CountdownOverlay` with full-screen 3-2-1-Go! display
+- Exercise lifecycle: idle → countdown (4-3-2-1) → playing → done
 - BPM +/- controls (adjustable in idle phase, range 40–200)
 - 54 tests passing (42 existing + 12 new)
 
@@ -146,7 +145,7 @@ Strumming exercises may additionally include top-level `key` and `chords` fields
 - **Drum pad UI (`DrumPad` component):** Replaces `TapZone` when instrument is drums. Adaptive grid layout (2/3/5 pads). Keyboard shortcuts: f=kick, d=snare, j=hihat, k=tom1, l=tom2, Space=next expected pad. Color-coded pads with judgment flash feedback.
 - **Beat timeline color-coding:** Drum beats color-coded by pad type (kick=red, snare=orange, hihat=cyan, tom1=purple, tom2=pink). Falls back to duration-based colors for non-drum instruments.
 - **Strict / Free mode toggle:** Free mode (default) accepts any pad for timing-only scoring. Strict mode requires correct pad — wrong pad = miss with `expectedPad` tracked.
-- **Metronome:** Toggleable click track (default on). Clicks on countdown ticks (3-2-1-Go) and during playing via RAF loop tracking beat crossings. Accent (C5) on downbeats, normal (G4) on other beats.
+- **Metronome:** Toggleable click track (default on). Clicks on countdown ticks (4-3-2-1) and during playing via RAF loop tracking beat crossings. Accent (C5) on downbeats, normal (G4) on other beats.
 - **Tap sound toggle:** Mutes instrument sounds on tap while metronome and scoring still function.
 - **Settings popover:** Gear icon button opens popover with 3 toggle switches: metronome on/off, tap sounds on/off, strict/free mode. Toggles disabled during active exercise.
 - **Scoring integration:** `useTiming` accepts optional `pad` argument and `strictMode` option. Wrong pad in strict mode overrides judgment to miss. `TapResult` extended with `pad` and `expectedPad` fields.
@@ -158,7 +157,7 @@ Strumming exercises may additionally include top-level `key` and `chords` fields
 - **Drum pad idle colors:** Disabled pads show muted versions of their color (e.g. `bg-red-200` for kick) instead of gray, so players associate pad and lane colors before starting.
 - **Longer exercises:** "Extended Groove" (intermediate, 8 measures, 90 BPM, 32 beats) and "Endurance Run" (advanced, 16 measures, 85 BPM, 64 beats, all 5 pads).
 - **Speed Trainer mode:** `speedTrainerOn` added to `PracticeSettings`. Toggle in `SettingsPopover`. On completion with ≥95% accuracy → next run at +5 BPM (capped at 200). Below 95% → same BPM. Manual BPM change resets speed trainer. "Speed Trainer" badge on practice screen. "Next: {bpm} BPM" hint on results screen. State held in `App.tsx`, reset on exercise select.
-- **Tempo-aligned count-in:** Countdown ticks (3-2-1-Go) now use `msPerBeat(bpm)` intervals instead of fixed 1-second intervals, so the count-in matches the metronome tempo.
+- **Tempo-aligned count-in:** Countdown ticks (4-3-2-1) use `msPerBeat(bpm)` intervals instead of fixed 1-second intervals, so the count-in matches the metronome tempo.
 - **`useExercise` initialBpm:** Accepts optional `initialBpm` parameter for speed trainer BPM persistence across retries.
 - 145 tests passing (129 existing + 16 new)
 
@@ -167,7 +166,7 @@ Strumming exercises may additionally include top-level `key` and `chords` fields
 - **`PracticeSettings` extended:** Three new fields — `loopMode: boolean` (default false), `seamlessLoop: boolean` (default false), `speedTrainerStep: number` (default 5).
 - **Tap marker collection (`useTiming`):** `tapMarkersRef` accumulates a `TapMarker` on each matched tap with exact ms, pad, judgment, expectedPad, and expectedMs. Stray taps (>240ms) produce no marker. Clears on `reset()`. Returns both `tapMarkers` (value, for render) and `tapMarkersRef`.
 - **Tap marker rendering on timeline:** `BeatTimeline` accepts `tapMarkers` prop, converts each marker's ms to pixel/percent position, passes processed markers to child timelines. `DrumLaneTimeline` renders each as a 2px vertical tick line (full lane height) with opacity 0.7, color-coded by judgment (green/yellow/red), plus a 6px filled dot at lane center. Strict mode wrong-pad entries additionally render a hollow outline dot at the expected beat position in the expected pad's lane, border-colored by expected pad. `SingleRowTimeline` renders tick lines spanning full row height. Constants `TAP_MARKER_COLORS` and `DRUM_PAD_BORDER_COLORS` added to `timelineConstants.ts`.
-- **`useExercise` restart method:** `restart(options?: { seamless?, newBpm? })` calls `cleanup()`, optionally sets new BPM, then either starts playing immediately (seamless) or runs a 3-2-1 countdown at the effective BPM. `tick` function refactored to use `durationMsRef` (updated via `useEffect`) to avoid stale closure on BPM changes during restart. All ref assignments moved to `useEffect` for lint compliance.
+- **`useExercise` restart method:** `restart(options?: { seamless?, newBpm? })` calls `cleanup()`, optionally sets new BPM, then either starts playing immediately (seamless) or runs a 4-3-2-1 countdown with timeline lead-in at the effective BPM. `tick` function refactored to use `durationMsRef` (updated via `useEffect`) to avoid stale closure on BPM changes during restart. All ref assignments moved to `useEffect` for lint compliance.
 - **`ResultsOverlay` component:** Lightweight full-screen overlay (`fixed inset-0 z-50`) showing `StarDisplay`, accuracy %, optional "Next: {bpm} BPM" hint. Auto-dismisses after 2 seconds via `setTimeout(onDismiss, 2000)` with cleanup on unmount.
 - **`SettingsPopover` updates:** Loop Mode toggle (5th toggle after Speed Trainer). When loop mode on: indented Seamless sub-toggle. When speed trainer on: row of +2 / +5 / +10 preset buttons below toggle, selected one highlighted in emerald. Step buttons are disabled during playing.
 - **`PracticeScreen` orchestration:** Default settings include `loopMode`, `seamlessLoop`, `speedTrainerStep`. `handleDone` uses `speedTrainerStep` (not hardcoded 5) for BPM progression. Loop mode: saves result directly via `saveResult()`, stores `lastLoopResult`, shows `ResultsOverlay` (or seamless instant restart). Overlay dismissal triggers `reset()` + `restart({ newBpm })`. Stop during loop mode: if `lastLoopResult` exists, navigates to full results via `onShowResults` (no double-save). "Loop" badge displayed alongside Speed Trainer badge.
@@ -194,6 +193,17 @@ Strumming exercises may additionally include top-level `key` and `chords` fields
 - **Tap debounce:** 40ms per-pad debounce in `useTiming` using `performance.now()` and `lastTapTimePerPadRef` map. Different pads are independent. Cleared on `reset()`. At 200 BPM, 16th notes are 75ms apart — safely above the 40ms threshold.
 - **Handpan idle pad indicators:** Already implemented in Phase 5b. `HandpanPad` uses `HANDPAN_PAD_MUTED_COLORS` when disabled.
 - 258 tests passing (215 existing + 43 new)
+
+### Pre-Phase 6b — Timeline Lead-in, Outro Scroll, Learn Mode (Complete)
+- **Timeline lead-in:** Replaced full-screen `CountdownOverlay` with an animated timeline lead-in. RAF starts during countdown with negative elapsed time (`startTimeRef = performance.now() + leadInMs`). `elapsedMs` starts at `-leadInMs` and reaches 0 when playing begins. `rawProgress` (unclamped, can be negative) passed to `VerticalTimeline` — empty runway scrolls, then beats approach the hit line. Small non-blocking countdown badge (4-3-2-1) overlaid in timeline corner. `CountdownOverlay.tsx` deleted.
+- **Outro scroll:** After `elapsed >= durationMs`, `setPhase('done')` fires (stops taps), but RAF continues for one extra measure (`outroDurationMs`). `onDone` callback fires at `durationMs + outroDurationMs` after beats scroll past the hit line. Fixes seamless loop phase override — `setPhase('done')` before `onDone` means seamless restart's `setPhase('playing')` wins the React batch.
+- **Idle timeline position:** In idle, timeline pre-positions at lead-in start (`idleProgress = -(LEAD_IN_BEATS * msPerBeat(bpm)) / durationMs`). No visual jump when Start is pressed — RAF starts from the same position.
+- **Pads enabled during countdown:** Pads are visually active during countdown (both exercise and learn mode). Taps are silently ignored by `useTiming` since `phase !== 'playing'`.
+- **Learn mode:** New "Learn" button alongside "Start" and "Listen". `useLearnMode` hook manages step-through state independently of `useExercise`. Phases: `idle → countdown → active → done`. Countdown uses same 4-beat lead-in with RAF animation (negative progress scrolling to beat 0), metronome clicks, and countdown badge. During active phase, correct taps trigger smooth ease-out animation to the next beat position (tween duration = `msPerBeat(bpm)`). Wrong pad flashes red for 400ms. "Learning" badge shown. Auto-resets to idle after 600ms on completion. No scoring, no results screen.
+- **`useExercise.ts` changes:** Added `phaseDoneFiredRef`, `onDoneFiredRef`, `outroDurationMsRef` refs. Exported `LEAD_IN_BEATS = 4`. `rawProgress` export (unclamped). `progress` stays clamped `[0, 1]`.
+- **New file: `src/hooks/useLearnMode.ts`** — Learn mode hook with countdown + step-through logic.
+- **New file: `src/hooks/__tests__/useLearnMode.test.ts`** — 12 tests covering learn mode lifecycle.
+- 274 tests passing (258 existing + 16 new)
 
 ### Phase 6 — Strumming Instrument (Not Started)
 

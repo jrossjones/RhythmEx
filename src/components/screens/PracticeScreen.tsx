@@ -6,14 +6,14 @@ import { VerticalTimeline } from '@/components/practice/VerticalTimeline'
 import { TapZone } from '@/components/practice/TapZone'
 import { DrumPad } from '@/components/instruments/DrumPad'
 import { HandpanPad } from '@/components/instruments/HandpanPad'
-import { CountdownOverlay } from '@/components/practice/CountdownOverlay'
 import { ResultsOverlay } from '@/components/practice/ResultsOverlay'
 import { SettingsPopover } from '@/components/practice/SettingsPopover'
-import { useExercise } from '@/hooks/useExercise'
+import { useExercise, LEAD_IN_BEATS } from '@/hooks/useExercise'
 import { useTiming } from '@/hooks/useTiming'
+import { useLearnMode } from '@/hooks/useLearnMode'
 import { useAudio } from '@/hooks/useAudio'
 import { calculateAccuracy, calculateStars } from '@/utils/scoring'
-import { beatTimesMs, exerciseDrumPads, msPerBeat } from '@/utils/rhythm'
+import { beatTimesMs, exerciseDrumPads, exerciseDurationMs, msPerBeat } from '@/utils/rhythm'
 import { getScale, DEFAULT_HANDPAN_SCALE } from '@/data/handpan/scales'
 import { saveResult } from '@/utils/storage'
 import type { DrumPad as DrumPadType, Exercise, ExerciseResult, InstrumentType, PracticeSettings, StarRating, TapResult } from '@/types'
@@ -41,6 +41,8 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
 
   const [isDemoMode, setIsDemoMode] = useState(false)
   const isDemoModeRef = useRef(false)
+
+  const [isLearnMode, setIsLearnMode] = useState(false)
 
   const [loopOverlay, setLoopOverlay] = useState<{
     accuracy: number
@@ -134,7 +136,7 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
   const {
     phase,
     countdownValue,
-    progress,
+    rawProgress,
     bpm,
     setBpm,
     elapsedMsRef,
@@ -162,6 +164,17 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
     reset,
   } = useTiming({ exercise, bpm, phase, elapsedMsRef, strictMode: settings.strictMode })
 
+  const {
+    learnPhase,
+    learnBeatJudgments,
+    wrongPad,
+    learnProgress,
+    learnCountdownValue,
+    start: startLearn,
+    recordLearnTap,
+    stop: stopLearn,
+  } = useLearnMode(exercise, bpm)
+
   // Keep refs up to date so handleDone always calls the latest versions
   useEffect(() => {
     finalizeRef.current = finalize
@@ -175,19 +188,25 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
     restartRef.current({ newBpm: loopOverlay?.nextBpm })
   }, [loopOverlay?.nextBpm])
 
-  const isIdle = phase === 'idle'
+  const isIdle = phase === 'idle' && !isLearnMode
+
+  // In idle, show timeline at lead-in start position (no jump when Start pressed)
+  const durationMs = exerciseDurationMs({ ...exercise, bpm })
+  const idleProgress = durationMs > 0 ? -(LEAD_IN_BEATS * msPerBeat(bpm)) / durationMs : 0
 
   // Derive active pads and next expected pad for drums
   const activePads = useMemo(() => exerciseDrumPads(exercise), [exercise])
 
+  const activeJudgments = isLearnMode ? learnBeatJudgments : beatJudgments
+
   const nextExpectedPad = useMemo((): DrumPadType | null => {
     for (let i = 0; i < exercise.beats.length; i++) {
-      if (!beatJudgments.has(i)) {
+      if (!activeJudgments.has(i)) {
         return exercise.beats[i].note as DrumPadType
       }
     }
     return null
-  }, [exercise.beats, beatJudgments])
+  }, [exercise.beats, activeJudgments])
 
   // Derive handpan notes and next expected note
   const handpanScaleNotes = useMemo(() => {
@@ -198,24 +217,41 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
 
   const nextExpectedNote = useMemo((): string | null => {
     for (let i = 0; i < exercise.beats.length; i++) {
-      if (!beatJudgments.has(i)) {
+      if (!activeJudgments.has(i)) {
         return exercise.beats[i].note
       }
     }
     return null
-  }, [exercise.beats, beatJudgments])
+  }, [exercise.beats, activeJudgments])
 
   // Drum tap handler
   const handleDrumTap = useCallback((pad: DrumPadType) => {
+    if (isLearnMode) {
+      recordLearnTap(pad)
+      // Play sound on correct tap (learn mode always plays correct pad sound)
+      const expected = exercise.beats.find((_, i) => !learnBeatJudgments.has(i))
+      if (expected && pad === expected.note) {
+        playDrum(pad)
+      }
+      return
+    }
     if (settings.tapSoundOn) playDrum(pad)
     recordTap(pad)
-  }, [settings.tapSoundOn, playDrum, recordTap])
+  }, [isLearnMode, settings.tapSoundOn, playDrum, recordTap, recordLearnTap, exercise.beats, learnBeatJudgments])
 
   // Handpan tap handler
   const handleHandpanTap = useCallback((note: string) => {
+    if (isLearnMode) {
+      recordLearnTap(note)
+      const expected = exercise.beats.find((_, i) => !learnBeatJudgments.has(i))
+      if (expected && note === expected.note) {
+        playHandpan(note)
+      }
+      return
+    }
     if (settings.tapSoundOn) playHandpan(note)
     recordTap(note)
-  }, [settings.tapSoundOn, playHandpan, recordTap])
+  }, [isLearnMode, settings.tapSoundOn, playHandpan, recordTap, recordLearnTap, exercise.beats, learnBeatJudgments])
 
   // Start with audio context
   const handleStart = useCallback(async () => {
@@ -231,7 +267,19 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
     startExercise()
   }, [startAudioContext, startExercise])
 
+  // Start learn mode
+  const handleLearn = useCallback(async () => {
+    await startAudioContext()
+    setIsLearnMode(true)
+    startLearn()
+  }, [startAudioContext, startLearn])
+
   const handleStop = () => {
+    if (isLearnMode) {
+      stopLearn()
+      setIsLearnMode(false)
+      return
+    }
     stopExercise()
     reset()
     if (isDemoMode) {
@@ -252,6 +300,17 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
     onBack()
   }
 
+  // Auto-reset when learn mode completes
+  useEffect(() => {
+    if (learnPhase === 'done') {
+      const t = window.setTimeout(() => {
+        stopLearn()
+        setIsLearnMode(false)
+      }, 600)
+      return () => clearTimeout(t)
+    }
+  }, [learnPhase, stopLearn])
+
   // Manual BPM change resets speed trainer
   const handleBpmChange = (newBpm: number) => {
     setBpm(newBpm)
@@ -267,19 +326,29 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
   })
   const prevCountdownRef = useRef<number | null>(null)
 
+  const prevLearnCountdownRef = useRef<number | null>(null)
+
   useEffect(() => {
+    // Exercise countdown metronome
     if (phase !== 'countdown') {
       prevCountdownRef.current = null
-      return
-    }
-    // Fire on each distinct countdownValue change during countdown
-    if (prevCountdownRef.current !== countdownValue) {
+    } else if (prevCountdownRef.current !== countdownValue) {
       prevCountdownRef.current = countdownValue
       if (settings.metronomeOn) {
         playMetronomeClickRef.current(true)
       }
     }
-  }, [phase, countdownValue, settings.metronomeOn])
+
+    // Learn mode countdown metronome
+    if (!isLearnMode || learnPhase !== 'countdown') {
+      prevLearnCountdownRef.current = null
+    } else if (prevLearnCountdownRef.current !== learnCountdownValue) {
+      prevLearnCountdownRef.current = learnCountdownValue
+      if (settings.metronomeOn) {
+        playMetronomeClickRef.current(true)
+      }
+    }
+  }, [phase, countdownValue, isLearnMode, learnPhase, learnCountdownValue, settings.metronomeOn])
 
   // Metronome — beat clicks during playing
   useEffect(() => {
@@ -361,10 +430,15 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
               Listening...
             </span>
           )}
+          {isLearnMode && (learnPhase === 'active' || learnPhase === 'countdown') && (
+            <span className="rounded-full bg-amber-100 px-3 py-0.5 text-xs font-bold text-amber-700">
+              Learning
+            </span>
+          )}
           <SettingsPopover
             settings={settings}
             onSettingsChange={setSettings}
-            disabled={!isIdle}
+            disabled={!isIdle || isLearnMode}
           />
         </div>
       </div>
@@ -398,17 +472,29 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
       </div>
 
       {/* Beat timeline */}
-      <div className="mb-6">
+      <div className="relative mb-6">
         <VerticalTimeline
           exercise={exercise}
-          progress={progress}
+          progress={isLearnMode
+            ? (learnPhase === 'idle' ? idleProgress : learnProgress)
+            : (phase === 'idle' ? idleProgress : rawProgress)}
           bpm={bpm}
-          beatJudgments={beatJudgments}
+          beatJudgments={isLearnMode ? learnBeatJudgments : beatJudgments}
           instrument={instrument}
-          tapMarkers={tapMarkers}
+          tapMarkers={isLearnMode ? [] : tapMarkers}
           activePads={activePads}
           scaleNotes={handpanScaleNotes}
         />
+        {/* Countdown badge overlaid on timeline */}
+        {((phase === 'countdown' && countdownValue > 0) ||
+          (isLearnMode && learnPhase === 'countdown' && learnCountdownValue > 0)) && (
+          <div
+            data-testid="countdown-badge"
+            className="absolute top-2 right-2 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-black/60 text-2xl font-extrabold text-white"
+          >
+            {isLearnMode ? learnCountdownValue : countdownValue}
+          </div>
+        )}
       </div>
 
       {/* Tap input area */}
@@ -416,18 +502,18 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
         {instrument === 'drums' ? (
           <DrumPad
             onTap={handleDrumTap}
-            lastFeedback={lastTapFeedback}
-            lastFeedbackPad={lastFeedbackPad as DrumPadType | null}
-            disabled={phase !== 'playing' || isDemoMode}
+            lastFeedback={isLearnMode && wrongPad ? { judgment: 'miss' as const, timestamp: performance.now() } : lastTapFeedback}
+            lastFeedbackPad={isLearnMode && wrongPad ? wrongPad as DrumPadType : lastFeedbackPad as DrumPadType | null}
+            disabled={isLearnMode ? (learnPhase === 'idle' || learnPhase === 'done') : (phase === 'idle' || phase === 'done' || isDemoMode)}
             activePads={activePads}
             nextExpectedPad={nextExpectedPad}
           />
         ) : instrument === 'handpan' ? (
           <HandpanPad
             onTap={handleHandpanTap}
-            lastFeedback={lastTapFeedback}
-            lastFeedbackPad={lastFeedbackPad}
-            disabled={phase !== 'playing' || isDemoMode}
+            lastFeedback={isLearnMode && wrongPad ? { judgment: 'miss' as const, timestamp: performance.now() } : lastTapFeedback}
+            lastFeedbackPad={isLearnMode && wrongPad ? wrongPad : lastFeedbackPad}
+            disabled={isLearnMode ? (learnPhase === 'idle' || learnPhase === 'done') : (phase === 'idle' || phase === 'done' || isDemoMode)}
             scaleNotes={handpanScaleNotes}
             nextExpectedNote={nextExpectedNote}
           />
@@ -450,17 +536,17 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
             <Button variant="secondary" size="lg" onClick={handleListen}>
               Listen
             </Button>
+            <Button variant="secondary" size="lg" onClick={handleLearn}>
+              Learn
+            </Button>
           </>
         )}
-        {phase === 'playing' && (
+        {(phase === 'playing' || phase === 'countdown' || (isLearnMode && (learnPhase === 'active' || learnPhase === 'countdown'))) && (
           <Button variant="secondary" size="sm" onClick={handleStop}>
             Stop
           </Button>
         )}
       </div>
-
-      {/* Countdown overlay */}
-      {phase === 'countdown' && <CountdownOverlay value={countdownValue} />}
 
       {/* Loop results overlay */}
       {loopOverlay && (

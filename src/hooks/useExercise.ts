@@ -2,6 +2,8 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import type { Exercise, ExercisePhase } from '@/types'
 import { exerciseDurationMs, msPerBeat } from '@/utils/rhythm'
 
+export const LEAD_IN_BEATS = 4
+
 export function useExercise(exercise: Exercise, onDone: () => void, initialBpm?: number) {
   const [phase, setPhase] = useState<ExercisePhase>('idle')
   const [countdownValue, setCountdownValue] = useState(0)
@@ -14,10 +16,16 @@ export function useExercise(exercise: Exercise, onDone: () => void, initialBpm?:
   const timeoutIdsRef = useRef<number[]>([])
   const onDoneRef = useRef(onDone)
   const durationMsRef = useRef(0)
+  const phaseDoneFiredRef = useRef(false)
+  const onDoneFiredRef = useRef(false)
+  const outroDurationMsRef = useRef(0)
   const tickRef = useRef<() => void>(() => {})
 
   // Build an exercise-like object with the current BPM for duration calc
   const durationMs = exerciseDurationMs({ ...exercise, bpm })
+
+  // Outro: one extra measure of scroll after scoring
+  const outroDurationMs = exercise.timeSignature[0] * msPerBeat(bpm)
 
   // Keep refs in sync via useEffect
   useEffect(() => {
@@ -27,6 +35,9 @@ export function useExercise(exercise: Exercise, onDone: () => void, initialBpm?:
     durationMsRef.current = durationMs
   })
   useEffect(() => {
+    outroDurationMsRef.current = outroDurationMs
+  })
+  useEffect(() => {
     tickRef.current = () => {
       const now = performance.now()
       const elapsed = now - startTimeRef.current
@@ -34,12 +45,21 @@ export function useExercise(exercise: Exercise, onDone: () => void, initialBpm?:
 
       elapsedMsRef.current = elapsed
 
-      if (elapsed >= dur) {
-        elapsedMsRef.current = dur
-        setElapsedMs(dur)
+      // At durationMs: transition phase to stop accepting taps
+      if (elapsed >= dur && !phaseDoneFiredRef.current) {
+        phaseDoneFiredRef.current = true
         setPhase('done')
-        onDoneRef.current()
-        return
+      }
+
+      // After outro scroll: fire scoring callback and stop RAF
+      if (elapsed >= dur + outroDurationMsRef.current) {
+        if (!onDoneFiredRef.current) {
+          onDoneFiredRef.current = true
+          onDoneRef.current()
+        }
+        elapsedMsRef.current = elapsed
+        setElapsedMs(elapsed)
+        return // RAF stops here
       }
 
       setElapsedMs(elapsed)
@@ -59,6 +79,8 @@ export function useExercise(exercise: Exercise, onDone: () => void, initialBpm?:
   }, [])
 
   const startPlaying = useCallback(() => {
+    phaseDoneFiredRef.current = false
+    onDoneFiredRef.current = false
     startTimeRef.current = performance.now()
     elapsedMsRef.current = 0
     setElapsedMs(0)
@@ -69,23 +91,35 @@ export function useExercise(exercise: Exercise, onDone: () => void, initialBpm?:
   const startExercise = useCallback(() => {
     if (phase !== 'idle') return
     cleanup()
-    setPhase('countdown')
-    setCountdownValue(3)
 
-    // Count-in ticks at tempo so the countdown aligns with the metronome
+    // Start RAF immediately with negative elapsed time for timeline lead-in
     const beatInterval = msPerBeat(bpm)
-    const t1 = window.setTimeout(() => setCountdownValue(2), beatInterval)
-    const t2 = window.setTimeout(() => setCountdownValue(1), beatInterval * 2)
-    const t3 = window.setTimeout(() => {
-      setCountdownValue(0)
-      startPlaying()
-    }, beatInterval * 3)
+    const leadInMs = LEAD_IN_BEATS * beatInterval
+    phaseDoneFiredRef.current = false
+    onDoneFiredRef.current = false
+    startTimeRef.current = performance.now() + leadInMs
+    elapsedMsRef.current = -leadInMs
+    setElapsedMs(-leadInMs)
+    setPhase('countdown')
+    setCountdownValue(4)
+    rafIdRef.current = requestAnimationFrame(tickRef.current)
 
-    timeoutIdsRef.current = [t1, t2, t3]
-  }, [phase, cleanup, startPlaying, bpm])
+    // setTimeout chain still drives countdownValue + phase transition
+    const t1 = window.setTimeout(() => setCountdownValue(3), beatInterval)
+    const t2 = window.setTimeout(() => setCountdownValue(2), beatInterval * 2)
+    const t3 = window.setTimeout(() => setCountdownValue(1), beatInterval * 3)
+    const t4 = window.setTimeout(() => {
+      setCountdownValue(0)
+      setPhase('playing')
+    }, beatInterval * 4)
+
+    timeoutIdsRef.current = [t1, t2, t3, t4]
+  }, [phase, cleanup, bpm])
 
   const stopExercise = useCallback(() => {
     cleanup()
+    phaseDoneFiredRef.current = false
+    onDoneFiredRef.current = false
     setPhase('idle')
     setCountdownValue(0)
     setElapsedMs(0)
@@ -102,15 +136,24 @@ export function useExercise(exercise: Exercise, onDone: () => void, initialBpm?:
     } else {
       const effectiveBpm = options?.newBpm ?? bpm
       const beatInterval = msPerBeat(effectiveBpm)
+      const leadInMs = LEAD_IN_BEATS * beatInterval
+      phaseDoneFiredRef.current = false
+      onDoneFiredRef.current = false
+      startTimeRef.current = performance.now() + leadInMs
+      elapsedMsRef.current = -leadInMs
+      setElapsedMs(-leadInMs)
       setPhase('countdown')
-      setCountdownValue(3)
-      const t1 = window.setTimeout(() => setCountdownValue(2), beatInterval)
-      const t2 = window.setTimeout(() => setCountdownValue(1), beatInterval * 2)
-      const t3 = window.setTimeout(() => {
+      setCountdownValue(4)
+      rafIdRef.current = requestAnimationFrame(tickRef.current)
+
+      const t1 = window.setTimeout(() => setCountdownValue(3), beatInterval)
+      const t2 = window.setTimeout(() => setCountdownValue(2), beatInterval * 2)
+      const t3 = window.setTimeout(() => setCountdownValue(1), beatInterval * 3)
+      const t4 = window.setTimeout(() => {
         setCountdownValue(0)
-        startPlaying()
-      }, beatInterval * 3)
-      timeoutIdsRef.current = [t1, t2, t3]
+        setPhase('playing')
+      }, beatInterval * 4)
+      timeoutIdsRef.current = [t1, t2, t3, t4]
     }
   }, [cleanup, startPlaying, bpm])
 
@@ -119,7 +162,8 @@ export function useExercise(exercise: Exercise, onDone: () => void, initialBpm?:
     setBpmState(newBpm)
   }, [phase])
 
-  const progress = durationMs > 0 ? Math.min(elapsedMs / durationMs, 1) : 0
+  const progress = durationMs > 0 ? Math.max(0, Math.min(elapsedMs / durationMs, 1)) : 0
+  const rawProgress = durationMs > 0 ? elapsedMs / durationMs : 0
 
   // Cleanup on unmount
   useEffect(() => cleanup, [cleanup])
@@ -130,6 +174,7 @@ export function useExercise(exercise: Exercise, onDone: () => void, initialBpm?:
     elapsedMs,
     elapsedMsRef,
     progress,
+    rawProgress,
     bpm,
     setBpm,
     startExercise,

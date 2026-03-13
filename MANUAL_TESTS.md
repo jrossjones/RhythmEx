@@ -48,12 +48,14 @@ Run `npm run dev` and open the app in a browser to execute these tests.
 - [ ] During playing phase, playhead moves smoothly left-to-right
 - [ ] Playhead reaches the end when the exercise finishes
 
-### 2.3 Countdown
-- [ ] Clicking "Start" shows a full-screen countdown overlay
-- [ ] Countdown displays 3, then 2, then 1, then "Go!"
+### 2.3 Countdown & Timeline Lead-in
+- [ ] Clicking "Start" does NOT show a full-screen overlay
+- [ ] A small countdown badge (round, top-right of timeline) displays 4, 3, 2, 1
 - [ ] Countdown ticks are spaced at the exercise tempo (not fixed 1s)
   - Verify: at 120 BPM, each tick is ~500ms; at 60 BPM, each tick is ~1000ms
-- [ ] After "Go!", the overlay disappears and the exercise begins
+- [ ] During countdown, the timeline scrolls smoothly (empty runway, then beats approach hit line)
+- [ ] After countdown completes, playing phase begins seamlessly (no overlay dismissal)
+- [ ] The beat positions do NOT jump when Start is pressed — timeline starts from the same idle position
 
 ### 2.4 BPM Controls
 - [ ] BPM +/- buttons are visible and show current BPM
@@ -167,7 +169,8 @@ Run `npm run dev` and open the app in a browser to execute these tests.
   - Space = next expected pad
 - [ ] Each pad flashes with judgment color on tap (green/yellow/red)
 - [ ] Only the tapped pad flashes (not all pads)
-- [ ] Pads are disabled during idle/countdown phases
+- [ ] Pads are disabled during idle phase
+- [ ] Pads are visually enabled during countdown (taps silently ignored)
 
 ### 5.4 Drum Sounds
 - [ ] Kick produces a low "boom" (MembraneSynth)
@@ -177,7 +180,7 @@ Run `npm run dev` and open the app in a browser to execute these tests.
 - [ ] Tom2 produces a slightly different tom sound
 
 ### 5.5 Metronome
-- [ ] Metronome clicks during countdown (on each 3-2-1-Go tick)
+- [ ] Metronome clicks during countdown (on each 4-3-2-1 tick)
 - [ ] Metronome clicks on each beat during exercise playback
 - [ ] Downbeat click is accented (higher pitch C5) vs normal beats (G4)
 - [ ] Count-in ticks align with exercise tempo
@@ -285,7 +288,7 @@ Run `npm run dev` and open the app in a browser to execute these tests.
 - [ ] Start and complete an exercise:
   - A brief overlay appears showing stars and accuracy percentage
   - Overlay auto-dismisses after ~2 seconds
-  - Exercise restarts with 3-2-1 countdown
+  - Exercise restarts with 4-3-2-1 countdown and timeline lead-in
 - [ ] Complete another loop — scores are saved each loop (check localStorage)
 - [ ] Tap markers clear between loops (fresh timeline each loop)
 
@@ -362,7 +365,8 @@ Run `npm run dev` and open the app in a browser to execute these tests.
 - [ ] Each pad is color-coded by pitch class (e.g., D=orange, A=blue, Bb=violet)
 - [ ] Pad labels show note names (e.g., "D3", "A3", "Bb3")
 - [ ] Number of pads matches the exercise scale (8 or 9 pads for D Kurd)
-- [ ] Pads are disabled during idle/countdown phases
+- [ ] Pads are disabled during idle phase
+- [ ] Pads are visually enabled during countdown (taps silently ignored)
 - [ ] Disabled pads show muted versions of their color (not gray)
 
 ### 5b.3 Handpan Audio
@@ -379,7 +383,7 @@ Run `npm run dev` and open the app in a browser to execute these tests.
 - [ ] Space key triggers the next expected note during playing
 - [ ] Space key triggers the first note (ding) when no note is expected
 - [ ] Holding a key does not repeat-fire (event.repeat guard)
-- [ ] Keys do not respond during idle/countdown phases
+- [ ] Keys do not respond during idle phase (keyboard taps silently ignored during countdown)
 
 ### 5b.5 Handpan Timeline
 - [ ] Handpan exercises use single-row timeline (not multi-lane)
@@ -501,7 +505,7 @@ Run `npm run dev` and open the app in a browser to execute these tests.
 
 ### P6.8 Listen/Demo Mode
 - [ ] **"Listen" button** appears in the idle state, next to the "Start" button
-- [ ] Pressing "Listen" starts the countdown (same 3-2-1-Go as normal)
+- [ ] Pressing "Listen" starts the countdown (same 4-3-2-1 timeline lead-in as normal)
 - [ ] After countdown, exercise plays with auto-fired beat sounds:
   - **Drums:** each drum sound plays at the correct time (kick/snare/hihat/toms audible)
   - **Handpan:** each pitched note plays at the correct time
@@ -519,3 +523,97 @@ Run `npm run dev` and open the app in a browser to execute these tests.
   - Change BPM to 60 → listen plays at 60 BPM
   - Change BPM to 180 → listen plays at 180 BPM
 - [ ] Demo mode does not affect score storage (no scores saved)
+
+---
+
+## Pre-Phase 6b — Timeline Lead-in, Outro Scroll, Learn Mode
+
+### P6b.1 Timeline Lead-in (Replaces Full-Screen Countdown)
+- [ ] Clicking "Start" does NOT show a full-screen countdown overlay
+- [ ] A small round countdown badge appears in the top-right corner of the timeline
+- [ ] Badge shows 4, then 3, then 2, then 1 at tempo-aligned intervals
+  - At 120 BPM: each tick is ~500ms (total ~2000ms)
+  - At 60 BPM: each tick is ~1000ms (total ~4000ms)
+- [ ] During countdown, the timeline scrolls smoothly — empty runway first, then beats approach the hit line
+- [ ] Beats are NOT visible at the hit line during early countdown — they scroll into view
+- [ ] After countdown, playing begins seamlessly (no overlay dismissal transition)
+- [ ] "Stop" button is visible during countdown (user can abort the lead-in)
+- [ ] Clicking "Stop" during countdown resets to idle
+
+### P6b.2 Idle Timeline Position (No Jump)
+- [ ] In idle state, the timeline shows the lead-in start position (beats above viewport)
+- [ ] Pressing "Start" does NOT cause the beat positions to visually jump
+- [ ] The transition from idle → countdown → playing is a smooth continuous scroll
+- [ ] This works at different BPMs (40, 120, 200) — no jump at any tempo
+
+### P6b.3 Outro Scroll (Beats Scroll Past After Exercise)
+- [ ] Start an exercise and play through all beats
+- [ ] After the last beat passes the hit line, the timeline continues scrolling for ~1 measure
+- [ ] Beats animate past the hit line and disappear below before results appear
+- [ ] The exercise does NOT freeze with the last beat sitting on the hit line
+- [ ] Results screen / scoring fires after the outro scroll completes
+- [ ] In loop mode: exercise restarts after outro scroll (not immediately at last beat)
+
+### P6b.4 Outro Scroll with Seamless Loop
+- [ ] Enable seamless loop mode
+- [ ] Play through an exercise
+- [ ] After the last beat, outro scroll plays briefly
+- [ ] Exercise restarts at the new BPM (if speed trainer active) after outro
+- [ ] Pads remain enabled during the seamless restart (not disabled)
+- [ ] Seamless loop works repeatedly without pads getting stuck in disabled state
+
+### P6b.5 Pads Enabled During Countdown
+- [ ] **Drums:** Pads are visually active (colored, not grayed out) during countdown
+- [ ] **Handpan:** Pads are visually active during countdown
+- [ ] Tapping pads during countdown does NOT register timing (no judgment flash)
+- [ ] Tapping pads during countdown plays instrument sounds if tap sounds enabled
+- [ ] When playing phase begins, first tap registers normally
+
+### P6b.6 Learn Mode — Start & Countdown
+- [ ] **"Learn" button** appears alongside "Start" and "Listen" in idle state
+- [ ] Pressing "Learn" starts a 4-beat countdown with timeline lead-in (same badge as normal)
+- [ ] Metronome clicks during learn countdown if metronome is enabled
+- [ ] Timeline scrolls smoothly during learn countdown
+- [ ] After countdown, the first beat is positioned at the hit line
+- [ ] **"Learning" badge** appears (similar to "Listening..." badge)
+- [ ] "Stop" button is visible during learn countdown and active phase
+
+### P6b.7 Learn Mode — Step-Through Gameplay
+- [ ] During learn active phase, the next expected beat is highlighted at the hit line
+- [ ] **Correct tap:** beat is marked as on-time (green hollow outline)
+  - Timeline smoothly scrolls to position the next beat at the hit line
+  - Scroll speed scales with tempo (faster BPM = faster scroll animation)
+  - Instrument sound plays on correct tap
+- [ ] **Wrong tap:** tapped pad flashes red briefly (~400ms)
+  - Beat does NOT advance — stays on the same beat
+  - No instrument sound on wrong tap
+  - Red flash clears automatically
+- [ ] Multiple wrong taps in succession: each re-flashes the wrong pad
+- [ ] After clearing the red flash, the player can try again
+
+### P6b.8 Learn Mode — Completion
+- [ ] Tapping all beats correctly reaches the "done" phase
+- [ ] After ~600ms, learn mode auto-resets to idle
+- [ ] "Start", "Listen", and "Learn" buttons reappear
+- [ ] No scoring, no results screen, no score saved
+- [ ] Can immediately start another learn session, listen, or normal exercise
+
+### P6b.9 Learn Mode — Stop & Settings
+- [ ] Pressing "Stop" during learn mode resets to idle
+- [ ] Settings popover is disabled (gear icon hidden or not functional) during learn mode
+- [ ] BPM controls are disabled during learn mode
+- [ ] Learn mode uses the current BPM for countdown and scroll animation speed
+
+### P6b.10 Learn Mode — Handpan
+- [ ] Select Handpan instrument, pick an exercise, press "Learn"
+- [ ] Countdown and timeline lead-in work the same as drums
+- [ ] Correct note tap advances to the next beat with smooth scroll
+- [ ] Wrong note tap flashes red, does not advance
+- [ ] Ding notes and other notes all work correctly in learn mode
+- [ ] Handpan sounds play on correct tap
+
+### P6b.11 Learn Mode — Edge Cases
+- [ ] Tapping during learn countdown has no effect (no-op)
+- [ ] Tapping after all beats completed (done phase) has no effect
+- [ ] Starting learn mode twice resets state (starts fresh countdown each time)
+- [ ] Switching between Learn, Listen, and Start: each mode works independently
