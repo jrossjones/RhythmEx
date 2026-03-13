@@ -42,6 +42,7 @@ Young practicing musicians, ages 5 and up. The UI must be simple, colorful, and 
 - **Drums** — Kick, snare, hi-hat, tom1, tom2 with Tone.js synth sounds (MembraneSynth, NoiseSynth, MetalSynth). On-screen pads with keyboard shortcuts (f/d/j/k/l). Adaptive grid layout based on exercise difficulty. Multi-lane timeline.
 - **Handpan** — Pitched FM synth notes in a circular pad layout (center ding + surrounding tone fields). 3 scale presets (D Kurd, C Amara, F Pygmy). Keyboard shortcuts (1–9 keys). Note-colored timeline markers. 9 exercises across 3 difficulty levels.
 - **Strumming** — Guitar/ukulele strum patterns with chord display. Swipe zone (mobile) + arrow keys (desktop) for up/down strum direction — *not yet implemented*
+- **Kalimba** — Thumb piano with pitched tines in a fan/arc layout. Tone.js plucked synth sound. Scale presets (C major, G major, etc.). Keyboard shortcuts for tines. Single-column timeline with note-colored markers (similar to handpan). — *not yet implemented*
 - Instrument selection screen; user picks before starting an exercise
 - Settings popover on practice screen: metronome toggle, tap sound toggle, strict/free mode, speed trainer, loop mode
 
@@ -89,6 +90,7 @@ Young practicing musicians, ages 5 and up. The UI must be simple, colorful, and 
 Notes on `beat.note` by instrument:
 - **Drums:** Pad names — `kick`, `snare`, `hihat`, `tom1`, `tom2`
 - **Handpan:** Note names — `C4`, `D4`, `E4`, etc.
+- **Kalimba:** Note names — `C4`, `E4`, `G4`, etc. (same convention as handpan)
 - **Strumming:** Strum direction — `down`, `up`. Also includes `beat.chord` (e.g. `"G"`, `"Am"`) for chord progression exercises.
 
 Strumming exercises may additionally include top-level `key` and `chords` fields.
@@ -307,6 +309,35 @@ Replace screen tapping with real instrument audio detection via the browser's `g
 - **`useOnsetDetector` hook:** Wraps amplitude threshold logic. Configurable threshold and debounce.
 - **`usePitchDetector` hook:** Wraps autocorrelation pitch detection. Returns detected frequency and nearest note name.
 - **Settings:** New `micEnabled` boolean in `PracticeSettings`. When on, mic input runs alongside virtual pads. A sensitivity slider (0–100) maps to the onset threshold.
+
+### Phase 9 — Kalimba Instrument (Not Started)
+
+#### Overview
+A new instrument type (`kalimba`) for practicing thumb piano patterns. The kalimba is a popular beginner-friendly melodic percussion instrument with a distinctive plucked tone.
+
+#### Kalimba input
+- **Mobile/Desktop:** On-screen tine layout — a fan/arc arrangement of tines (like a real kalimba, alternating left/right from center). Tap or click to play.
+- **Keyboard:** Number keys and letter keys mapped to tines (e.g., 1–9 for 9-tine kalimba, or extended mapping for 17 tines).
+- **Component:** `KalimbaPad.tsx` in `src/components/instruments/`.
+
+#### Kalimba synth
+- **Audio:** Tone.js `PluckSynth` or tuned `FMSynth` configured for the bright, bell-like kalimba timbre. Short attack, medium sustain, gentle decay.
+- **Scale presets:** Common kalimba tunings — C major (17 notes), G major, pentatonic subsets. Stored in `src/data/kalimba/scales.ts`.
+- **Note layout:** Tines arranged low-to-high alternating left-right from center (matching real kalimba ergonomics). Center tine is the root note.
+
+#### Exercise data model
+- `beat.note` uses note names (e.g., `"C4"`, `"E4"`, `"G4"`) — same convention as handpan.
+- `exercise.instrument = 'kalimba'`, `exercise.scale` references a kalimba scale preset.
+- Exercises organized by difficulty: beginner (simple melodies, few tines), intermediate (wider range, eighth notes), advanced (fast runs, full range).
+
+#### Beat timeline
+- Single-column layout (like handpan) with note-colored markers.
+- Marker colors use the same `HANDPAN_NOTE_COLORS` chromatic color map.
+- Marker shapes based on octave register (low=circle, mid=diamond, high=triangle).
+
+#### Strict / Free mode
+- **Free mode:** Any tine tap counts for timing-only scoring.
+- **Strict mode:** Must tap the correct tine — wrong note = miss.
 
 ### Future Phases (Not Yet Planned in Detail)
 

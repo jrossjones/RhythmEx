@@ -175,11 +175,12 @@ src/
 - **Phase 6 — Strumming:** New instrument type. `StrumZone` component (vertical swipe + tap buttons + arrow keys). PluckSynth chord voicings (`src/data/chords.ts`). Exercises support single-chord patterns and chord progressions (`beat.note` = `down`/`up`, `beat.chord` = chord name).
 - **Phase 7 — Free Play:** Dedicated `FreePlayScreen` — instrument pads + optional metronome, no timeline/scoring. Entry from exercise select. Drum customization: pad count selector (2/3/5). Handpan customization: scale/key selector + note count selector (5/7/9 notes). Both persisted in localStorage. Future home for YouTube video playback.
 - **Phase 8 — Microphone Input:** `useMicrophone` + `useOnsetDetector` + `usePitchDetector` hooks. Drums: onset detection (amplitude threshold). Handpan: autocorrelation pitch detection. Guitar: root note detection (phase 1), ML chord classification (phase 2 future). Mic runs alongside virtual pads.
+- **Phase 9 — Kalimba:** New instrument type. `KalimbaPad` component (fan/arc tine layout, alternating left/right from center). PluckSynth or tuned FMSynth for bright bell-like timbre. Scale presets (C major, G major, pentatonic). Single-column timeline with note-colored markers. `beat.note` uses note names (same as handpan).
 
 ## Important Notes
 - Target audience is young children (5+): keep UI simple, colorful, and forgiving
 - All audio must be triggered by user interaction (no autoplay)
 - Performance matters: rhythm apps need <10ms input latency where possible
 - Exercises are data-driven — adding new exercises should only require adding JSON
-- `beat.note` convention varies by instrument: drum pad names for drums, note names (C4, D4) for handpan, strum direction (down/up) for strumming
-- Three planned instrument types: `drums` (implemented), `handpan` (implemented), `strumming` (planned)
+- `beat.note` convention varies by instrument: drum pad names for drums, note names (C4, D4) for handpan/kalimba, strum direction (down/up) for strumming
+- Four planned instrument types: `drums` (implemented), `handpan` (implemented), `strumming` (planned), `kalimba` (planned)
