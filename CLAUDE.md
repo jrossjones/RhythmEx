@@ -38,11 +38,13 @@ src/
     instruments/        # Virtual instrument UIs
       DrumPad.tsx       # Grid of color-coded drum pads with keyboard shortcuts (f/d/j/k/l)
       HandpanPad.tsx    # Circular pad layout: center ding + surrounding tone fields, keyboard 1-9
+      StrumZone.tsx     # Two stacked down/up tap buttons, ArrowDown/ArrowUp/Space keyboard, chord display
     practice/           # Practice UI components
       BeatMarker.tsx    # Shape-differentiated marker: circle/diamond/triangle/square/rounded-rect/line, labels, hollow/filled
       VerticalTimeline.tsx       # Orchestrator for vertical note highway (replaces horizontal BeatTimeline in PracticeScreen)
       VerticalDrumTimeline.tsx   # N equal-width columns for drum pads, markers scroll downward
       VerticalSingleTimeline.tsx # Single column with horizontal offsets for handpan notes
+      VerticalStrumTimeline.tsx  # Single centered column with chord change pill labels for strumming
       BeatTimeline.tsx  # (Legacy) Horizontal timeline orchestrator — kept for rollback
       DrumLaneTimeline.tsx  # (Legacy) 5-lane stacked drum timeline
       SingleRowTimeline.tsx # (Legacy) Single-row timeline for non-drum instruments
@@ -51,7 +53,7 @@ src/
       SettingsPopover.tsx # Gear icon popover: metronome, tap sounds, strict mode, speed trainer, loop mode toggles
   hooks/
     useExercise.ts      # Exercise lifecycle (idle/countdown/playing/done), playhead, BPM, lead-in, outro scroll
-    useAudio.ts         # Tone.js synth engine: drum sounds + handpan FM synth + metronome click
+    useAudio.ts         # Tone.js synth engine: drum sounds + handpan FM synth + strum PluckSynth + metronome click
     useTiming.ts        # Tap detection, beat matching, result accumulation, finalize/reset
     useLearnMode.ts     # Learn mode: countdown + step-through beats with smooth scroll animation
   data/
@@ -62,13 +64,17 @@ src/
       handpan-beginner.ts    # 3 handpan exercises: ding pulse, two-note melody, ascending scale
       handpan-intermediate.ts # 3 handpan exercises: kurd flow, ding & ring, cascade (8 measures)
       handpan-advanced.ts    # 3 handpan exercises: handpan rain, syncopated groove, endurance flow (16 measures)
-      index.ts          # Aggregator: allExercises (18), exercisesByDifficulty(diff, instrument?), exerciseById()
+      strumming-beginner.ts    # 3 strumming exercises: basic down strum, down-up intro, easy strum pattern
+      strumming-intermediate.ts # 3 strumming exercises: two-chord switch, four-chord song, strum marathon (8 measures)
+      strumming-advanced.ts    # 3 strumming exercises: syncopated strum, quick changes, endurance strum (16 measures)
+      index.ts          # Aggregator: allExercises (27), exercisesByDifficulty(diff, instrument?), exerciseById()
+    chords.ts           # ChordVoicing type, 8 open guitar voicings, getChord() lookup
     handpan/
       scales.ts         # HandpanScale type, 3 presets (D Kurd, C Amara, F Pygmy), getScale()
     samples/
       index.ts          # Audio sample path manifests (placeholder paths)
   utils/
-    rhythm.ts           # transportTimeToMs, msPerBeat, exerciseDurationMs, beatTimesMs, exerciseDrumPads, pitchClass
+    rhythm.ts           # transportTimeToMs, msPerBeat, exerciseDurationMs, beatTimesMs, exerciseDrumPads, pitchClass, exerciseChords
     scoring.ts          # TIMING_WINDOWS, judgeTap, calculateAccuracy, calculateStars
     storage.ts          # localStorage CRUD: compound key per instrument, attempt tracking, getAllScores
     __tests__/          # Vitest unit tests
@@ -89,6 +95,7 @@ src/
       __tests__/
         DrumPad.test.tsx
         HandpanPad.test.tsx
+        StrumZone.test.tsx
     practice/
       __tests__/
         BeatMarker.test.tsx
@@ -96,12 +103,16 @@ src/
         DrumLaneTimeline.test.tsx
         VerticalTimeline.test.tsx
         VerticalDrumTimeline.test.tsx
+        VerticalStrumTimeline.test.tsx
         TapZone.test.tsx
         SettingsPopover.test.tsx
   data/
     exercises/
       __tests__/
-        index.test.ts       # Exercise aggregator: 18 exercises, instrument filtering
+        index.test.ts       # Exercise aggregator: 27 exercises, instrument filtering
+    chords/
+      __tests__/
+        chords.test.ts      # Chord voicing count, lookup, unknown returns undefined
     handpan/
       __tests__/
         scales.test.ts      # Scale presets, lookup, defaults
@@ -168,11 +179,15 @@ src/
 - **Handpan scales:** `HandpanScale` type in `src/data/handpan/scales.ts` with 3 presets: D Kurd (9 notes), C Amara (8 notes), F Pygmy (9 notes). Default: `d-kurd`. `getScale(id)` lookup. Exercises reference scale via `exercise.scale` field.
 - **Handpan pad layout:** `HandpanPad` component with circular arrangement — center ding (64×64px) + surrounding tone fields (52×52px). Color-coded by pitch class via `HANDPAN_PAD_COLORS`. Keyboard: 1–9 for notes, Space for next expected note. Muted idle colors via `HANDPAN_PAD_MUTED_COLORS`.
 - **Handpan note colors:** `HANDPAN_NOTE_COLORS` in `timelineConstants.ts` maps 12 chromatic pitch classes to Tailwind colors (C=red, D=orange, E=amber, F=green, G=teal, A=blue, Bb=violet, etc.). `pitchClass()` helper extracts pitch class from note string (e.g. `"D3"` → `"D"`, `"Bb4"` → `"Bb"`). Used for both timeline markers and pad colors.
-- **Exercise instrument filtering:** `Exercise.instrument` field (`'drums' | 'handpan'`) added to type. `exercisesByDifficulty()` accepts optional instrument filter. `ExerciseSelectScreen` filters by selected instrument. 18 total exercises (9 drums + 9 handpan).
+- **Exercise instrument filtering:** `Exercise.instrument` field (`'drums' | 'handpan' | 'strumming'`) added to type. `exercisesByDifficulty()` accepts optional instrument filter. `ExerciseSelectScreen` filters by selected instrument. 27 total exercises (9 drums + 9 handpan + 9 strumming).
+- **Strumming input:** `StrumZone` component with two large tap buttons (down/up). ArrowDown/ArrowUp keyboard shortcuts, Space for next expected direction. No swipe detection in v1 (deferred). Chord name displayed above buttons.
+- **Strum audio:** `PolySynth(PluckSynth)` with reverb (decay 1.5s, wet 0.2). `playStrum(chord, direction)` staggers notes ~20ms apart, low-to-high for down, high-to-low for up. Chord voicings from `src/data/chords.ts`.
+- **Strum timeline:** `VerticalStrumTimeline` — single centered column (120px). Triangle markers with rotation (180deg=down, 0deg=up). Blue for down, amber for up. Chord change labels rendered as pill badges.
+- **BeatMarker rotation:** Optional `rotation` prop for directional markers. Labels counter-rotate to stay upright.
 
 ## Upcoming Phases (see SPEC.md for full detail)
 - **Future improvements:** Column-to-pyramid alignment (match drum column widths to pad centers). Approach animation (osu!-style shrinking ring). Colorblind mode toggle.
-- **Phase 6 — Strumming:** New instrument type. `StrumZone` component (vertical swipe + tap buttons + arrow keys). PluckSynth chord voicings (`src/data/chords.ts`). Exercises support single-chord patterns and chord progressions (`beat.note` = `down`/`up`, `beat.chord` = chord name).
+- **Phase 6 — Strumming:** New instrument type. `StrumZone` component (two stacked down/up tap buttons + ArrowDown/ArrowUp/Space keyboard). `PolySynth(PluckSynth)` with staggered note triggering. `VerticalStrumTimeline` with rotated triangle markers and chord change pill labels. 9 exercises (3 per difficulty) with chord voicings from `src/data/chords.ts`. `exerciseChords()` utility. `BeatMarker` rotation prop. Full demo/learn/strict mode support.
 - **Phase 7 — Free Play:** Dedicated `FreePlayScreen` — instrument pads + optional metronome, no timeline/scoring. Entry from exercise select. Drum customization: pad count selector (2/3/5). Handpan customization: scale/key selector + note count selector (5/7/9 notes). Both persisted in localStorage. Future home for YouTube video playback.
 - **Phase 8 — Microphone Input:** `useMicrophone` + `useOnsetDetector` + `usePitchDetector` hooks. Drums: onset detection (amplitude threshold). Handpan: autocorrelation pitch detection. Guitar: root note detection (phase 1), ML chord classification (phase 2 future). Mic runs alongside virtual pads.
 - **Phase 9 — Kalimba:** New instrument type. `KalimbaPad` component (fan/arc tine layout, alternating left/right from center). PluckSynth or tuned FMSynth for bright bell-like timbre. Scale presets (C major, G major, pentatonic). Single-column timeline with note-colored markers. `beat.note` uses note names (same as handpan).
