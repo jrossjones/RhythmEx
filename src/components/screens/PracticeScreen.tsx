@@ -6,6 +6,7 @@ import { VerticalTimeline } from '@/components/practice/VerticalTimeline'
 import { TapZone } from '@/components/practice/TapZone'
 import { DrumPad } from '@/components/instruments/DrumPad'
 import { HandpanPad } from '@/components/instruments/HandpanPad'
+import { StrumZone } from '@/components/instruments/StrumZone'
 import { ResultsOverlay } from '@/components/practice/ResultsOverlay'
 import { SettingsPopover } from '@/components/practice/SettingsPopover'
 import { useExercise, LEAD_IN_BEATS } from '@/hooks/useExercise'
@@ -16,7 +17,7 @@ import { calculateAccuracy, calculateStars } from '@/utils/scoring'
 import { beatTimesMs, exerciseDrumPads, exerciseDurationMs, msPerBeat } from '@/utils/rhythm'
 import { getScale, DEFAULT_HANDPAN_SCALE } from '@/data/handpan/scales'
 import { saveResult } from '@/utils/storage'
-import type { DrumPad as DrumPadType, Exercise, ExerciseResult, InstrumentType, PracticeSettings, StarRating, TapResult } from '@/types'
+import type { DrumPad as DrumPadType, Exercise, ExerciseResult, InstrumentType, PracticeSettings, StarRating, StrumDirection, TapResult } from '@/types'
 
 interface PracticeScreenProps {
   exercise: Exercise
@@ -51,7 +52,7 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
   } | null>(null)
   const [lastLoopResult, setLastLoopResult] = useState<ExerciseResult | null>(null)
 
-  const { playDrum, playHandpan, playMetronomeClick, startAudioContext } = useAudio()
+  const { playDrum, playHandpan, playStrum, playMetronomeClick, startAudioContext } = useAudio()
 
   // Refs to break circular dependency between useExercise and useTiming/settings
   const finalizeRef = useRef<() => TapResult[]>(() => [])
@@ -239,6 +240,55 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
     recordTap(pad)
   }, [isLearnMode, settings.tapSoundOn, playDrum, recordTap, recordLearnTap, exercise.beats, learnBeatJudgments])
 
+  // Derive current chord from playhead position (not judgment state)
+  const beatTimes = useMemo(() => beatTimesMs({ ...exercise, bpm }), [exercise, bpm])
+
+  const currentChord = useMemo((): string | null => {
+    if (instrument !== 'strumming') return null
+    const progress = isLearnMode
+      ? (learnPhase === 'idle' ? idleProgress : learnProgress)
+      : (phase === 'idle' ? idleProgress : rawProgress)
+    const playheadMs = progress * durationMs
+    // Walk beats backwards from playhead to find current chord
+    for (let i = beatTimes.length - 1; i >= 0; i--) {
+      if (beatTimes[i] <= playheadMs && exercise.beats[i].chord) {
+        return exercise.beats[i].chord!
+      }
+    }
+    // Before first beat, show first chord
+    return exercise.beats[0]?.chord ?? null
+  }, [instrument, exercise, beatTimes, durationMs, isLearnMode, learnPhase, learnProgress, phase, idleProgress, rawProgress])
+
+  const nextExpectedDirection = useMemo((): StrumDirection | null => {
+    for (let i = 0; i < exercise.beats.length; i++) {
+      if (!activeJudgments.has(i)) {
+        return exercise.beats[i].note as StrumDirection
+      }
+    }
+    return null
+  }, [exercise.beats, activeJudgments])
+
+  // Strum tap handler
+  const handleStrumTap = useCallback((direction: string) => {
+    if (isLearnMode) {
+      recordLearnTap(direction)
+      const expected = exercise.beats.find((_, i) => !learnBeatJudgments.has(i))
+      if (expected && direction === expected.note) {
+        playStrum(expected.chord ?? '', direction as StrumDirection)
+      }
+      return
+    }
+    if (settings.tapSoundOn) {
+      // Use chord from next unjudged beat for audio (not playhead-based currentChord)
+      const nextBeat = exercise.beats.find((_, i) => !activeJudgments.has(i))
+      const tapChord = nextBeat?.chord ?? currentChord
+      if (tapChord) {
+        playStrum(tapChord, direction as StrumDirection)
+      }
+    }
+    recordTap(direction)
+  }, [isLearnMode, settings.tapSoundOn, currentChord, activeJudgments, playStrum, recordTap, recordLearnTap, exercise.beats, learnBeatJudgments])
+
   // Handpan tap handler
   const handleHandpanTap = useCallback((note: string) => {
     if (isLearnMode) {
@@ -379,9 +429,11 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
   // Demo mode — auto-fire beat sounds during playing
   const playDrumRef = useRef(playDrum)
   const playHandpanRef = useRef(playHandpan)
+  const playStrumRef = useRef(playStrum)
   useEffect(() => {
     playDrumRef.current = playDrum
     playHandpanRef.current = playHandpan
+    playStrumRef.current = playStrum
   })
 
   useEffect(() => {
@@ -400,6 +452,8 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
             playDrumRef.current(exercise.beats[i].note as DrumPadType)
           } else if (instrument === 'handpan') {
             playHandpanRef.current(exercise.beats[i].note)
+          } else if (instrument === 'strumming') {
+            playStrumRef.current(exercise.beats[i].chord ?? '', exercise.beats[i].note as StrumDirection)
           }
         }
       }
@@ -507,6 +561,15 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
             disabled={isLearnMode ? (learnPhase === 'idle' || learnPhase === 'done') : (phase === 'idle' || phase === 'done' || isDemoMode)}
             activePads={activePads}
             nextExpectedPad={nextExpectedPad}
+          />
+        ) : instrument === 'strumming' ? (
+          <StrumZone
+            onTap={handleStrumTap}
+            lastFeedback={isLearnMode && wrongPad ? { judgment: 'miss' as const, timestamp: performance.now() } : lastTapFeedback}
+            lastFeedbackPad={isLearnMode && wrongPad ? wrongPad : lastFeedbackPad}
+            disabled={isLearnMode ? (learnPhase === 'idle' || learnPhase === 'done') : (phase === 'idle' || phase === 'done' || isDemoMode)}
+            currentChord={currentChord}
+            nextExpectedDirection={nextExpectedDirection}
           />
         ) : instrument === 'handpan' ? (
           <HandpanPad

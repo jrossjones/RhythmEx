@@ -5,6 +5,9 @@ import { advancedExercises } from './advanced'
 import { handpanBeginnerExercises } from './handpan-beginner'
 import { handpanIntermediateExercises } from './handpan-intermediate'
 import { handpanAdvancedExercises } from './handpan-advanced'
+import { strummingBeginnerExercises } from './strumming-beginner'
+import { strummingIntermediateExercises } from './strumming-intermediate'
+import { strummingAdvancedExercises } from './strumming-advanced'
 
 export const allExercises: Exercise[] = [
   ...beginnerExercises,
@@ -13,6 +16,9 @@ export const allExercises: Exercise[] = [
   ...handpanBeginnerExercises,
   ...handpanIntermediateExercises,
   ...handpanAdvancedExercises,
+  ...strummingBeginnerExercises,
+  ...strummingIntermediateExercises,
+  ...strummingAdvancedExercises,
 ]
 
 export function exercisesByDifficulty(difficulty: Difficulty, instrument?: InstrumentType): Exercise[] {

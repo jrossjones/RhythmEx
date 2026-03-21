@@ -41,7 +41,7 @@ Young practicing musicians, ages 5 and up. The UI must be simple, colorful, and 
 ### 5. Virtual Instruments
 - **Drums** — Kick, snare, hi-hat, tom1, tom2 with Tone.js synth sounds (MembraneSynth, NoiseSynth, MetalSynth). On-screen pads with keyboard shortcuts (f/d/j/k/l). Adaptive grid layout based on exercise difficulty. Multi-lane timeline.
 - **Handpan** — Pitched FM synth notes in a circular pad layout (center ding + surrounding tone fields). 3 scale presets (D Kurd, C Amara, F Pygmy). Keyboard shortcuts (1–9 keys). Note-colored timeline markers. 9 exercises across 3 difficulty levels.
-- **Strumming** — Guitar/ukulele strum patterns with chord display. Swipe zone (mobile) + arrow keys (desktop) for up/down strum direction — *not yet implemented*
+- **Strumming** — Guitar/ukulele strum patterns with chord display. Two stacked down/up tap buttons (mobile) + arrow keys (desktop) for strum direction. PluckSynth with staggered chord notes. Chord change labels on vertical timeline. Playhead-based chord display above strum buttons.
 - **Kalimba** — Thumb piano with pitched tines in a fan/arc layout. Tone.js plucked synth sound. Scale presets (C major, G major, etc.). Keyboard shortcuts for tines. Single-column timeline with note-colored markers (similar to handpan). — *not yet implemented*
 - Instrument selection screen; user picks before starting an exercise
 - Settings popover on practice screen: metronome toggle, tap sound toggle, strict/free mode, speed trainer, loop mode
@@ -61,9 +61,8 @@ Young practicing musicians, ages 5 and up. The UI must be simple, colorful, and 
 - No login required — fully client-side
 
 ## Future Features (Post-MVP, in rough priority order)
-1. **Strumming instrument** — Swipe/key-based strum input with chord progressions
-2. **Free Play mode** — Open-ended instrument play without exercises or scoring
-3. **Microphone input** — Real instrument detection (onset for drums, pitch for handpan, root note for guitar)
+1. **Free Play mode** — Open-ended instrument play without exercises or scoring
+2. **Microphone input** — Real instrument detection (onset for drums, pitch for handpan, root note for guitar)
 4. **Guitar Hero mode** — Scrolling note highway for sight-reading practice
 5. **Polyrhythm practice** — Two simultaneous rhythms, tap both hands
 6. **YouTube integration** — Play YouTube videos, practice along with embedded audio
@@ -207,167 +206,18 @@ Strumming exercises may additionally include top-level `key` and `chords` fields
 - **New file: `src/hooks/__tests__/useLearnMode.test.ts`** — 12 tests covering learn mode lifecycle.
 - 274 tests passing (258 existing + 16 new)
 
-### Phase 6 — Strumming Instrument (Not Started)
-
-#### Overview
-A new instrument type (`strumming`) for practicing guitar/ukulele strum patterns. Supports both pattern-only exercises (single chord, focus on rhythm) and chord progression exercises (chord changes at specific beats). Follows the same architecture as drums and handpan: dedicated pad component, audio engine extension, vertical timeline integration, 9 exercises across 3 difficulty levels, and full demo/learn/strict mode support.
-
-#### Type system changes (`src/types/index.ts`)
-- **`InstrumentType`:** Extend to `'drums' | 'handpan' | 'strumming'`.
-- **`StrumDirection`:** New exported type alias `'down' | 'up'`.
-- **`Beat` interface:** Add optional `chord?: string` field (e.g. `"G"`, `"Am"`). Used by strumming exercises.
-- **`Exercise` interface:** Add optional `key?: string` (e.g. `"G"`) and `chords?: string[]` (e.g. `["G", "C", "D", "Em"]`). Used by strumming exercises.
-
-#### Strum input (`src/components/instruments/StrumZone.tsx`)
-- **Props:** `onTap(direction: StrumDirection)`, `lastFeedback: TimingJudgment | null`, `lastFeedbackPad: string | null`, `disabled: boolean`, `currentChord?: string`, `nextExpectedDirection?: StrumDirection | null`.
-- **Mobile:** Two large stacked tap buttons — top button for downstrum (↓ label), bottom button for upstrum (↑ label). Minimum 64px height each. `onTouchStart` for low-latency input (same pattern as `DrumPad`/`HandpanPad`). Swipe detection deferred to a future enhancement.
-- **Desktop keyboard:** ArrowDown = downstrum, ArrowUp = upstrum, Space = next expected direction (falls back to `'down'`). Same `useRef` pattern for `onTap`/`disabled`/`nextExpectedDirection`. Same `useEffect` keydown listener with `e.repeat` guard.
-- **Color-coding:** Down = `bg-blue-400` (active) / `bg-blue-200` (muted/disabled). Up = `bg-amber-400` (active) / `bg-amber-200` (muted/disabled). Judgment feedback: same flash system as drums/handpan (green=on-time, yellow=early/late, red=miss), auto-clears after 300ms.
-- **Chord display:** When `currentChord` is provided, show the chord name prominently above the strum buttons (large bold text, e.g. "G" or "Am"). Updates when chord changes.
-
-#### Chord data (`src/data/chords.ts`)
-- **`ChordVoicing` type:**
-  ```ts
-  export interface ChordVoicing {
-    name: string         // e.g. "G", "Am", "C"
-    notes: string[]      // e.g. ["G2", "B2", "D3", "G3", "B3", "G4"]
-  }
-  ```
-- **Initial chord set (open position guitar voicings):**
-  - `G` — `["G2", "B2", "D3", "G3", "B3", "G4"]`
-  - `C` — `["C3", "E3", "G3", "C4", "E4"]`
-  - `D` — `["D3", "A3", "D4", "F#4"]`
-  - `Em` — `["E2", "B2", "E3", "G3", "B3", "E4"]`
-  - `Am` — `["A2", "E3", "A3", "C4", "E4"]`
-  - `A` — `["A2", "E3", "A3", "C#4", "E4"]`
-  - `E` — `["E2", "B2", "E3", "G#3", "B3", "E4"]`
-  - `D7` — `["D3", "A3", "C4", "F#4"]`
-- **Exports:** `chordVoicings: ChordVoicing[]`, `getChord(name: string): ChordVoicing | undefined`.
-
-#### Audio engine extension (`src/hooks/useAudio.ts`)
-- **Synth:** Tone.js `PolySynth` wrapping `PluckSynth` for polyphonic strum sound. Connected to a short reverb (`decay: 1.5, wet: 0.2`). Created lazily alongside existing synths in `createSynths()`. Disposed on unmount.
-- **`playStrum(chord: string, direction: StrumDirection)`:** Looks up `ChordVoicing` via `getChord()`. Triggers notes in sequence with ~20ms stagger. Downstrum: low-to-high (array order). Upstrum: high-to-low (reversed). Each note triggered with `triggerAttackRelease(note, 0.8, time)` where `time = Tone.now() + i * 0.02`.
-
-#### Exercise data model
-```json
-{
-  "id": "basic-down-strum",
-  "name": "Basic Down Strum",
-  "difficulty": "beginner",
-  "instrument": "strumming",
-  "timeSignature": [4, 4],
-  "bpm": 80,
-  "measures": 4,
-  "key": "G",
-  "chords": ["G"],
-  "beats": [
-    { "time": "0:0:0", "duration": "4n", "note": "down", "chord": "G" },
-    { "time": "0:1:0", "duration": "4n", "note": "down", "chord": "G" }
-  ]
-}
-```
-- `beat.note`: `"down"` or `"up"` for strum direction.
-- `beat.chord`: which chord is active at that beat (required for all strumming beats).
-- Top-level `key`: exercise key. `chords`: array of all unique chords used.
-
-#### Exercise files (9 exercises, 3 per difficulty)
-- **`src/data/exercises/strumming-beginner.ts`** (`strummingBeginnerExercises`):
-  1. **"Basic Down Strum"** — 4 measures, 80 BPM, G only, all quarter-note downstrums (16 beats).
-  2. **"Down-Up Intro"** — 4 measures, 75 BPM, C only, alternating down-up quarter notes (16 beats).
-  3. **"Easy Strum Pattern"** — 4 measures, 70 BPM, G only, "D-D-U-U-D-U" pattern per measure using mixed quarter/eighth notes (24 beats).
-
-- **`src/data/exercises/strumming-intermediate.ts`** (`strummingIntermediateExercises`):
-  1. **"Two-Chord Switch"** — 4 measures, 85 BPM, G→C (change every 2 measures), steady down-up eighth-note pattern.
-  2. **"Four-Chord Song"** — 4 measures, 80 BPM, G-D-Em-C (one per measure), D-D-U-U-D-U per measure.
-  3. **"Strum Marathon"** — 8 measures, 85 BPM, G-C-D-Em repeating, steady eighth-note down-up.
-
-- **`src/data/exercises/strumming-advanced.ts`** (`strummingAdvancedExercises`):
-  1. **"Syncopated Strum"** — 4 measures, 90 BPM, G-Am-C-D, syncopated pattern with offbeat upstrums.
-  2. **"Quick Changes"** — 4 measures, 100 BPM, chord changes every 2 beats, mixed strum pattern.
-  3. **"Endurance Strum"** — 16 measures, 90 BPM, cycling G-C-D-Em-Am-E, D-D-U-U-D-U with variations.
-
-- **`src/data/exercises/index.ts`:** Import and aggregate strumming exercises. Total: 27 (9 drums + 9 handpan + 9 strumming).
-
-#### Utility functions (`src/utils/rhythm.ts`)
-- **`exerciseChords(exercise: Exercise): string[]`** — Deduplicated array of `beat.chord` values. Same pattern as `exerciseDrumPads()`.
-
-#### Timeline constants (`src/components/practice/timelineConstants.ts`)
-- **`STRUM_DIRECTION_COLORS`:** `{ down: 'bg-blue-400', up: 'bg-amber-400' }`.
-- **`STRUM_DIRECTION_MUTED_COLORS`:** `{ down: 'bg-blue-200', up: 'bg-amber-200' }`.
-- **`STRUM_DIRECTION_LABELS`:** `{ down: '↓', up: '↑' }`.
-- **`STRUM_COLUMN_WIDTH`:** `120` px.
-- Strumming uses `triangle` marker shape with rotation: down = 180deg (points down), up = 0deg (points up).
-
-#### BeatMarker extension (`src/components/practice/BeatMarker.tsx`)
-- Add optional `rotation?: number` prop. Applied as CSS `transform: rotate(Xdeg)` on the marker container. Labels counter-rotate to stay upright. Default: `undefined` (no rotation).
-
-#### VerticalStrumTimeline (`src/components/practice/VerticalStrumTimeline.tsx`)
-- New component. Single centered column (120px wide). Markers centered, no angular offsets.
-- **Chord change annotations:** When `beat.chord` differs from the previous beat's chord (or is the first beat), render a chord name label to the left of the column at that Y position. Small pill badge styling.
-- **Props:** Same interface pattern as other vertical timelines: `markers`, `measureLines`, `scrollOffset`, `hitLineY`, `renderedHeight`, `tapMarkers`, `containerHeight`, plus `chordChanges: { beatIndex: number; chord: string; yPosition: number }[]`.
-
-#### VerticalTimeline orchestrator (`src/components/practice/VerticalTimeline.tsx`)
-- Add `isStrumming = instrument === 'strumming'` check.
-- Build strumming markers using `STRUM_DIRECTION_COLORS`, `triangle` shape with rotation, `STRUM_DIRECTION_LABELS`.
-- Compute `chordChanges` array from exercise beats.
-- Route to `VerticalStrumTimeline` when strumming.
-
-#### PracticeScreen integration (`src/components/screens/PracticeScreen.tsx`)
-- **`handleStrumTap(direction)`:** Same pattern as `handleDrumTap`/`handleHandpanTap`. Calls `recordLearnTap(direction)` in learn mode, `recordTap(direction)` in normal mode. Plays `playStrum(currentChord, direction)` when tap sounds enabled.
-- **Current chord:** Derived from next unjudged beat's `chord` field. Passed to `StrumZone` and `playStrum`.
-- **Next expected direction:** Derived from next unjudged beat's `note` field. Passed to `StrumZone`.
-- **Conditional render:** `instrument === 'strumming' ? <StrumZone ... /> : ...`
-- **Demo mode:** Add strum branch to RAF auto-fire loop, calling `playStrum(beat.chord, beat.note)` at beat times.
-
-#### Learn mode
-- Fully compatible with `useLearnMode` hook. No hook changes needed.
-- `recordLearnTap(direction)` compares direction against `exercise.beats[idx].note` — same string comparison pattern as handpan notes.
-
-#### Strict / Free mode
-- **Free mode (default):** Any strum direction accepted; timing-only scoring.
-- **Strict mode:** Must match direction. Existing `useTiming` logic already compares `pad !== expectedNote` generically — no changes needed.
-
-#### Speed trainer, loop mode, settings
-- All existing settings work automatically. No changes to `SettingsPopover` or `PracticeSettings`.
-
-#### Score storage
-- Compound key `"exerciseId::strumming"` — works automatically via existing storage functions.
-
-#### InstrumentSelectScreen (`src/components/screens/InstrumentSelectScreen.tsx`)
-- Add strumming card: `{ type: 'strumming', label: 'Strumming', emoji: '🎸', color: 'from-blue-400 to-indigo-500' }`.
-- Grid: 3 cards. Keep `sm:grid-cols-2` (two top, one centered below). Revisit layout when kalimba is added.
-
-#### New files
-| File | Purpose |
-|---|---|
-| `src/components/instruments/StrumZone.tsx` | Strum input (down/up buttons, keyboard, chord display) |
-| `src/data/chords.ts` | Chord voicing data + lookup |
-| `src/data/exercises/strumming-beginner.ts` | 3 beginner exercises |
-| `src/data/exercises/strumming-intermediate.ts` | 3 intermediate exercises |
-| `src/data/exercises/strumming-advanced.ts` | 3 advanced exercises |
-| `src/components/practice/VerticalStrumTimeline.tsx` | Vertical timeline with chord annotations |
-| `src/components/instruments/__tests__/StrumZone.test.tsx` | StrumZone tests |
-| `src/data/chords/__tests__/chords.test.ts` | Chord data tests |
-| `src/components/practice/__tests__/VerticalStrumTimeline.test.tsx` | Strum timeline tests |
-
-#### Modified files
-| File | Changes |
-|---|---|
-| `src/types/index.ts` | Add `'strumming'` to `InstrumentType`, `StrumDirection` type, `chord?` to `Beat`, `key?`/`chords?` to `Exercise` |
-| `src/hooks/useAudio.ts` | Add `PolySynth(PluckSynth)` + reverb, `playStrum()`, disposal |
-| `src/components/screens/PracticeScreen.tsx` | StrumZone branch, `handleStrumTap`, chord derivation, demo mode strum branch |
-| `src/components/screens/InstrumentSelectScreen.tsx` | Add strumming card |
-| `src/components/practice/VerticalTimeline.tsx` | Strumming marker logic, route to VerticalStrumTimeline |
-| `src/components/practice/timelineConstants.ts` | Strum color/label/shape constants |
-| `src/components/practice/BeatMarker.tsx` | Add `rotation` prop |
-| `src/data/exercises/index.ts` | Aggregate strumming exercises (total: 27) |
-| `src/utils/rhythm.ts` | Add `exerciseChords()` |
-
-#### Test expectations
-- StrumZone: button rendering, tap callbacks, keyboard shortcuts (ArrowDown/Up/Space), repeat guard, disabled state, feedback flash, chord display.
-- Chord data: voicing count, lookup, unknown chord returns undefined.
-- VerticalStrumTimeline: marker rendering, chord labels, hit line, scroll offset.
-- Updated: exercise index (27 total), useAudio (playStrum), rhythm utils (exerciseChords).
+### Phase 6 — Strumming Instrument (Complete)
+- **Strum input (`StrumZone` component):** Two large stacked tap buttons (down/up) with ArrowDown/ArrowUp/Space keyboard shortcuts. Blue for down, amber for up. Same judgment flash system as drums/handpan. Chord name displayed prominently above buttons, derived from playhead position (updates in real-time as playhead passes chord changes).
+- **Chord data:** 8 open guitar voicings (G, C, D, Em, Am, A, E, D7) in `src/data/chords.ts`. `ChordVoicing` type with `name` and `notes[]`. `getChord()` lookup.
+- **Strum audio:** `PolySynth(PluckSynth)` with reverb (decay 1.5s, wet 0.2). `playStrum(chord, direction)` staggers notes ~20ms apart — low-to-high for downstrum, high-to-low for upstrum. Audio uses the next unjudged beat's chord (not the playhead chord) to stay in sync with tap matching.
+- **Strum timeline:** `VerticalStrumTimeline` — single centered column (120px). Triangle markers with rotation (180deg=down, 0deg=up). Blue for down, amber for up. Chord change labels rendered as pill badges inside the column (left-aligned at `left: 4px`).
+- **Strumming exercises:** 9 exercises (3 per difficulty). Beginner: basic down strum, down-up intro, easy strum pattern. Intermediate: two-chord switch, four-chord song, strum marathon (8 measures). Advanced: syncopated strum, quick changes, endurance strum (16 measures).
+- **Type system:** `InstrumentType` extended to `'drums' | 'handpan' | 'strumming'`. `StrumDirection` type. `Beat.chord?` and `Exercise.key?`/`Exercise.chords?` fields.
+- **BeatMarker rotation:** Optional `rotation` prop for directional markers. Labels counter-rotate to stay upright.
+- **`exerciseChords()` utility:** Deduplicated array of `beat.chord` values from an exercise.
+- **Playhead-based chord display:** `currentChord` in `PracticeScreen` derived from playhead position (`rawProgress * durationMs`), not judgment state. Walks `beatTimesMs` backwards to find the most recent chord. Updates every frame via RAF.
+- **Full mode support:** Demo mode auto-fires `playStrum()` at beat times. Learn mode step-through works with direction comparison. Strict mode requires correct strum direction. Speed trainer, loop mode, score persistence all work automatically.
+- 304 tests passing (274 existing + 30 new)
 
 ### Phase 7 — Free Play Mode (Not Started)
 

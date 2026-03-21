@@ -182,12 +182,12 @@ src/
 - **Exercise instrument filtering:** `Exercise.instrument` field (`'drums' | 'handpan' | 'strumming'`) added to type. `exercisesByDifficulty()` accepts optional instrument filter. `ExerciseSelectScreen` filters by selected instrument. 27 total exercises (9 drums + 9 handpan + 9 strumming).
 - **Strumming input:** `StrumZone` component with two large tap buttons (down/up). ArrowDown/ArrowUp keyboard shortcuts, Space for next expected direction. No swipe detection in v1 (deferred). Chord name displayed above buttons.
 - **Strum audio:** `PolySynth(PluckSynth)` with reverb (decay 1.5s, wet 0.2). `playStrum(chord, direction)` staggers notes ~20ms apart, low-to-high for down, high-to-low for up. Chord voicings from `src/data/chords.ts`.
-- **Strum timeline:** `VerticalStrumTimeline` — single centered column (120px). Triangle markers with rotation (180deg=down, 0deg=up). Blue for down, amber for up. Chord change labels rendered as pill badges.
+- **Strum timeline:** `VerticalStrumTimeline` — single centered column (120px). Triangle markers with rotation (180deg=down, 0deg=up). Blue for down, amber for up. Chord change labels rendered as left-aligned pill badges inside the column (`left: 4px`).
 - **BeatMarker rotation:** Optional `rotation` prop for directional markers. Labels counter-rotate to stay upright.
+- **Strum chord display:** `currentChord` in `PracticeScreen` derived from playhead position (`rawProgress * durationMs`), not judgment state. Walks `beatTimesMs` backwards from the playhead to find the most recent chord change. Updates every RAF frame. `handleStrumTap` uses the next unjudged beat's chord for audio playback (stays in sync with tap matching).
 
 ## Upcoming Phases (see SPEC.md for full detail)
 - **Future improvements:** Column-to-pyramid alignment (match drum column widths to pad centers). Approach animation (osu!-style shrinking ring). Colorblind mode toggle.
-- **Phase 6 — Strumming:** New instrument type. `StrumZone` component (two stacked down/up tap buttons + ArrowDown/ArrowUp/Space keyboard). `PolySynth(PluckSynth)` with staggered note triggering. `VerticalStrumTimeline` with rotated triangle markers and chord change pill labels. 9 exercises (3 per difficulty) with chord voicings from `src/data/chords.ts`. `exerciseChords()` utility. `BeatMarker` rotation prop. Full demo/learn/strict mode support.
 - **Phase 7 — Free Play:** Dedicated `FreePlayScreen` — instrument pads + optional metronome, no timeline/scoring. Entry from exercise select. Drum customization: pad count selector (2/3/5). Handpan customization: scale/key selector + note count selector (5/7/9 notes). Both persisted in localStorage. Future home for YouTube video playback.
 - **Phase 8 — Microphone Input:** `useMicrophone` + `useOnsetDetector` + `usePitchDetector` hooks. Drums: onset detection (amplitude threshold). Handpan: autocorrelation pitch detection. Guitar: root note detection (phase 1), ML chord classification (phase 2 future). Mic runs alongside virtual pads.
 - **Phase 9 — Kalimba:** New instrument type. `KalimbaPad` component (fan/arc tine layout, alternating left/right from center). PluckSynth or tuned FMSynth for bright bell-like timbre. Scale presets (C major, G major, pentatonic). Single-column timeline with note-colored markers. `beat.note` uses note names (same as handpan).
@@ -198,4 +198,4 @@ src/
 - Performance matters: rhythm apps need <10ms input latency where possible
 - Exercises are data-driven — adding new exercises should only require adding JSON
 - `beat.note` convention varies by instrument: drum pad names for drums, note names (C4, D4) for handpan/kalimba, strum direction (down/up) for strumming
-- Four planned instrument types: `drums` (implemented), `handpan` (implemented), `strumming` (planned), `kalimba` (planned)
+- Four planned instrument types: `drums` (implemented), `handpan` (implemented), `strumming` (implemented), `kalimba` (planned)

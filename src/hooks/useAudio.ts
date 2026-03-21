@@ -1,6 +1,7 @@
 import { useRef, useState, useCallback, useEffect } from 'react'
 import * as Tone from 'tone'
-import type { DrumPad } from '@/types'
+import type { DrumPad, StrumDirection } from '@/types'
+import { getChord } from '@/data/chords'
 
 interface Synths {
   kick: Tone.MembraneSynth
@@ -11,11 +12,14 @@ interface Synths {
   metronome: Tone.Synth
   handpan: Tone.PolySynth
   reverb: Tone.Reverb
+  strumming: Tone.PolySynth
+  strumReverb: Tone.Reverb
 }
 
 export interface UseAudioReturn {
   playDrum: (pad: DrumPad) => void
   playHandpan: (note: string) => void
+  playStrum: (chord: string, direction: StrumDirection) => void
   playMetronomeClick: (accent?: boolean) => void
   startAudioContext: () => Promise<void>
   isAudioReady: boolean
@@ -75,7 +79,16 @@ export function useAudio(): UseAudioReturn {
     }).connect(reverb)
     handpan.volume.value = -6
 
-    return { kick, snare, hihat, tom1, tom2, metronome, handpan, reverb }
+    const strumReverb = new Tone.Reverb({ decay: 1.5, wet: 0.2 })
+    strumReverb.toDestination()
+
+    const strumming = new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.001, decay: 0.5, sustain: 0, release: 0.3 },
+    }).connect(strumReverb)
+    strumming.volume.value = -6
+
+    return { kick, snare, hihat, tom1, tom2, metronome, handpan, reverb, strumming, strumReverb }
   }, [])
 
   const startAudioContext = useCallback(async () => {
@@ -116,6 +129,21 @@ export function useAudio(): UseAudioReturn {
     synths.handpan.triggerAttackRelease(note, '0.8', Tone.now())
   }, [])
 
+  const playStrum = useCallback((chord: string, direction: StrumDirection) => {
+    const synths = synthsRef.current
+    if (!synths) return
+
+    const voicing = getChord(chord)
+    if (!voicing) return
+
+    const notes = direction === 'up' ? [...voicing.notes].reverse() : voicing.notes
+
+    const now = Tone.now()
+    notes.forEach((note, i) => {
+      synths.strumming.triggerAttackRelease(note, '0.8', now + i * 0.02)
+    })
+  }, [])
+
   const playMetronomeClick = useCallback((accent?: boolean) => {
     const synths = synthsRef.current
     if (!synths) return
@@ -136,10 +164,12 @@ export function useAudio(): UseAudioReturn {
         synths.metronome.dispose()
         synths.handpan.dispose()
         synths.reverb.dispose()
+        synths.strumming.dispose()
+        synths.strumReverb.dispose()
         synthsRef.current = null
       }
     }
   }, [])
 
-  return { playDrum, playHandpan, playMetronomeClick, startAudioContext, isAudioReady }
+  return { playDrum, playHandpan, playStrum, playMetronomeClick, startAudioContext, isAudioReady }
 }

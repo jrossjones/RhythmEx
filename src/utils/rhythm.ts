@@ -61,3 +61,19 @@ export function exerciseHandpanNotes(exercise: Exercise): string[] {
   }
   return notes
 }
+
+/**
+ * Get deduplicated array of chord names used in a strumming exercise.
+ * Preserves order of first appearance.
+ */
+export function exerciseChords(exercise: Exercise): string[] {
+  const seen = new Set<string>()
+  const chords: string[] = []
+  for (const beat of exercise.beats) {
+    if (beat.chord && !seen.has(beat.chord)) {
+      seen.add(beat.chord)
+      chords.push(beat.chord)
+    }
+  }
+  return chords
+}

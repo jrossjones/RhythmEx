@@ -617,3 +617,111 @@ Run `npm run dev` and open the app in a browser to execute these tests.
 - [ ] Tapping after all beats completed (done phase) has no effect
 - [ ] Starting learn mode twice resets state (starts fresh countdown each time)
 - [ ] Switching between Learn, Listen, and Start: each mode works independently
+
+---
+
+## Phase 6 — Strumming Instrument
+
+### 6.1 Exercise Selection (Strumming)
+- [ ] Select "Strumming" on the Instrument Select screen (guitar emoji card)
+- [ ] Exercise Select shows only strumming exercises (not drum or handpan exercises)
+- [ ] Beginner section shows 3 exercises: Basic Down Strum, Down-Up Intro, Easy Strum Pattern
+- [ ] Intermediate section shows 3 exercises: Two-Chord Switch, Four-Chord Song, Strum Marathon
+- [ ] Advanced section shows 3 exercises: Syncopated Strum, Quick Changes, Endurance Strum
+- [ ] Back button returns to Instrument Select
+- [ ] Select "Drums" — only drum exercises shown (no strumming exercises)
+
+### 6.2 StrumZone UI
+- [ ] When instrument is Strumming, two large stacked buttons replace drum pads
+- [ ] Top button is for downstrum (↓ label), colored blue
+- [ ] Bottom button is for upstrum (↑ label), colored amber
+- [ ] Both buttons are large touch targets (minimum 64px height each)
+- [ ] Buttons are disabled during idle phase
+- [ ] Buttons are visually enabled during countdown (taps silently ignored)
+- [ ] Disabled buttons show muted versions of their color (blue-200/amber-200)
+
+### 6.3 Chord Display Above Strum Buttons
+- [ ] Current chord name displayed prominently above the strum buttons (large bold text)
+- [ ] **Single-chord exercise** (e.g., "Basic Down Strum" — G only): chord shows "G" throughout
+- [ ] **Multi-chord exercise** (e.g., "Four-Chord Song" — G-D-Em-C): chord updates as playhead advances
+  - Start playing — shows "G" for measure 1
+  - Playhead reaches measure 2 — display updates to "D"
+  - Playhead reaches measure 3 — display updates to "Em"
+  - Playhead reaches measure 4 — display updates to "C"
+- [ ] Chord display updates in real-time (synced with playhead, not with taps)
+- [ ] Before first beat (during lead-in), shows the first chord of the exercise
+
+### 6.4 Strumming Audio
+- [ ] Down strum plays a chord with notes in low-to-high order (audible stagger)
+- [ ] Up strum plays a chord with notes in high-to-low order (reversed stagger)
+- [ ] Chord sound matches the current chord (e.g., G sounds different from C)
+- [ ] Notes have natural sustain with reverb (not abrupt cutoff)
+- [ ] Multiple rapid strums produce overlapping sounds (polyphonic)
+- [ ] "Tap Sounds" off: strumming registers timing but plays no chord sound
+- [ ] No audio plays before user interaction (browser autoplay policy)
+
+### 6.5 Strumming Keyboard Input
+- [ ] ArrowDown key triggers a downstrum
+- [ ] ArrowUp key triggers an upstrum
+- [ ] Space key triggers the next expected direction
+- [ ] Holding a key does not repeat-fire (event.repeat guard)
+- [ ] Keys do not respond during idle phase
+
+### 6.6 Strumming Timeline
+- [ ] Single centered column (120px wide) on the vertical timeline
+- [ ] Down strums shown as blue downward-pointing triangles (rotated 180deg)
+- [ ] Up strums shown as amber upward-pointing triangles (0deg)
+- [ ] Triangle labels (↓/↑) are readable (counter-rotated to stay upright)
+- [ ] Beat markers use hollow/filled states after judgment (same as drums/handpan)
+- [ ] Measure divider lines appear between measures
+- [ ] Tap markers (horizontal tick lines) appear at tap positions
+
+### 6.7 Chord Change Labels on Timeline
+- [ ] When a chord changes, a pill-shaped label appears on the timeline at that beat position
+- [ ] Labels are positioned inside the column (left-aligned), not clipped by overflow
+- [ ] Labels show the chord name (e.g., "G", "C", "D", "Em")
+- [ ] First beat always shows a chord label
+- [ ] Labels are visually distinct from beat markers (small indigo pill badges)
+- [ ] Multi-chord exercises show multiple labels at correct vertical positions
+
+### 6.8 Strumming Strict Mode
+- [ ] Default is Free mode: any strum direction counts for timing-only scoring
+  - Strum down when up is expected → judges timing only, no penalty
+- [ ] Enable Strict mode in settings
+  - Strum down when up is expected → miss judgment regardless of timing
+  - Strum the correct direction → normal timing judgment applies
+- [ ] Strict mode only changeable in idle phase
+
+### 6.9 Strumming Listen/Demo Mode
+- [ ] Press "Listen" on a strumming exercise
+- [ ] Countdown plays normally (4-3-2-1 with metronome if enabled)
+- [ ] Each beat auto-fires the correct strum sound at the right time
+  - Chord changes are audible (different chords sound different)
+  - Strum direction is audible (down vs up stagger pattern)
+- [ ] Strum buttons are visible but disabled during demo
+- [ ] "Listening..." badge appears
+- [ ] On completion, returns to idle (no scoring)
+
+### 6.10 Strumming Learn Mode
+- [ ] Press "Learn" on a strumming exercise
+- [ ] Countdown and timeline lead-in work the same as drums/handpan
+- [ ] Next expected direction highlighted at the hit line
+- [ ] Correct strum direction advances to next beat with smooth scroll
+  - Chord sound plays on correct strum
+- [ ] Wrong direction flashes red, does not advance
+  - No chord sound on wrong strum
+- [ ] "Learning" badge shown
+- [ ] After all beats completed, auto-resets to idle after 600ms
+
+### 6.11 Strumming with Practice Features
+- [ ] **Metronome:** Clicks during countdown and playback, same as other instruments
+- [ ] **BPM controls:** +/- buttons work, range 40–200, disabled during playing
+- [ ] **Speed Trainer:** BPM increments on ≥95% accuracy, badge shown, "Next: X BPM" on results
+- [ ] **Loop Mode:** Exercise auto-restarts after brief results overlay
+- [ ] **Seamless Loop:** Exercise restarts immediately with no countdown/overlay
+- [ ] **Score persistence:** Strumming scores saved independently from drum/handpan scores
+  - Complete an exercise on Strumming, note the score
+  - Switch to Drums — strumming score not shown (per-instrument isolation)
+  - Switch back to Strumming — score preserved
+- [ ] **Tap placement markers:** Tick marks appear at tap positions on single-column timeline
+- [ ] **Results screen:** Shows stars, accuracy, tap breakdown, personal best comparison

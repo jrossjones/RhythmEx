@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest'
 import { allExercises, exercisesByDifficulty, exerciseById } from '../index'
 
 describe('allExercises', () => {
-  it('contains 18 exercises total (9 drums + 9 handpan)', () => {
-    expect(allExercises).toHaveLength(18)
+  it('contains 27 exercises total (9 drums + 9 handpan + 9 strumming)', () => {
+    expect(allExercises).toHaveLength(27)
   })
 
   it('all exercises have required fields', () => {
@@ -31,6 +31,11 @@ describe('allExercises', () => {
     const handpanExercises = allExercises.filter((e) => e.instrument === 'handpan')
     expect(handpanExercises).toHaveLength(9)
   })
+
+  it('all strumming exercises have instrument: strumming', () => {
+    const strummingExercises = allExercises.filter((e) => e.instrument === 'strumming')
+    expect(strummingExercises).toHaveLength(9)
+  })
 })
 
 describe('exercisesByDifficulty', () => {
@@ -52,19 +57,30 @@ describe('exercisesByDifficulty', () => {
     })
   })
 
+  it('returns beginner exercises for strumming only', () => {
+    const exercises = exercisesByDifficulty('beginner', 'strumming')
+    expect(exercises).toHaveLength(3)
+    exercises.forEach((e) => {
+      expect(e.difficulty).toBe('beginner')
+      expect(e.instrument).toBe('strumming')
+    })
+  })
+
   it('returns all beginner exercises when no instrument filter', () => {
     const exercises = exercisesByDifficulty('beginner')
-    expect(exercises).toHaveLength(6)
+    expect(exercises).toHaveLength(9)
   })
 
   it('returns intermediate exercises for each instrument', () => {
     expect(exercisesByDifficulty('intermediate', 'drums')).toHaveLength(3)
     expect(exercisesByDifficulty('intermediate', 'handpan')).toHaveLength(3)
+    expect(exercisesByDifficulty('intermediate', 'strumming')).toHaveLength(3)
   })
 
   it('returns advanced exercises for each instrument', () => {
     expect(exercisesByDifficulty('advanced', 'drums')).toHaveLength(3)
     expect(exercisesByDifficulty('advanced', 'handpan')).toHaveLength(3)
+    expect(exercisesByDifficulty('advanced', 'strumming')).toHaveLength(3)
   })
 })
 

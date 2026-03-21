@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { transportTimeToMs, msPerBeat, exerciseDurationMs, beatTimesMs, exerciseHandpanNotes } from '../rhythm'
+import { transportTimeToMs, msPerBeat, exerciseDurationMs, beatTimesMs, exerciseHandpanNotes, exerciseChords } from '../rhythm'
 import type { Exercise } from '@/types'
 
 describe('msPerBeat', () => {
@@ -133,5 +133,53 @@ describe('exerciseHandpanNotes', () => {
       beats: [],
     }
     expect(exerciseHandpanNotes(exercise)).toEqual([])
+  })
+})
+
+describe('exerciseChords', () => {
+  it('returns deduplicated chords in order of first appearance', () => {
+    const exercise: Exercise = {
+      id: 'test',
+      name: 'Test',
+      difficulty: 'beginner',
+      timeSignature: [4, 4],
+      bpm: 120,
+      measures: 1,
+      beats: [
+        { time: '0:0:0', duration: '4n', note: 'down', chord: 'G' },
+        { time: '0:1:0', duration: '4n', note: 'up', chord: 'G' },
+        { time: '0:2:0', duration: '4n', note: 'down', chord: 'C' },
+        { time: '0:3:0', duration: '4n', note: 'up', chord: 'G' },
+      ],
+    }
+    expect(exerciseChords(exercise)).toEqual(['G', 'C'])
+  })
+
+  it('returns empty array for exercise with no chords', () => {
+    const exercise: Exercise = {
+      id: 'test',
+      name: 'Test',
+      difficulty: 'beginner',
+      timeSignature: [4, 4],
+      bpm: 120,
+      measures: 1,
+      beats: [
+        { time: '0:0:0', duration: '4n', note: 'kick' },
+      ],
+    }
+    expect(exerciseChords(exercise)).toEqual([])
+  })
+
+  it('returns empty array for exercise with no beats', () => {
+    const exercise: Exercise = {
+      id: 'test',
+      name: 'Test',
+      difficulty: 'beginner',
+      timeSignature: [4, 4],
+      bpm: 120,
+      measures: 1,
+      beats: [],
+    }
+    expect(exerciseChords(exercise)).toEqual([])
   })
 })

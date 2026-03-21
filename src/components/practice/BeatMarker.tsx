@@ -10,6 +10,7 @@ interface BeatMarkerProps {
   isHollow?: boolean
   isNext?: boolean
   isJudged?: boolean
+  rotation?: number
   className?: string
   style?: React.CSSProperties
 }
@@ -23,6 +24,7 @@ export function BeatMarker({
   isHollow = false,
   isNext = false,
   isJudged = false,
+  rotation,
   className = '',
   style,
 }: BeatMarkerProps) {
@@ -83,19 +85,29 @@ export function BeatMarker({
   }
 
   if (shape === 'triangle') {
+    const triangleStyle: React.CSSProperties = {
+      width: size,
+      height: size,
+      clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)',
+      ...style,
+    }
+    if (rotation != null) {
+      triangleStyle.transform = `${style?.transform ?? ''} rotate(${rotation}deg)`.trim()
+    }
+
     return (
       <div
         data-testid="beat-marker"
         data-shape="triangle"
         className={`${baseClasses}`}
-        style={{
-          width: size,
-          height: size,
-          clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)',
-          ...style,
-        }}
+        style={triangleStyle}
       >
-        <span className="mt-1">{labelEl}</span>
+        <span
+          className="mt-1"
+          style={rotation != null ? { transform: `rotate(${-rotation}deg)` } : undefined}
+        >
+          {labelEl}
+        </span>
       </div>
     )
   }

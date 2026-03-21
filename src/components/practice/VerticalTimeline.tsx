@@ -3,6 +3,7 @@ import type { DrumPad, Exercise, InstrumentType, TapMarker, TimingJudgment } fro
 import { beatTimesMs, exerciseDurationMs, msPerBeat } from '@/utils/rhythm'
 import { VerticalDrumTimeline } from './VerticalDrumTimeline'
 import { VerticalSingleTimeline } from './VerticalSingleTimeline'
+import { VerticalStrumTimeline } from './VerticalStrumTimeline'
 import type { MarkerShape } from './timelineConstants'
 import {
   DRUM_PAD_COLORS,
@@ -19,6 +20,9 @@ import {
   PX_PER_BEAT_VERTICAL,
   HIT_LINE_POSITION_VERTICAL,
   VERTICAL_TIMELINE_HEIGHT,
+  STRUM_DIRECTION_COLORS,
+  STRUM_DIRECTION_LABELS,
+  type StrumDirection,
 } from './timelineConstants'
 
 interface VerticalTimelineProps {
@@ -44,6 +48,7 @@ export function VerticalTimeline({
 }: VerticalTimelineProps) {
   const isDrum = instrument === 'drums'
   const isHandpan = instrument === 'handpan'
+  const isStrumming = instrument === 'strumming'
 
   const exerciseWithBpm = useMemo(() => ({ ...exercise, bpm }), [exercise, bpm])
   const durationMs = exerciseDurationMs(exerciseWithBpm)
@@ -99,7 +104,9 @@ export function VerticalTimeline({
       ? (DRUM_PAD_COLORS[beat.note as keyof typeof DRUM_PAD_COLORS] ?? 'bg-gray-400')
       : isHandpan
         ? (HANDPAN_NOTE_COLORS[pitchClass(beat.note)] ?? 'bg-gray-400')
-        : (DURATION_COLORS[beat.duration] ?? 'bg-gray-400')
+        : isStrumming
+          ? (STRUM_DIRECTION_COLORS[beat.note as StrumDirection] ?? 'bg-gray-400')
+          : (DURATION_COLORS[beat.duration] ?? 'bg-gray-400')
     const color = judgment ? JUDGMENT_COLORS[judgment] : baseColor
     const isNext = i === nextBeatIndex && !judgment
     const isJudged = !!judgment
@@ -111,6 +118,7 @@ export function VerticalTimeline({
     let label: string | undefined
     let noteIndex: number | undefined
     let totalNotes: number | undefined
+    let rotation: number | undefined
 
     if (isDrum) {
       const pad = beat.note as keyof typeof DRUM_PAD_SHAPES
@@ -127,6 +135,10 @@ export function VerticalTimeline({
         shape = HANDPAN_REGISTER_SHAPES[handpanNoteRegister(beat.note)]
       }
       label = pitchClass(beat.note)
+    } else if (isStrumming) {
+      shape = 'triangle'
+      rotation = beat.note === 'down' ? 180 : 0
+      label = STRUM_DIRECTION_LABELS[beat.note as StrumDirection]
     }
 
     return {
@@ -142,6 +154,7 @@ export function VerticalTimeline({
       label,
       noteIndex,
       totalNotes,
+      rotation,
     }
   })
 
@@ -157,9 +170,39 @@ export function VerticalTimeline({
     }
   })
 
+  // Compute chord changes for strumming timeline
+  const chordChanges = useMemo(() => {
+    if (!isStrumming) return []
+    const changes: { chord: string; yPosition: number }[] = []
+    let lastChord = ''
+    for (let i = 0; i < exercise.beats.length; i++) {
+      const chord = exercise.beats[i].chord
+      if (chord && chord !== lastChord) {
+        lastChord = chord
+        const frac = durationMs > 0 ? times[i] / durationMs : 0
+        changes.push({
+          chord,
+          yPosition: topPadding + (1 - frac) * exercisePixels,
+        })
+      }
+    }
+    return changes
+  }, [isStrumming, exercise.beats, durationMs, times, topPadding, exercisePixels])
+
   return (
     <div data-testid="vertical-timeline" className="rounded-2xl bg-white shadow-md p-2">
-      {isDrum ? (
+      {isStrumming ? (
+        <VerticalStrumTimeline
+          markers={markers}
+          measureLines={measureLines}
+          scrollOffset={scrollOffset}
+          hitLineY={hitLineY}
+          renderedHeight={renderedHeight}
+          tapMarkers={processedTapMarkers}
+          containerHeight={containerHeight}
+          chordChanges={chordChanges}
+        />
+      ) : isDrum ? (
         <VerticalDrumTimeline
           markers={markers}
           measureLines={measureLines}

@@ -168,3 +168,23 @@ export function handpanNoteOffset(noteIndex: number, totalToneFields: number): n
   const angle = ((noteIndex - 1) / (totalToneFields - 1)) * 2 * Math.PI - Math.PI / 2
   return 0.5 + Math.cos(angle) * 0.35 // 0.15 to 0.85 range
 }
+
+// Strumming timeline constants
+export type StrumDirection = 'down' | 'up'
+
+export const STRUM_DIRECTION_COLORS: Record<StrumDirection, string> = {
+  down: 'bg-blue-400',
+  up: 'bg-amber-400',
+}
+
+export const STRUM_DIRECTION_MUTED_COLORS: Record<StrumDirection, string> = {
+  down: 'bg-blue-200',
+  up: 'bg-amber-200',
+}
+
+export const STRUM_DIRECTION_LABELS: Record<StrumDirection, string> = {
+  down: '\u2193',
+  up: '\u2191',
+}
+
+export const STRUM_COLUMN_WIDTH = 120

@@ -4,11 +4,15 @@ export type Difficulty = 'beginner' | 'intermediate' | 'advanced'
 // Time signature as [beatsPerMeasure, beatUnit]
 export type TimeSignature = [number, number]
 
+// Strum direction for strumming exercises
+export type StrumDirection = 'down' | 'up'
+
 // A single beat in an exercise pattern
 export interface Beat {
   time: string        // Tone.js transport time, e.g. "0:0:0"
   duration: string    // Tone.js duration, e.g. "4n", "8n"
   note: string        // Note name, e.g. "C4"
+  chord?: string      // Chord name for strumming exercises, e.g. "G", "Am"
 }
 
 // An exercise definition
@@ -22,10 +26,12 @@ export interface Exercise {
   beats: Beat[]
   instrument?: InstrumentType  // which instrument this exercise is for
   scale?: string               // handpan scale preset id, e.g. 'd-kurd'
+  key?: string                 // musical key for strumming exercises, e.g. "G"
+  chords?: string[]            // chord names used in strumming exercises
 }
 
 // Available instrument types
-export type InstrumentType = 'drums' | 'handpan'
+export type InstrumentType = 'drums' | 'handpan' | 'strumming'
 
 // Drum pad identifiers
 export type DrumPad = 'kick' | 'snare' | 'hihat' | 'tom1' | 'tom2'
