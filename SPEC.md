@@ -41,7 +41,7 @@ Young practicing musicians, ages 5 and up. The UI must be simple, colorful, and 
 ### 5. Virtual Instruments
 - **Drums** — Kick, snare, hi-hat, tom1, tom2 with Tone.js synth sounds (MembraneSynth, NoiseSynth, MetalSynth). On-screen pads with keyboard shortcuts (f/d/j/k/l). Adaptive grid layout based on exercise difficulty. Multi-lane timeline.
 - **Handpan** — Pitched FM synth notes in a circular pad layout (center ding + surrounding tone fields). 3 scale presets (D Kurd, C Amara, F Pygmy). Keyboard shortcuts (1–9 keys). Note-colored timeline markers. 9 exercises across 3 difficulty levels.
-- **Strumming** — Guitar/ukulele strum patterns with chord display. Two stacked down/up tap buttons (mobile) + arrow keys (desktop) for strum direction. Real acoustic-guitar samples via `Tone.Sampler` (12 MP3 anchors in `public/samples/guitar-acoustic/`, E2–G4) with ~20 ms staggered chord notes. Chord change labels on vertical timeline. Playhead-based chord display above strum buttons.
+- **Strumming** — Guitar/ukulele strum patterns with chord display. Two stacked down/up tap buttons (mobile) + arrow keys (desktop) for strum direction. Real acoustic-guitar samples via `Tone.Sampler` (12 MP3 anchors in `public/samples/guitar-acoustic/`, E2–G4). Down-strums play the full voicing with 25 ms note stagger at full velocity; up-strums skip the 1–2 lowest bass notes, play faster (10 ms stagger) and quieter (velocity ≈ 0.6) for physical realism. Chord change labels on vertical timeline. Playhead-based chord display above strum buttons.
 - **Kalimba** — Thumb piano with pitched tines in a fan/arc layout. Tone.js plucked synth sound. Scale presets (C major, G major, etc.). Keyboard shortcuts for tines. Single-column timeline with note-colored markers (similar to handpan). — *not yet implemented*
 - Instrument selection screen; user picks before starting an exercise
 - Settings popover on practice screen: metronome toggle, tap sound toggle, strict/free mode, speed trainer, loop mode
@@ -327,8 +327,14 @@ Integrated reference material: note values, time signatures, rhythm notation. Co
 - [ ] make chord changes more visible (different background)
   - [ ] create playlists of chord progressions
   - [ ] create procedural progressions
+- [ ] display chord fingering next to timeline
+- [ ] have a strumming/rhythm library(maybe even org by song)
+  - [ ] link to online rhythm library
 
 ### Usability
+- [ ] add addional patterns 
+- [ ] add additional strum feel (like yellow submarine)
+- [ ] change from menu based to scroll?
 - [ ] Realtime BPM change while playing
 - [ ] fix sounds to not depend on length of button press
 - [ ] move the selections from the settings menu to
@@ -337,7 +343,9 @@ Integrated reference material: note values, time signatures, rhythm notation. Co
 - [ ] fix loop not working in listen mode
 - [ ] show arm movements in the background (constant motion down up down up)
 - [ ] create a synth playground to adjust the sound of each instrument
+- [x] confirm strum up different than down
 
 ### Bugs
 - [ ] fix zoom/ disable scrolling on small screens
 - [ ] ensure that the marker line is aligned with beat when pressed
+- [ ] in listen the strum samples change with the chord changes, but when playing the samples are always the same
