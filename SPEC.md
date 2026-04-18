@@ -319,16 +319,23 @@ Integrated reference material: note values, time signatures, rhythm notation. Co
 
 
 ## Todo
-- [ ] Realtime BPM change while playing
-- [ ] fix zoom/ disable scrolling on small screens
-- [ ] fix sounds to not depend on length of button press
-- [ ] move the selections from the settings menu to
+### Features
 - [ ] add tutorial/overview 
-- [ ] make chord changes more visible (different background)
 - [ ] add ability to enter chord progression to play (save locally?)
+- [ ] make chord changes more visible (different background)
   - [ ] create playlists of chord progressions
   - [ ] create procedural progressions
+
+### Usability
+- [ ] Realtime BPM change while playing
+- [ ] fix sounds to not depend on length of button press
+- [ ] move the selections from the settings menu to
 - [ ] fix end of section not ending on the beat
 - [ ] remove delay at end of excersize 
 - [ ] fix loop not working in listen mode
 - [ ] show arm movements in the background (constant motion down up down up)
+- [ ] create a synth playground to adjust the sound of each instrument
+
+### Bugs
+- [ ] fix zoom/ disable scrolling on small screens
+- [ ] ensure that the marker line is aligned with beat when pressed

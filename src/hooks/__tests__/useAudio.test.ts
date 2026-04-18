@@ -65,13 +65,27 @@ MockPolySynth.prototype.connect = function () { return this }
 // Mock FMSynth — used as argument to PolySynth, not constructed directly
 function MockFMSynth() {}
 
-function MockPluckSynth(this: ReturnType<typeof createMockSynth> & { triggerAttack: ReturnType<typeof vi.fn> }) {
+function MockPluckSynth(this: ReturnType<typeof createMockSynth> & { triggerAttack: ReturnType<typeof vi.fn>; chain: ReturnType<typeof vi.fn> }) {
   const synth = createMockSynth()
-  Object.assign(this, synth, { triggerAttack: vi.fn() })
+  Object.assign(this, synth, { triggerAttack: vi.fn(), chain: vi.fn().mockReturnThis() })
   createdSynths.pluck.push(this)
   return this
 }
 MockPluckSynth.prototype.connect = function () { return this }
+
+function MockEQ3(this: ReturnType<typeof createMockSynth>) {
+  const synth = createMockSynth()
+  Object.assign(this, synth)
+  return this
+}
+MockEQ3.prototype.connect = function () { return this }
+
+function MockChorus(this: ReturnType<typeof createMockSynth> & { start: ReturnType<typeof vi.fn> }) {
+  const synth = createMockSynth()
+  Object.assign(this, synth, { start: vi.fn().mockReturnThis() })
+  return this
+}
+MockChorus.prototype.connect = function () { return this }
 
 vi.mock('tone', () => ({
   start: vi.fn().mockResolvedValue(undefined),
@@ -84,6 +98,8 @@ vi.mock('tone', () => ({
   PolySynth: MockPolySynth,
   FMSynth: MockFMSynth,
   PluckSynth: MockPluckSynth,
+  EQ3: MockEQ3,
+  Chorus: MockChorus,
 }))
 
 import { useAudio } from '../useAudio'

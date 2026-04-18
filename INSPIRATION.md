@@ -326,3 +326,13 @@ The Yishama Virtual Pantam validates that a circular pad arrangement with center
 
 ### 10. Simplicity Wins for the Youngest Users
 Chrome Music Lab's zero-text, grid-based interface works for the youngest children. For RhythmEx's easiest exercises, the UI should be comprehensible through color and position alone, without requiring literacy.
+
+
+
+### Tone JS
+ Sources:
+  - https://tonejs.github.io/docs/15.1.22/classes/PluckSynth.html
+  - https://github.com/Tonejs/Tone.js/issues/1074
+  - https://github.com/nbrosowsky/tonejs-instruments
+  - https://loophole-letters.vercel.app/sampler-instruments
+  - https://tonejs.github.io/examples/sampler
