@@ -65,6 +65,14 @@ MockPolySynth.prototype.connect = function () { return this }
 // Mock FMSynth — used as argument to PolySynth, not constructed directly
 function MockFMSynth() {}
 
+function MockPluckSynth(this: ReturnType<typeof createMockSynth> & { triggerAttack: ReturnType<typeof vi.fn> }) {
+  const synth = createMockSynth()
+  Object.assign(this, synth, { triggerAttack: vi.fn() })
+  createdSynths.pluck.push(this)
+  return this
+}
+MockPluckSynth.prototype.connect = function () { return this }
+
 vi.mock('tone', () => ({
   start: vi.fn().mockResolvedValue(undefined),
   now: vi.fn().mockReturnValue(0),
@@ -75,6 +83,7 @@ vi.mock('tone', () => ({
   Reverb: MockReverb,
   PolySynth: MockPolySynth,
   FMSynth: MockFMSynth,
+  PluckSynth: MockPluckSynth,
 }))
 
 import { useAudio } from '../useAudio'
@@ -83,7 +92,7 @@ import * as Tone from 'tone'
 describe('useAudio', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    createdSynths = { membrane: [], noise: [], metal: [], synth: [], reverb: [], polySynth: [] }
+    createdSynths = { membrane: [], noise: [], metal: [], synth: [], reverb: [], polySynth: [], pluck: [] }
   })
 
   afterEach(() => {

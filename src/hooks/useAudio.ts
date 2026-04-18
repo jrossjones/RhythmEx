@@ -12,7 +12,7 @@ interface Synths {
   metronome: Tone.Synth
   handpan: Tone.PolySynth
   reverb: Tone.Reverb
-  strumming: Tone.PolySynth
+  strumming: Tone.PluckSynth
   strumReverb: Tone.Reverb
 }
 
@@ -82,9 +82,11 @@ export function useAudio(): UseAudioReturn {
     const strumReverb = new Tone.Reverb({ decay: 1.5, wet: 0.2 })
     strumReverb.toDestination()
 
-    const strumming = new Tone.PolySynth(Tone.Synth, {
-      oscillator: { type: 'sine' },
-      envelope: { attack: 0.001, decay: 0.5, sustain: 0, release: 0.3 },
+    const strumming = new Tone.PluckSynth({
+      attackNoise: 1,
+      dampening: 4000,
+      resonance: 0.7,
+      release: 1,
     }).connect(strumReverb)
     strumming.volume.value = -6
 
@@ -140,7 +142,7 @@ export function useAudio(): UseAudioReturn {
 
     const now = Tone.now()
     notes.forEach((note, i) => {
-      synths.strumming.triggerAttackRelease(note, '0.8', now + i * 0.02)
+      synths.strumming.triggerAttack(note, now + i * 0.02)
     })
   }, [])
 

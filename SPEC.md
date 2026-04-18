@@ -316,3 +316,19 @@ Identify musical elements by ear: key detection, interval recognition, tempo ide
 
 #### Music theory lessons
 Integrated reference material: note values, time signatures, rhythm notation. Could be a static content section or interactive mini-lessons.
+
+
+## Todo
+- [ ] Realtime BPM change while playing
+- [ ] fix zoom/ disable scrolling on small screens
+- [ ] fix sounds to not depend on length of button press
+- [ ] move the selections from the settings menu to
+- [ ] add tutorial/overview 
+- [ ] make chord changes more visible (different background)
+- [ ] add ability to enter chord progression to play (save locally?)
+  - [ ] create playlists of chord progressions
+  - [ ] create procedural progressions
+- [ ] fix end of section not ending on the beat
+- [ ] remove delay at end of excersize 
+- [ ] fix loop not working in listen mode
+- [ ] show arm movements in the background (constant motion down up down up)

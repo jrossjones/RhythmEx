@@ -13,11 +13,13 @@ import { useExercise, LEAD_IN_BEATS } from '@/hooks/useExercise'
 import { useTiming } from '@/hooks/useTiming'
 import { useLearnMode } from '@/hooks/useLearnMode'
 import { useAudio } from '@/hooks/useAudio'
+import { useMetronome } from '@/hooks/useMetronome'
+import { useDemoMode } from '@/hooks/useDemoMode'
+import { useLoopMode } from '@/hooks/useLoopMode'
 import { calculateAccuracy, calculateStars } from '@/utils/scoring'
 import { beatTimesMs, exerciseDrumPads, exerciseDurationMs, msPerBeat } from '@/utils/rhythm'
 import { getScale, DEFAULT_HANDPAN_SCALE } from '@/data/handpan/scales'
-import { saveResult } from '@/utils/storage'
-import type { DrumPad as DrumPadType, Exercise, ExerciseResult, InstrumentType, PracticeSettings, StarRating, StrumDirection, TapResult } from '@/types'
+import type { DrumPad as DrumPadType, Exercise, ExerciseResult, InstrumentType, PracticeSettings, StrumDirection, TapResult } from '@/types'
 
 interface PracticeScreenProps {
   exercise: Exercise
@@ -45,13 +47,6 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
 
   const [isLearnMode, setIsLearnMode] = useState(false)
 
-  const [loopOverlay, setLoopOverlay] = useState<{
-    accuracy: number
-    stars: StarRating
-    nextBpm?: number
-  } | null>(null)
-  const [lastLoopResult, setLastLoopResult] = useState<ExerciseResult | null>(null)
-
   const { playDrum, playHandpan, playStrum, playMetronomeClick, startAudioContext } = useAudio()
 
   // Refs to break circular dependency between useExercise and useTiming/settings
@@ -62,6 +57,18 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
   const settingsRef = useRef(settings)
   const currentBpmRef = useRef(0)
   const onSpeedTrainerBpmChangeRef = useRef(onSpeedTrainerBpmChange)
+
+  const { loopOverlay, lastLoopResult, triggerLoopCompletion, dismissOverlay } = useLoopMode({
+    seamlessLoop: settings.seamlessLoop,
+    onSeamlessRestart: (nextBpm) => {
+      resetRef.current()
+      restartRef.current({ seamless: true, newBpm: nextBpm })
+    },
+    onOverlayRestart: (nextBpm) => {
+      resetRef.current()
+      restartRef.current({ newBpm: nextBpm })
+    },
+  })
 
   const handleDone = () => {
     // Demo mode: just reset, no scoring
@@ -90,47 +97,28 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
       }
     }
 
-    if (currentSettings.loopMode) {
-      // Loop mode: save result directly, restart
-      const result: ExerciseResult = {
-        exerciseId: exercise.id,
-        instrument,
-        accuracy,
-        stars,
-        tapResults,
-        timestamp: Date.now(),
-      }
-      saveResult(result)
-      setLastLoopResult(result)
+    const result: ExerciseResult = {
+      exerciseId: exercise.id,
+      instrument,
+      accuracy,
+      stars,
+      tapResults,
+      timestamp: Date.now(),
+    }
 
-      // Update speed trainer BPM in App
+    if (currentSettings.loopMode) {
       if (currentSettings.speedTrainerOn && callback) {
         callback(nextBpm!)
       }
-
-      if (currentSettings.seamlessLoop) {
-        resetRef.current()
-        restartRef.current({ seamless: true, newBpm: nextBpm })
-      } else {
-        setLoopOverlay({ accuracy, stars, nextBpm })
-        // Overlay auto-dismisses after 2s, then restart
-      }
+      triggerLoopCompletion(result, nextBpm)
     } else {
-      // Normal mode: navigate to results
       if (currentSettings.speedTrainerOn && callback) {
         callback(nextBpm!)
       } else if (callback) {
         callback(null)
       }
 
-      onFinish({
-        exerciseId: exercise.id,
-        instrument,
-        accuracy,
-        stars,
-        tapResults,
-        timestamp: Date.now(),
-      })
+      onFinish(result)
     }
   }
 
@@ -182,12 +170,6 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
     resetRef.current = reset
     restartRef.current = restart
   })
-
-  const handleLoopOverlayDismiss = useCallback(() => {
-    setLoopOverlay(null)
-    resetRef.current()
-    restartRef.current({ newBpm: loopOverlay?.nextBpm })
-  }, [loopOverlay?.nextBpm])
 
   const isIdle = phase === 'idle' && !isLearnMode
 
@@ -369,100 +351,30 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
     }
   }
 
-  // Metronome — countdown clicks
-  const playMetronomeClickRef = useRef(playMetronomeClick)
-  useEffect(() => {
-    playMetronomeClickRef.current = playMetronomeClick
-  })
-  const prevCountdownRef = useRef<number | null>(null)
-
-  const prevLearnCountdownRef = useRef<number | null>(null)
-
-  useEffect(() => {
-    // Exercise countdown metronome
-    if (phase !== 'countdown') {
-      prevCountdownRef.current = null
-    } else if (prevCountdownRef.current !== countdownValue) {
-      prevCountdownRef.current = countdownValue
-      if (settings.metronomeOn) {
-        playMetronomeClickRef.current(true)
-      }
-    }
-
-    // Learn mode countdown metronome
-    if (!isLearnMode || learnPhase !== 'countdown') {
-      prevLearnCountdownRef.current = null
-    } else if (prevLearnCountdownRef.current !== learnCountdownValue) {
-      prevLearnCountdownRef.current = learnCountdownValue
-      if (settings.metronomeOn) {
-        playMetronomeClickRef.current(true)
-      }
-    }
-  }, [phase, countdownValue, isLearnMode, learnPhase, learnCountdownValue, settings.metronomeOn])
-
-  // Metronome — beat clicks during playing
-  useEffect(() => {
-    if (phase !== 'playing' || !settings.metronomeOn) return
-
-    const beatMs = msPerBeat(bpm)
-    let lastClickedBeat = -1
-    let rafId: number
-
-    const tick = () => {
-      const elapsed = elapsedMsRef.current
-      const currentBeat = Math.floor(elapsed / beatMs)
-
-      if (currentBeat > lastClickedBeat) {
-        lastClickedBeat = currentBeat
-        const [beatsPerMeasure] = exercise.timeSignature
-        const isDownbeat = currentBeat % beatsPerMeasure === 0
-        playMetronomeClickRef.current(isDownbeat)
-      }
-
-      rafId = requestAnimationFrame(tick)
-    }
-
-    rafId = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(rafId)
-  }, [phase, settings.metronomeOn, bpm, elapsedMsRef, exercise.timeSignature])
-
-  // Demo mode — auto-fire beat sounds during playing
-  const playDrumRef = useRef(playDrum)
-  const playHandpanRef = useRef(playHandpan)
-  const playStrumRef = useRef(playStrum)
-  useEffect(() => {
-    playDrumRef.current = playDrum
-    playHandpanRef.current = playHandpan
-    playStrumRef.current = playStrum
+  useMetronome({
+    phase,
+    countdownValue,
+    isLearnMode,
+    learnPhase,
+    learnCountdownValue,
+    bpm,
+    timeSignature: exercise.timeSignature,
+    elapsedMsRef,
+    metronomeOn: settings.metronomeOn,
+    playMetronomeClick,
   })
 
-  useEffect(() => {
-    if (phase !== 'playing' || !isDemoMode) return
-
-    const times = beatTimesMs({ ...exercise, bpm })
-    const firedBeats = new Set<number>()
-    let rafId: number
-
-    const tick = () => {
-      const elapsed = elapsedMsRef.current
-      for (let i = 0; i < times.length; i++) {
-        if (!firedBeats.has(i) && elapsed >= times[i]) {
-          firedBeats.add(i)
-          if (instrument === 'drums') {
-            playDrumRef.current(exercise.beats[i].note as DrumPadType)
-          } else if (instrument === 'handpan') {
-            playHandpanRef.current(exercise.beats[i].note)
-          } else if (instrument === 'strumming') {
-            playStrumRef.current(exercise.beats[i].chord ?? '', exercise.beats[i].note as StrumDirection)
-          }
-        }
-      }
-      rafId = requestAnimationFrame(tick)
-    }
-
-    rafId = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(rafId)
-  }, [phase, isDemoMode, exercise, bpm, instrument, elapsedMsRef])
+  useDemoMode({
+    phase,
+    isDemoMode,
+    exercise,
+    bpm,
+    instrument,
+    elapsedMsRef,
+    playDrum,
+    playHandpan,
+    playStrum,
+  })
 
   return (
     <Layout>
@@ -616,7 +528,7 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
         <ResultsOverlay
           accuracy={loopOverlay.accuracy}
           stars={loopOverlay.stars}
-          onDismiss={handleLoopOverlayDismiss}
+          onDismiss={dismissOverlay}
           speedTrainerNextBpm={loopOverlay.nextBpm}
         />
       )}
