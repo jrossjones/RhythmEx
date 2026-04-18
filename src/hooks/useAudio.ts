@@ -152,7 +152,7 @@ export function useAudio(): UseAudioReturn {
     notes.forEach((note, i) => {
       const voice = synths.strumming[strumVoiceIndexRef.current % synths.strumming.length]
       strumVoiceIndexRef.current++
-      voice.triggerAttack(note, now + i * 0.015)
+      voice.triggerAttack(note, now)
     })
   }, [])
 
