@@ -12,11 +12,11 @@ interface Synths {
   metronome: Tone.Synth
   handpan: Tone.PolySynth
   reverb: Tone.Reverb
-  strumming: Tone.PluckSynth
-  strumEq: Tone.EQ3
-  strumChorus: Tone.Chorus
+  strumming: Tone.PluckSynth[]
   strumReverb: Tone.Reverb
 }
+
+const STRUM_VOICES = 8
 
 export interface UseAudioReturn {
   playDrum: (pad: DrumPad) => void
@@ -30,6 +30,7 @@ export interface UseAudioReturn {
 export function useAudio(): UseAudioReturn {
   const [isAudioReady, setIsAudioReady] = useState(false)
   const synthsRef = useRef<Synths | null>(null)
+  const strumVoiceIndexRef = useRef(0)
 
   const createSynths = useCallback(async (): Promise<Synths> => {
     const kick = new Tone.MembraneSynth({
@@ -81,28 +82,23 @@ export function useAudio(): UseAudioReturn {
     }).connect(reverb)
     handpan.volume.value = -6
 
-    const strumReverb = new Tone.Reverb({ decay: 2.5, wet: 0.25 })
+    const strumReverb = new Tone.Reverb({ decay: 2, wet: 0.15 })
     strumReverb.toDestination()
 
-    const strumChorus = new Tone.Chorus({
-      frequency: 1.5,
-      delayTime: 3.5,
-      depth: 0.4,
-      wet: 0.5,
-    }).start()
-
-    const strumEq = new Tone.EQ3({ low: 0, mid: 2, high: -1 })
-
-    const strumming = new Tone.PluckSynth({
-      attackNoise: 3,
-      dampening: 4000,
-      resonance: 0.85,
-      release: 1,
+    const strumming = Array.from({ length: STRUM_VOICES }, () =>
+      new Tone.PluckSynth({
+        attackNoise: 3,
+        dampening: 4000,
+        resonance: 0.85,
+        release: 0.5,
+      })
+    )
+    strumming.forEach((voice) => {
+      voice.volume.value = -10
+      voice.connect(strumReverb)
     })
-    strumming.chain(strumEq, strumChorus, strumReverb)
-    strumming.volume.value = -6
 
-    return { kick, snare, hihat, tom1, tom2, metronome, handpan, reverb, strumming, strumEq, strumChorus, strumReverb }
+    return { kick, snare, hihat, tom1, tom2, metronome, handpan, reverb, strumming, strumReverb }
   }, [])
 
   const startAudioContext = useCallback(async () => {
@@ -154,7 +150,9 @@ export function useAudio(): UseAudioReturn {
 
     const now = Tone.now()
     notes.forEach((note, i) => {
-      synths.strumming.triggerAttack(note, now + i * 0.03)
+      const voice = synths.strumming[strumVoiceIndexRef.current % synths.strumming.length]
+      strumVoiceIndexRef.current++
+      voice.triggerAttack(note, now + i * 0.015)
     })
   }, [])
 
@@ -178,9 +176,7 @@ export function useAudio(): UseAudioReturn {
         synths.metronome.dispose()
         synths.handpan.dispose()
         synths.reverb.dispose()
-        synths.strumming.dispose()
-        synths.strumEq.dispose()
-        synths.strumChorus.dispose()
+        synths.strumming.forEach((voice) => voice.dispose())
         synths.strumReverb.dispose()
         synthsRef.current = null
       }

@@ -73,9 +73,9 @@ function MockPluckSynth(this: ReturnType<typeof createMockSynth> & { triggerAtta
 }
 MockPluckSynth.prototype.connect = function () { return this }
 
-function MockEQ3(this: ReturnType<typeof createMockSynth>) {
+function MockEQ3(this: ReturnType<typeof createMockSynth> & { chain: ReturnType<typeof vi.fn> }) {
   const synth = createMockSynth()
-  Object.assign(this, synth)
+  Object.assign(this, synth, { chain: vi.fn().mockReturnThis() })
   return this
 }
 MockEQ3.prototype.connect = function () { return this }
@@ -86,6 +86,13 @@ function MockChorus(this: ReturnType<typeof createMockSynth> & { start: ReturnTy
   return this
 }
 MockChorus.prototype.connect = function () { return this }
+
+function MockCompressor(this: ReturnType<typeof createMockSynth>) {
+  const synth = createMockSynth()
+  Object.assign(this, synth)
+  return this
+}
+MockCompressor.prototype.connect = function () { return this }
 
 vi.mock('tone', () => ({
   start: vi.fn().mockResolvedValue(undefined),
@@ -100,6 +107,7 @@ vi.mock('tone', () => ({
   PluckSynth: MockPluckSynth,
   EQ3: MockEQ3,
   Chorus: MockChorus,
+  Compressor: MockCompressor,
 }))
 
 import { useAudio } from '../useAudio'
