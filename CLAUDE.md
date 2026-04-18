@@ -53,9 +53,12 @@ src/
       SettingsPopover.tsx # Gear icon popover: metronome, tap sounds, strict mode, speed trainer, loop mode toggles
   hooks/
     useExercise.ts      # Exercise lifecycle (idle/countdown/playing/done), playhead, BPM, lead-in, outro scroll
-    useAudio.ts         # Tone.js synth engine: drum sounds + handpan FM synth + strum PluckSynth + metronome click
+    useAudio.ts         # Tone.js synth engine: drum synths + handpan FM synth + guitar Sampler + metronome click
     useTiming.ts        # Tap detection, beat matching, result accumulation, finalize/reset
     useLearnMode.ts     # Learn mode: countdown + step-through beats with smooth scroll animation
+    useMetronome.ts     # Countdown ticks + beat clicks during playing (RAF, accent on downbeat)
+    useDemoMode.ts      # Auto-fires instrument sounds at beat times during Listen/demo playback
+    useLoopMode.ts      # Owns loop overlay state, seamless vs overlay restart, lastLoopResult
   data/
     exercises/          # Exercise definitions by difficulty
       beginner.ts       # 3 drum exercises: quarter notes, half notes, whole notes
@@ -87,10 +90,14 @@ src/
       useTiming.test.ts
       useAudio.test.ts
       useLearnMode.test.ts
+      useMetronome.test.ts
+      useDemoMode.test.ts
+      useLoopMode.test.ts
   components/
     screens/
       __tests__/
         ResultsScreen.test.tsx
+        PracticeScreen.test.tsx
     instruments/
       __tests__/
         DrumPad.test.tsx
@@ -118,6 +125,9 @@ src/
         scales.test.ts      # Scale presets, lookup, defaults
   test/
     setup.ts            # Vitest setup — @testing-library/jest-dom + ResizeObserver mock
+public/
+  samples/
+    guitar-acoustic/    # 12 real guitar MP3 samples (E2–G4) for strumming Tone.Sampler; from nbrosowsky/tonejs-instruments, MIT
 ```
 
 ## Commands
@@ -157,7 +167,7 @@ src/
 - **Tap matching:** `useTiming` hook matches each tap to the nearest unmatched beat via `judgeTap()`. Stray taps beyond 240ms from any beat are silently ignored (kid-friendly). `finalize()` fills unmatched beats as misses. Uses refs for tap data (performance), state only for UI feedback. Feedback auto-clears after 300ms via internal timeout. Per-pad debounce (40ms) prevents double-triggers — uses `performance.now()` and `lastTapTimePerPadRef` map, cleared on `reset()`.
 - **Tap input:** `TapZone` supports Space key (`keydown` with `event.repeat` guard), `onTouchStart` (lower latency), and `onClick` (desktop fallback). Flashes green/yellow/red for 300ms per judgment.
 - **Drum pads:** `DrumPad` component replaces `TapZone` when instrument is drums. Grid layout adapts to active pad count (2/3/5). Keyboard shortcuts: `f`=kick, `d`=snare, `j`=hihat, `k`=tom1, `l`=tom2. Space maps to next expected pad. Each pad color-coded (kick=red, snare=orange, hihat=cyan, tom1=purple, tom2=pink).
-- **Audio engine:** `useAudio` hook creates Tone.js synths lazily on first `startAudioContext()` call (user gesture). Drums: MembraneSynth for kick/toms, NoiseSynth for snare, MetalSynth for hihat. Handpan: `PolySynth(FMSynth)` with reverb (decay 3s, wet 0.35), harmonicity 2.01, modulation index 12, 800ms note duration. Triangle Synth for metronome. All synths stored in ref, disposed on unmount. `playDrum`/`playHandpan`/`playMetronomeClick` are no-ops before audio context is ready.
+- **Audio engine:** `useAudio` hook creates Tone.js synths lazily on first `startAudioContext()` call (user gesture). Drums: MembraneSynth for kick/toms, NoiseSynth for snare, MetalSynth for hihat. Handpan: `PolySynth(FMSynth)` with reverb (decay 3s, wet 0.35), harmonicity 2.01, modulation index 12, 800ms note duration. Strumming: `Tone.Sampler` with real guitar MP3 samples (see "Strum audio" below). Triangle Synth for metronome. All synths stored in ref, disposed on unmount. `playDrum`/`playHandpan`/`playStrum`/`playMetronomeClick` are no-ops before audio context is ready.
 - **Metronome:** Clicks during countdown (on each 4-3-2-1 tick) and during playing (RAF loop tracks beat crossings from `elapsedMsRef`). Accent on downbeats (C5) vs normal beats (G4). Toggleable via settings. Also clicks during learn mode countdown.
 - **Tempo-aligned count-in:** 4-beat lead-in using `msPerBeat(bpm)` intervals. Countdown values: 4→3→2→1→0 (Go). Metronome clicks on each tick. Timeline scrolls during lead-in (empty runway, then beats approach hit line).
 - **Practice settings:** `PracticeSettings` type with `metronomeOn`, `tapSoundOn`, `strictMode`, `speedTrainerOn`. Managed as state in `PracticeScreen`, controlled via `SettingsPopover` gear icon. Settings only changeable in idle phase.
@@ -181,7 +191,7 @@ src/
 - **Handpan note colors:** `HANDPAN_NOTE_COLORS` in `timelineConstants.ts` maps 12 chromatic pitch classes to Tailwind colors (C=red, D=orange, E=amber, F=green, G=teal, A=blue, Bb=violet, etc.). `pitchClass()` helper extracts pitch class from note string (e.g. `"D3"` → `"D"`, `"Bb4"` → `"Bb"`). Used for both timeline markers and pad colors.
 - **Exercise instrument filtering:** `Exercise.instrument` field (`'drums' | 'handpan' | 'strumming'`) added to type. `exercisesByDifficulty()` accepts optional instrument filter. `ExerciseSelectScreen` filters by selected instrument. 27 total exercises (9 drums + 9 handpan + 9 strumming).
 - **Strumming input:** `StrumZone` component with two large tap buttons (down/up). ArrowDown/ArrowUp keyboard shortcuts, Space for next expected direction. No swipe detection in v1 (deferred). Chord name displayed above buttons.
-- **Strum audio:** `PolySynth(PluckSynth)` with reverb (decay 1.5s, wet 0.2). `playStrum(chord, direction)` staggers notes ~20ms apart, low-to-high for down, high-to-low for up. Chord voicings from `src/data/chords.ts`.
+- **Strum audio:** `Tone.Sampler` loading 12 real acoustic-guitar MP3 samples (E2–G4) from `public/samples/guitar-acoustic/`. No effects chain — routes directly to destination, matching the reference library (`nbrosowsky/tonejs-instruments`). `baseUrl` uses `import.meta.env.BASE_URL` for GitHub Pages subpath compatibility. `createSynths` awaits `Tone.loaded()` so first strum doesn't fire against empty buffers. `playStrum(chord, direction)` calls `triggerAttackRelease(note, '2n', now + i * 0.02)` — 20 ms stagger between notes, low-to-high for down, high-to-low for up. Sampler handles polyphony internally and auto-repitches between anchor samples. Chord voicings from `src/data/chords.ts`.
 - **Strum timeline:** `VerticalStrumTimeline` — single centered column (120px). Triangle markers with rotation (180deg=down, 0deg=up). Blue for down, amber for up. Chord change labels rendered as left-aligned pill badges inside the column (`left: 4px`).
 - **BeatMarker rotation:** Optional `rotation` prop for directional markers. Labels counter-rotate to stay upright.
 - **Strum chord display:** `currentChord` in `PracticeScreen` derived from playhead position (`rawProgress * durationMs`), not judgment state. Walks `beatTimesMs` backwards from the playhead to find the most recent chord change. Updates every RAF frame. `handleStrumTap` uses the next unjudged beat's chord for audio playback (stays in sync with tap matching).

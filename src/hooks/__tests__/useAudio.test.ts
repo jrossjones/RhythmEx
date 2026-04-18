@@ -65,37 +65,17 @@ MockPolySynth.prototype.connect = function () { return this }
 // Mock FMSynth — used as argument to PolySynth, not constructed directly
 function MockFMSynth() {}
 
-function MockPluckSynth(this: ReturnType<typeof createMockSynth> & { triggerAttack: ReturnType<typeof vi.fn>; chain: ReturnType<typeof vi.fn> }) {
-  const synth = createMockSynth()
-  Object.assign(this, synth, { triggerAttack: vi.fn(), chain: vi.fn().mockReturnThis() })
-  createdSynths.pluck.push(this)
-  return this
-}
-MockPluckSynth.prototype.connect = function () { return this }
-
-function MockEQ3(this: ReturnType<typeof createMockSynth> & { chain: ReturnType<typeof vi.fn> }) {
-  const synth = createMockSynth()
-  Object.assign(this, synth, { chain: vi.fn().mockReturnThis() })
-  return this
-}
-MockEQ3.prototype.connect = function () { return this }
-
-function MockChorus(this: ReturnType<typeof createMockSynth> & { start: ReturnType<typeof vi.fn> }) {
-  const synth = createMockSynth()
-  Object.assign(this, synth, { start: vi.fn().mockReturnThis() })
-  return this
-}
-MockChorus.prototype.connect = function () { return this }
-
-function MockCompressor(this: ReturnType<typeof createMockSynth>) {
+function MockSampler(this: ReturnType<typeof createMockSynth>) {
   const synth = createMockSynth()
   Object.assign(this, synth)
+  createdSynths.sampler.push(this)
   return this
 }
-MockCompressor.prototype.connect = function () { return this }
+MockSampler.prototype.toDestination = function () { return this }
 
 vi.mock('tone', () => ({
   start: vi.fn().mockResolvedValue(undefined),
+  loaded: vi.fn().mockResolvedValue(undefined),
   now: vi.fn().mockReturnValue(0),
   MembraneSynth: MockMembraneSynth,
   NoiseSynth: MockNoiseSynth,
@@ -104,10 +84,7 @@ vi.mock('tone', () => ({
   Reverb: MockReverb,
   PolySynth: MockPolySynth,
   FMSynth: MockFMSynth,
-  PluckSynth: MockPluckSynth,
-  EQ3: MockEQ3,
-  Chorus: MockChorus,
-  Compressor: MockCompressor,
+  Sampler: MockSampler,
 }))
 
 import { useAudio } from '../useAudio'
@@ -116,7 +93,7 @@ import * as Tone from 'tone'
 describe('useAudio', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    createdSynths = { membrane: [], noise: [], metal: [], synth: [], reverb: [], polySynth: [], pluck: [] }
+    createdSynths = { membrane: [], noise: [], metal: [], synth: [], reverb: [], polySynth: [], sampler: [] }
   })
 
   afterEach(() => {
