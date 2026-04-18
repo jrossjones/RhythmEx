@@ -147,11 +147,18 @@ export function useAudio(): UseAudioReturn {
     const voicing = getChord(chord)
     if (!voicing) return
 
-    const notes = direction === 'up' ? [...voicing.notes].reverse() : voicing.notes
+    const isUp = direction === 'up'
+    // Up-strum skips the lowest 1-2 bass strings (physical realism), but always leaves ≥3 notes.
+    const bassesToSkip = isUp ? Math.min(2, Math.max(0, voicing.notes.length - 3)) : 0
+    const sourceNotes = voicing.notes.slice(bassesToSkip)
+    const notes = isUp ? [...sourceNotes].reverse() : sourceNotes
+
+    const stagger = isUp ? 0.01 : 0.025
+    const velocity = isUp ? 0.6 : 1
 
     const now = Tone.now()
     notes.forEach((note, i) => {
-      synths.strumming.triggerAttackRelease(note, '2n', now + i * 0.02)
+      synths.strumming.triggerAttackRelease(note, '2n', now + i * stagger, velocity)
     })
   }, [])
 
