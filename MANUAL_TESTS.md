@@ -758,7 +758,7 @@ Run `npm run dev` and open the app in a browser to execute these tests.
 - [ ] Three new beginner strumming exercises appear in the strumming exercise list: "Bibi Blocksberg — Intro", "Bibi Blocksberg — Verse", "Bibi Blocksberg — Chorus".
 - [ ] All play at 80 BPM in 4/4 with a steady down-strum (D-D-D-D) pattern.
 - [ ] **Intro (8 measures):** chord progression sounds like C | D | G→D | Em | C | Am | C→D | G.
-- [ ] **Verse (15 measures):** chord progression sounds like C | D | G→D | Em→C | C→Am | C | G | C | D | G | D→Em | C→Am | C | C | G.
+- [ ] **Verse (16 measures):** chord progression sounds like C | D | G→D | Em | C | Am | C | G | C | D | G→D | Em | C | Am | C | G.
 - [ ] **Chorus (6 measures):** C→D | D | C→D | D | C→Am | (rest) C D G — last measure has a brief silence on beat 1 followed by three single-strum chords.
 - [ ] Two-chord measures audibly switch on beat 3.
 - [ ] Chord diagrams (fixed and scroll mode) update correctly through every chord change.

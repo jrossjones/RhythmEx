@@ -242,7 +242,7 @@ Strumming exercises may additionally include top-level `key` and `chords` fields
 - 347 tests passing (333 previous + 14 new: ExerciseSelectScreen 5, chordDiagrams 4, ChordDiagram 5).
 
 #### Bibi Blocksberg song exercises
-- Three new beginner strumming exercises that walk through the Bibi Blocksberg theme: `bibi-blocksberg-intro` (8 measures), `bibi-blocksberg-verse` (15 measures), and `bibi-blocksberg-chorus` (6 measures). All in 4/4 at 80 BPM with a D-D-D-D pattern. Two-chord measures place the change on beat 3 (chord A on beats 1–2, chord B on beats 3–4). The chorus's final measure has a rest on beat 1 followed by C–D–G on beats 2–4. Chords used: C, D, G, Em, Am — all already in the diagram set.
+- Three new beginner strumming exercises that walk through the Bibi Blocksberg theme: `bibi-blocksberg-intro` (8 measures), `bibi-blocksberg-verse` (16 measures), and `bibi-blocksberg-chorus` (6 measures). All in 4/4 at 80 BPM with a D-D-D-D pattern. Two-chord measures place the change on beat 3 (chord A on beats 1–2, chord B on beats 3–4). The chorus's final measure has a rest on beat 1 followed by C–D–G on beats 2–4. Chords used: C, D, G, Em, Am — all already in the diagram set.
 - Beginner strumming count grows from 3 → 6, total exercises 27 → 30.
 
 

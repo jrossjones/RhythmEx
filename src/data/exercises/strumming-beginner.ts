@@ -25,21 +25,22 @@ const bibiIntroMeasures: (string | null)[][] = [
 ]
 
 const bibiVerseMeasures: (string | null)[][] = [
-  ['C', 'C', 'C', 'C'],     // 1
-  ['D', 'D', 'D', 'D'],     // 2
-  ['G', 'G', 'D', 'D'],     // 3: G→D
-  ['Em', 'Em', 'C', 'C'],   // 4: Em→C
-  ['C', 'C', 'Am', 'Am'],   // 5: C→Am
-  ['C', 'C', 'C', 'C'],     // 6
-  ['G', 'G', 'G', 'G'],     // 7
-  ['C', 'C', 'C', 'C'],     // 8
-  ['D', 'D', 'D', 'D'],     // 9
-  ['G', 'G', 'G', 'G'],     // 10
-  ['D', 'D', 'Em', 'Em'],   // 11: D→Em
-  ['C', 'C', 'Am', 'Am'],   // 12: C→Am
-  ['C', 'C', 'C', 'C'],     // 13
-  ['C', 'C', 'C', 'C'],     // 14
-  ['G', 'G', 'G', 'G'],     // 15
+  ['C',  'C',  'C',  'C'],   // 1:  C
+  ['D',  'D',  'D',  'D'],   // 2:  D
+  ['G',  'G',  'D',  'D'],   // 3:  G→D
+  ['Em', 'Em', 'Em', 'Em'],  // 4:  Em
+  ['C',  'C',  'C',  'C'],   // 5:  C
+  ['Am', 'Am', 'Am', 'Am'],  // 6:  Am
+  ['C',  'C',  'C',  'C'],   // 7:  C
+  ['G',  'G',  'G',  'G'],   // 8:  G
+  ['C',  'C',  'C',  'C'],   // 9:  C
+  ['D',  'D',  'D',  'D'],   // 10: D
+  ['G',  'G',  'D',  'D'],   // 11: G→D
+  ['Em', 'Em', 'Em', 'Em'],  // 12: Em
+  ['C',  'C',  'C',  'C'],   // 13: C
+  ['Am', 'Am', 'Am', 'Am'],  // 14: Am
+  ['C',  'C',  'C',  'C'],   // 15: C
+  ['G',  'G',  'G',  'G'],   // 16: G
 ]
 
 const bibiChorusMeasures: (string | null)[][] = [
@@ -176,7 +177,7 @@ export const strummingBeginnerExercises: Exercise[] = [
     chords: ['C', 'D', 'G', 'Em', 'Am'],
     timeSignature: [4, 4],
     bpm: 80,
-    measures: 15,
+    measures: 16,
     beats: buildBeats(bibiVerseMeasures),
   },
   {
