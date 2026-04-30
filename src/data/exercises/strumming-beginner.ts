@@ -44,12 +44,13 @@ const bibiVerseMeasures: (string | null)[][] = [
 ]
 
 const bibiChorusMeasures: (string | null)[][] = [
-  ['C', 'C', 'D', 'D'],   // 1: C→D
+  ['C', 'C', 'C', 'D'],   // 1: C→D
   ['D', 'D', 'D', 'D'],   // 2: D
-  ['C', 'C', 'D', 'D'],   // 3: C→D
+  ['C', 'C', 'C', 'D'],   // 3: C→D
   ['D', 'D', 'D', 'D'],   // 4: D
-  ['C', 'C', 'Am', 'Am'], // 5: C→Am
-  [null, 'C', 'D', 'G'],  // 6: rest, C, D, G
+  ['C', 'C', 'C', 'Am'],  // 5: C→Am
+  ['Am', 'Am', 'Am', 'C'],// 6: Am→C
+  ['C', 'D', 'D', 'G'],   // 7: C, D, G
 ]
 
 function buildBeats(measures: (string | null)[][]): Exercise['beats'] {
@@ -189,7 +190,7 @@ export const strummingBeginnerExercises: Exercise[] = [
     chords: ['C', 'D', 'Am', 'G'],
     timeSignature: [4, 4],
     bpm: 80,
-    measures: 6,
+    measures: 7,
     beats: buildBeats(bibiChorusMeasures),
   },
 ]
