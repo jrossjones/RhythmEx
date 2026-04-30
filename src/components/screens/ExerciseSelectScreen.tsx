@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { Layout } from '@/components/ui/Layout'
 import { Navigation } from '@/components/ui/Navigation'
 import { StarDisplay } from '@/components/ui/StarDisplay'
@@ -14,51 +13,47 @@ interface ExerciseSelectScreenProps {
 
 const difficulties: Difficulty[] = ['beginner', 'intermediate', 'advanced']
 
-const difficultyColors: Record<Difficulty, string> = {
+const difficultyHeaderColors: Record<Difficulty, string> = {
   beginner: 'bg-green-500',
   intermediate: 'bg-yellow-500',
   advanced: 'bg-red-500',
 }
 
 export function ExerciseSelectScreen({ instrument, onSelect, onBack }: ExerciseSelectScreenProps) {
-  const [activeDifficulty, setActiveDifficulty] = useState<Difficulty>('beginner')
-  const exercises = exercisesByDifficulty(activeDifficulty, instrument)
-
   return (
     <Layout>
       <Navigation title="Choose Exercise" onBack={onBack} />
 
-      <div className="mb-6 flex gap-2">
-        {difficulties.map((d) => (
-          <button
-            key={d}
-            onClick={() => setActiveDifficulty(d)}
-            className={`rounded-full px-4 py-2 text-sm font-semibold capitalize transition-colors cursor-pointer ${
-              activeDifficulty === d
-                ? `${difficultyColors[d]} text-white`
-                : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-            }`}
-          >
-            {d}
-          </button>
-        ))}
-      </div>
-
-      <div className="flex flex-col gap-3">
-        {exercises.map((exercise) => {
-          const best = getBestScore(exercise.id, instrument)
+      <div className="flex flex-col gap-6">
+        {difficulties.map((d) => {
+          const exercises = exercisesByDifficulty(d, instrument)
+          if (exercises.length === 0) return null
           return (
-            <button
-              key={exercise.id}
-              onClick={() => onSelect(exercise)}
-              className="flex items-center justify-between rounded-xl bg-white p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer text-left"
-            >
-              <div>
-                <h3 className="font-semibold text-gray-800">{exercise.name}</h3>
-                <p className="text-sm text-gray-500">{exercise.bpm} BPM</p>
+            <section key={d} data-testid={`difficulty-section-${d}`}>
+              <h2
+                className={`mb-2 rounded-xl px-4 py-2 text-lg font-bold capitalize text-white ${difficultyHeaderColors[d]}`}
+              >
+                {d}
+              </h2>
+              <div className="flex flex-col gap-3">
+                {exercises.map((exercise) => {
+                  const best = getBestScore(exercise.id, instrument)
+                  return (
+                    <button
+                      key={exercise.id}
+                      onClick={() => onSelect(exercise)}
+                      className="flex items-center justify-between rounded-xl bg-white p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer text-left"
+                    >
+                      <div>
+                        <h3 className="font-semibold text-gray-800">{exercise.name}</h3>
+                        <p className="text-sm text-gray-500">{exercise.bpm} BPM</p>
+                      </div>
+                      <StarDisplay stars={best?.bestStars ?? 0} size="sm" />
+                    </button>
+                  )
+                })}
               </div>
-              <StarDisplay stars={best?.bestStars ?? 0} size="sm" />
-            </button>
+            </section>
           )
         })}
       </div>

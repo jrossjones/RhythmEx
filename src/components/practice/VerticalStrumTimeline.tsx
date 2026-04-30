@@ -1,10 +1,13 @@
 import { BeatMarker } from './BeatMarker'
+import { ChordDiagram } from './ChordDiagram'
 import type { MarkerShape } from './timelineConstants'
 import {
   STRUM_COLUMN_WIDTH,
   TAP_MARKER_COLORS,
 } from './timelineConstants'
 import type { ProcessedTapMarker } from './BeatTimeline'
+
+const SCROLL_DIAGRAM_COLUMN_WIDTH = 80
 
 interface VerticalMarker {
   beatIndex: number
@@ -34,6 +37,7 @@ interface VerticalStrumTimelineProps {
   tapMarkers?: ProcessedTapMarker[]
   containerHeight: number
   chordChanges: ChordChange[]
+  chordDiagramMode?: 'fixed' | 'scroll'
 }
 
 export function VerticalStrumTimeline({
@@ -45,21 +49,27 @@ export function VerticalStrumTimeline({
   tapMarkers = [],
   containerHeight,
   chordChanges,
+  chordDiagramMode = 'fixed',
 }: VerticalStrumTimelineProps) {
   const columnWidth = STRUM_COLUMN_WIDTH
+  const showScrollDiagrams = chordDiagramMode === 'scroll'
+  const totalWidth = showScrollDiagrams
+    ? columnWidth + SCROLL_DIAGRAM_COLUMN_WIDTH
+    : columnWidth
 
   return (
     <div
       data-testid="vertical-strum-timeline"
       className="relative overflow-hidden mx-auto"
-      style={{ height: containerHeight, width: columnWidth }}
+      style={{ height: containerHeight, width: totalWidth }}
     >
       {/* Scrolling content */}
       <div
         data-testid="vertical-scroll-content"
-        className="absolute left-0 right-0"
+        className="absolute left-0 top-0"
         style={{
           height: renderedHeight,
+          width: columnWidth,
           transform: `translateY(-${scrollOffset}px)`,
           willChange: 'transform',
         }}
@@ -68,8 +78,8 @@ export function VerticalStrumTimeline({
         {measureLines.map((yPos, i) => (
           <div
             key={`m-${i}`}
-            className="absolute left-0 right-0 h-px bg-gray-200"
-            style={{ top: yPos }}
+            className="absolute left-0 h-px bg-gray-200"
+            style={{ top: yPos, width: columnWidth }}
           />
         ))}
 
@@ -123,11 +133,37 @@ export function VerticalStrumTimeline({
         ))}
       </div>
 
-      {/* Hit line */}
+      {/* Scroll-mode chord diagrams column (right of marker column) */}
+      {showScrollDiagrams && (
+        <div
+          data-testid="vertical-scroll-diagrams"
+          className="absolute top-0"
+          style={{
+            left: columnWidth,
+            width: SCROLL_DIAGRAM_COLUMN_WIDTH,
+            height: renderedHeight,
+            transform: `translateY(-${scrollOffset}px)`,
+            willChange: 'transform',
+          }}
+        >
+          {chordChanges.map((cc, i) => (
+            <div
+              key={`scroll-diagram-${i}`}
+              data-testid="scroll-chord-diagram"
+              className="absolute -translate-y-1/2"
+              style={{ left: 4, top: cc.yPosition }}
+            >
+              <ChordDiagram chord={cc.chord} size="sm" />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Hit line — only spans the marker column */}
       <div
         data-testid="hit-line"
-        className="absolute left-0 right-0 z-10 flex items-center"
-        style={{ top: hitLineY }}
+        className="absolute left-0 z-10 flex items-center"
+        style={{ top: hitLineY, width: columnWidth }}
       >
         <div className="flex-1 h-0.5 bg-indigo-600" />
         <div className="w-0 h-0 border-t-[5px] border-t-transparent border-b-[5px] border-b-transparent border-l-[6px] border-l-indigo-600 ml-0.5" />

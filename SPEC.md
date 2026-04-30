@@ -225,7 +225,23 @@ Strumming exercises may additionally include top-level `key` and `chords` fields
 - **PracticeScreen smoke tests:** New `PracticeScreen.test.tsx` covers happy path, speed trainer ≥95%/>95% branching, loop-mode save-without-finish, demo completion path, BPM disabled-during-playing gate, strict mode wrong-pad, and back button.
 - 333 tests passing (304 previous + 29 new: useMetronome 7, useDemoMode 6, useLoopMode 7, PracticeScreen 9)
 
-### Phase 7 — Free Play Mode (Not Started)
+### Phase 6.1 — Vertical Exercise List + Chord Diagrams (Complete)
+
+#### Vertical exercise list (all instruments)
+- `ExerciseSelectScreen` no longer uses difficulty tabs. All exercises for the selected instrument are stacked vertically in three colored sections: Beginner (green), Intermediate (yellow), Advanced (red). Section headers are full-width colored bars. Exercise cards inside each section keep their current styling, BPM text, and per-instrument best-score star display. Sections with no exercises are omitted defensively. The change applies to drums, handpan, and strumming.
+
+#### Chord diagrams next to strum timeline
+- New beginner-friendly chord diagrams shown during strumming exercises. Each diagram is a 6-string × 4-fret SVG grid with filled dots on fingered notes, `O` for open strings, and `X` for muted strings. No finger numbers, no barre indicators (kept simple for kids).
+- Diagram fingering data lives in `src/data/chordDiagrams.ts` (separate from `chords.ts` voicing data). Covers the 7 chord shapes used by exercises: G, C, D, Em, Am, A, E. `getChordDiagram(name)` lookup; unknown names return `undefined`.
+- New component `src/components/practice/ChordDiagram.tsx`. Props: `chord`, `size?: 'sm' | 'md'`, `dimmed?: boolean`. Returns `null` for unknown chords.
+- Two display modes selectable in the practice screen via a small toggle (strumming only):
+  - **Fixed mode (default):** Two diagrams stacked in a sibling column to the right of the timeline — current chord (medium) above next upcoming chord (small, dimmed). Diagrams swap content as the playhead crosses chord changes.
+  - **Scroll mode:** Diagrams render inline inside `VerticalStrumTimeline` at the y-position of each chord-change beat, scrolling down with the markers like a chord chart. Replaces the existing pill chord-name labels visually but does not remove them.
+- Mode is local per-session state in `PracticeScreen` (not persisted to localStorage in v1).
+- Diagrams are gated on `instrument === 'strumming'` — drums and handpan render unchanged.
+- 347 tests passing (333 previous + 14 new: ExerciseSelectScreen 5, chordDiagrams 4, ChordDiagram 5).
+
+
 
 #### Overview
 A dedicated screen for open-ended instrument play without exercises, timelines, or scoring. Accessible from the exercise select screen as a "Free Play" option.
@@ -332,14 +348,14 @@ Integrated reference material: note values, time signatures, rhythm notation. Co
 - [ ] make chord changes more visible (different background)
   - [ ] create playlists of chord progressions
   - [ ] create procedural progressions
-- [ ] display chord fingering next to timeline
+- [x] display chord fingering next to timeline
 - [ ] have a strumming/rhythm library(maybe even org by song)
   - [ ] link to online rhythm library
 
 ### Usability
 - [ ] add addional patterns 
 - [ ] add additional strum feel (like yellow submarine)
-- [ ] change from menu based to scroll?
+- [x] change from menu based to scroll?
 - [ ] Realtime BPM change while playing
 - [ ] fix sounds to not depend on length of button press
 - [ ] move the selections from the settings menu to

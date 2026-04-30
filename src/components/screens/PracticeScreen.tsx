@@ -9,6 +9,7 @@ import { HandpanPad } from '@/components/instruments/HandpanPad'
 import { StrumZone } from '@/components/instruments/StrumZone'
 import { ResultsOverlay } from '@/components/practice/ResultsOverlay'
 import { SettingsPopover } from '@/components/practice/SettingsPopover'
+import { ChordDiagram } from '@/components/practice/ChordDiagram'
 import { useExercise, LEAD_IN_BEATS } from '@/hooks/useExercise'
 import { useTiming } from '@/hooks/useTiming'
 import { useLearnMode } from '@/hooks/useLearnMode'
@@ -46,6 +47,8 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
   const isDemoModeRef = useRef(false)
 
   const [isLearnMode, setIsLearnMode] = useState(false)
+
+  const [chordDiagramMode, setChordDiagramMode] = useState<'fixed' | 'scroll'>('fixed')
 
   const { playDrum, playHandpan, playStrum, playMetronomeClick, startAudioContext } = useAudio()
 
@@ -240,6 +243,21 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
     // Before first beat, show first chord
     return exercise.beats[0]?.chord ?? null
   }, [instrument, exercise, beatTimes, durationMs, isLearnMode, learnPhase, learnProgress, phase, idleProgress, rawProgress])
+
+  const nextChord = useMemo((): string | null => {
+    if (instrument !== 'strumming' || !currentChord) return null
+    const progress = isLearnMode
+      ? (learnPhase === 'idle' ? idleProgress : learnProgress)
+      : (phase === 'idle' ? idleProgress : rawProgress)
+    const playheadMs = progress * durationMs
+    for (let i = 0; i < beatTimes.length; i++) {
+      if (beatTimes[i] > playheadMs) {
+        const c = exercise.beats[i].chord
+        if (c && c !== currentChord) return c
+      }
+    }
+    return null
+  }, [instrument, currentChord, exercise.beats, beatTimes, durationMs, isLearnMode, learnPhase, learnProgress, phase, idleProgress, rawProgress])
 
   const nextExpectedDirection = useMemo((): StrumDirection | null => {
     for (let i = 0; i < exercise.beats.length; i++) {
@@ -438,7 +456,7 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
       </div>
 
       {/* Beat timeline */}
-      <div className="relative mb-6">
+      <div className="relative mb-6 flex items-start justify-center gap-3">
         <VerticalTimeline
           exercise={exercise}
           progress={isLearnMode
@@ -450,7 +468,23 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
           tapMarkers={isLearnMode ? [] : tapMarkers}
           activePads={activePads}
           scaleNotes={handpanScaleNotes}
+          chordDiagramMode={chordDiagramMode}
         />
+        {instrument === 'strumming' && chordDiagramMode === 'fixed' && currentChord && (
+          <div
+            data-testid="chord-diagram-column"
+            className="flex flex-col items-center gap-3 rounded-2xl bg-white p-3 shadow-md"
+          >
+            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Now</span>
+            <ChordDiagram chord={currentChord} size="md" />
+            {nextChord && (
+              <>
+                <span className="mt-1 text-xs font-semibold uppercase tracking-wide text-gray-400">Next</span>
+                <ChordDiagram chord={nextChord} size="sm" dimmed />
+              </>
+            )}
+          </div>
+        )}
         {/* Countdown badge overlaid on timeline */}
         {((phase === 'countdown' && countdownValue > 0) ||
           (isLearnMode && learnPhase === 'countdown' && learnCountdownValue > 0)) && (
@@ -462,6 +496,35 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
           </div>
         )}
       </div>
+
+      {/* Chord diagram mode toggle (strumming only) */}
+      {instrument === 'strumming' && (
+        <div className="mb-4 flex items-center justify-center gap-2 text-sm">
+          <span className="text-gray-500">Chord diagrams:</span>
+          <button
+            type="button"
+            onClick={() => setChordDiagramMode('fixed')}
+            className={`rounded-full px-3 py-1 font-semibold transition-colors cursor-pointer ${
+              chordDiagramMode === 'fixed'
+                ? 'bg-indigo-500 text-white'
+                : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+            }`}
+          >
+            Fixed
+          </button>
+          <button
+            type="button"
+            onClick={() => setChordDiagramMode('scroll')}
+            className={`rounded-full px-3 py-1 font-semibold transition-colors cursor-pointer ${
+              chordDiagramMode === 'scroll'
+                ? 'bg-indigo-500 text-white'
+                : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+            }`}
+          >
+            Scroll
+          </button>
+        </div>
+      )}
 
       {/* Tap input area */}
       <div className="mb-6">

@@ -60,7 +60,8 @@ src/
       VerticalTimeline.tsx       # Orchestrator for vertical note highway (replaces horizontal BeatTimeline in PracticeScreen)
       VerticalDrumTimeline.tsx   # N equal-width columns for drum pads, markers scroll downward
       VerticalSingleTimeline.tsx # Single column with horizontal offsets for handpan notes
-      VerticalStrumTimeline.tsx  # Single centered column with chord change pill labels for strumming
+      VerticalStrumTimeline.tsx  # Single centered column with chord change pill labels for strumming; optional inline scrolling chord diagrams (chordDiagramMode='scroll')
+      ChordDiagram.tsx           # SVG beginner chord diagram (6 strings × 4 frets, dots/O/X), used by PracticeScreen and VerticalStrumTimeline
       BeatTimeline.tsx  # (Legacy) Horizontal timeline orchestrator — kept for rollback
       DrumLaneTimeline.tsx  # (Legacy) 5-lane stacked drum timeline
       SingleRowTimeline.tsx # (Legacy) Single-row timeline for non-drum instruments
@@ -88,6 +89,7 @@ src/
       strumming-advanced.ts    # 3 strumming exercises: syncopated strum, quick changes, endurance strum (16 measures)
       index.ts          # Aggregator: allExercises (27), exercisesByDifficulty(diff, instrument?), exerciseById()
     chords.ts           # ChordVoicing type, 8 open guitar voicings, getChord() lookup
+    chordDiagrams.ts    # ChordDiagram type, fret/open/muted layout for 7 beginner shapes (G/C/D/Em/Am/A/E), getChordDiagram() lookup
     handpan/
       scales.ts         # HandpanScale type, 3 presets (D Kurd, C Amara, F Pygmy), getScale()
     samples/
@@ -114,6 +116,7 @@ src/
       __tests__/
         ResultsScreen.test.tsx
         PracticeScreen.test.tsx
+        ExerciseSelectScreen.test.tsx
     instruments/
       __tests__/
         DrumPad.test.tsx
@@ -127,6 +130,7 @@ src/
         VerticalTimeline.test.tsx
         VerticalDrumTimeline.test.tsx
         VerticalStrumTimeline.test.tsx
+        ChordDiagram.test.tsx
         TapZone.test.tsx
         SettingsPopover.test.tsx
   data/
@@ -136,6 +140,8 @@ src/
     chords/
       __tests__/
         chords.test.ts      # Chord voicing count, lookup, unknown returns undefined
+    __tests__/
+      chordDiagrams.test.ts # Diagram coverage for all strumming-exercise chords + shape integrity
     handpan/
       __tests__/
         scales.test.ts      # Scale presets, lookup, defaults
@@ -215,6 +221,9 @@ public/
 - **Strum timeline:** `VerticalStrumTimeline` — single centered column (120px). Triangle markers with rotation (180deg=down, 0deg=up). Blue for down, amber for up. Chord change labels rendered as left-aligned pill badges inside the column (`left: 4px`).
 - **BeatMarker rotation:** Optional `rotation` prop for directional markers. Labels counter-rotate to stay upright.
 - **Strum chord display:** `currentChord` in `PracticeScreen` derived from playhead position (`rawProgress * durationMs`), not judgment state. Walks `beatTimesMs` backwards from the playhead to find the most recent chord change. Updates every RAF frame. `handleStrumTap` uses the next unjudged beat's chord for audio playback (stays in sync with tap matching).
+- **Exercise select layout:** `ExerciseSelectScreen` shows all 9 exercises for the selected instrument stacked vertically under three colored section headers (Beginner=green, Intermediate=yellow, Advanced=red). No tab state. Sections with zero exercises are omitted. Card styling and per-instrument best-score display are unchanged.
+- **Chord diagrams:** `ChordDiagram` component renders a 6-string × 4-fret SVG with filled dots for fingered notes, `O` for open strings, `X` for muted. No finger numbers or barre indicators. Sizes: `sm` (~70px), `md` (~100px). `dimmed` prop reduces opacity to 0.45 for "next chord" preview. Returns `null` for unknown chord names. Diagram fingering data lives in `src/data/chordDiagrams.ts` (separate from `chords.ts` voicing data); covers G/C/D/Em/Am/A/E.
+- **Chord diagram modes (strumming practice):** `chordDiagramMode` is local state in `PracticeScreen` (default `'fixed'`). `'fixed'`: a sibling column right of the timeline shows current chord (md) above the next upcoming chord (sm, dimmed); `nextChord` is computed by walking forward from the playhead. `'scroll'`: `VerticalStrumTimeline` widens by 80px and renders an inline scrolling diagram column at each chord-change Y, sharing the timeline's `scrollOffset`. Toggle is a two-button pill control beneath the timeline. Diagrams are gated on `instrument === 'strumming'`.
 
 ## Upcoming Phases (see SPEC.md for full detail)
 - **Future improvements:** Column-to-pyramid alignment (match drum column widths to pad centers). Approach animation (osu!-style shrinking ring). Colorblind mode toggle.

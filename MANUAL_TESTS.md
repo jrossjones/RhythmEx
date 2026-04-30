@@ -725,3 +725,31 @@ Run `npm run dev` and open the app in a browser to execute these tests.
   - Switch back to Strumming — score preserved
 - [ ] **Tap placement markers:** Tick marks appear at tap positions on single-column timeline
 - [ ] **Results screen:** Shows stars, accuracy, tap breakdown, personal best comparison
+
+## 7. Vertical Exercise List + Chord Diagrams (Phase 6.1)
+
+### 7.1 Vertical Exercise List (all instruments)
+- [ ] On Drums, Handpan, and Strumming exercise-select screens, all 9 exercises are visible at once stacked vertically (no difficulty tabs).
+- [ ] Three colored section headers in order: Beginner (green), Intermediate (yellow), Advanced (red).
+- [ ] Clicking any exercise (from any section) navigates to PracticeScreen for that exercise.
+- [ ] Per-exercise best-score stars still display correctly.
+- [ ] Back button returns to instrument select.
+- [ ] Page scrolls vertically when content exceeds viewport.
+
+### 7.2 Chord Diagrams — Fixed Mode (default)
+- [ ] On a strumming exercise idle screen, a card to the right of the timeline shows the **current chord diagram** (med size) above the **next chord** (small, dimmed).
+- [ ] Diagram correctly shows: `O` above open strings, `X` above muted strings, filled dots on fretted notes.
+- [ ] As the playhead moves through the exercise, the "Now" diagram swaps when crossing a chord change.
+- [ ] The "Next" diagram updates to the upcoming distinct chord; if no upcoming chord change exists, only the "Now" diagram shows.
+- [ ] Drum and Handpan exercises show no chord diagram column.
+
+### 7.3 Chord Diagrams — Scroll Mode
+- [ ] Toggle "Chord diagrams: Scroll" beneath the timeline.
+- [ ] Diagrams now appear inside the timeline area, anchored at each chord-change Y position, scrolling down as beats fall toward the hit line.
+- [ ] Existing chord-name pill labels still appear inside the marker column.
+- [ ] Hit line still spans only the strum marker column (not the diagram column).
+- [ ] Toggling back to "Fixed" returns to the right-side card with no visual jump.
+
+### 7.4 Chord Diagram Coverage
+- [ ] Every chord referenced in strumming exercises (G, C, D, Em, Am, A, E) renders a valid diagram.
+- [ ] No exercise causes a missing/blank diagram during play.

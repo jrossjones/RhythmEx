@@ -34,6 +34,7 @@ interface VerticalTimelineProps {
   tapMarkers?: TapMarker[]
   activePads?: DrumPad[]
   scaleNotes?: string[]
+  chordDiagramMode?: 'fixed' | 'scroll'
 }
 
 export function VerticalTimeline({
@@ -45,6 +46,7 @@ export function VerticalTimeline({
   tapMarkers,
   activePads = [],
   scaleNotes = [],
+  chordDiagramMode = 'fixed',
 }: VerticalTimelineProps) {
   const isDrum = instrument === 'drums'
   const isHandpan = instrument === 'handpan'
@@ -201,6 +203,7 @@ export function VerticalTimeline({
           tapMarkers={processedTapMarkers}
           containerHeight={containerHeight}
           chordChanges={chordChanges}
+          chordDiagramMode={chordDiagramMode}
         />
       ) : isDrum ? (
         <VerticalDrumTimeline
