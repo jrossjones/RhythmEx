@@ -328,6 +328,7 @@ Integrated reference material: note values, time signatures, rhythm notation. Co
 ### Features
 - [ ] add tutorial/overview 
 - [ ] add ability to enter chord progression to play (save locally?)
+- [ ] add ability to enter rhythm patterns to play (save locally?)
 - [ ] make chord changes more visible (different background)
   - [ ] create playlists of chord progressions
   - [ ] create procedural progressions

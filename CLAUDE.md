@@ -8,6 +8,22 @@ When `SPEC.md` is updated or a phase is completed, prompt the user to review and
 ## Project Overview
 RhythmEx is a browser-based rhythm practice app for young musicians. See `SPEC.md` for full product specification.
 
+## Working Style
+
+Three principles that override defaults when in tension:
+
+1. **Think before coding.** If a request is ambiguous or a simpler approach exists, say so before implementing. When confused, name what's unclear and stop — don't paper over it with plausible-looking code.
+
+2. **Simplicity first.** Minimum code that solves the stated problem. If 200 lines could be 50, rewrite it.
+
+3. **Surgical changes.** Touch only what the request requires. Match existing style. Clean up orphans *your* changes created; leave pre-existing dead code alone (mention it instead). Every changed line should trace to the request.
+
+### Self-improvement loop
+- After ANY correction from user: update LESSONS.md with the pattern
+- Write rules for yourself to prevent the same mistake
+- Ruthlessly iterate on these lessons until mistake rate drops
+- Review lessons at session start for relevant project
+
 ## Tech Stack
 - React 19 + TypeScript + Vite
 - Tailwind CSS v4 for styling
