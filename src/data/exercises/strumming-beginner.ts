@@ -40,7 +40,7 @@ const bibiVerseMeasures: (string | null)[][] = [
   ['C',  'C',  'C',  'C'],   // 13: C
   ['Am', 'Am', 'Am', 'Am'],  // 14: Am
   ['C',  'C',  'C',  'C'],   // 15: C
-  ['G',  'G',  'G',  'G'],   // 16: G
+  ['G'],   // 16: G
 ]
 
 const bibiChorusMeasures: (string | null)[][] = [
