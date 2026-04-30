@@ -84,10 +84,10 @@ src/
       handpan-beginner.ts    # 3 handpan exercises: ding pulse, two-note melody, ascending scale
       handpan-intermediate.ts # 3 handpan exercises: kurd flow, ding & ring, cascade (8 measures)
       handpan-advanced.ts    # 3 handpan exercises: handpan rain, syncopated groove, endurance flow (16 measures)
-      strumming-beginner.ts    # 3 strumming exercises: basic down strum, down-up intro, easy strum pattern
+      strumming-beginner.ts    # 6 strumming exercises: basic down strum, down-up intro, easy strum pattern, Bibi Blocksberg intro/verse/chorus
       strumming-intermediate.ts # 3 strumming exercises: two-chord switch, four-chord song, strum marathon (8 measures)
       strumming-advanced.ts    # 3 strumming exercises: syncopated strum, quick changes, endurance strum (16 measures)
-      index.ts          # Aggregator: allExercises (27), exercisesByDifficulty(diff, instrument?), exerciseById()
+      index.ts          # Aggregator: allExercises (30), exercisesByDifficulty(diff, instrument?), exerciseById()
     chords.ts           # ChordVoicing type, 8 open guitar voicings, getChord() lookup
     chordDiagrams.ts    # ChordDiagram type, fret/open/muted layout for 7 beginner shapes (G/C/D/Em/Am/A/E), getChordDiagram() lookup
     handpan/
@@ -211,7 +211,7 @@ public/
 - **Handpan scales:** `HandpanScale` type in `src/data/handpan/scales.ts` with 3 presets: D Kurd (9 notes), C Amara (8 notes), F Pygmy (9 notes). Default: `d-kurd`. `getScale(id)` lookup. Exercises reference scale via `exercise.scale` field.
 - **Handpan pad layout:** `HandpanPad` component with circular arrangement — center ding (64×64px) + surrounding tone fields (52×52px). Color-coded by pitch class via `HANDPAN_PAD_COLORS`. Keyboard: 1–9 for notes, Space for next expected note. Muted idle colors via `HANDPAN_PAD_MUTED_COLORS`.
 - **Handpan note colors:** `HANDPAN_NOTE_COLORS` in `timelineConstants.ts` maps 12 chromatic pitch classes to Tailwind colors (C=red, D=orange, E=amber, F=green, G=teal, A=blue, Bb=violet, etc.). `pitchClass()` helper extracts pitch class from note string (e.g. `"D3"` → `"D"`, `"Bb4"` → `"Bb"`). Used for both timeline markers and pad colors.
-- **Exercise instrument filtering:** `Exercise.instrument` field (`'drums' | 'handpan' | 'strumming'`) added to type. `exercisesByDifficulty()` accepts optional instrument filter. `ExerciseSelectScreen` filters by selected instrument. 27 total exercises (9 drums + 9 handpan + 9 strumming).
+- **Exercise instrument filtering:** `Exercise.instrument` field (`'drums' | 'handpan' | 'strumming'`) added to type. `exercisesByDifficulty()` accepts optional instrument filter. `ExerciseSelectScreen` filters by selected instrument. 30 total exercises (9 drums + 9 handpan + 12 strumming — strumming includes Bibi Blocksberg intro/verse/chorus).
 - **Strumming input:** `StrumZone` component with two large tap buttons (down/up). ArrowDown/ArrowUp keyboard shortcuts, Space for next expected direction. No swipe detection in v1 (deferred). Chord name displayed above buttons.
 - **Strum audio:** `Tone.Sampler` loading 12 real acoustic-guitar MP3 samples (E2–G4) from `public/samples/guitar-acoustic/`. No effects chain — routes directly to destination, matching the reference library (`nbrosowsky/tonejs-instruments`). `baseUrl` uses `import.meta.env.BASE_URL` for GitHub Pages subpath compatibility. `createSynths` awaits `Tone.loaded()` so first strum doesn't fire against empty buffers. Sampler handles polyphony internally and auto-repitches between anchor samples. Chord voicings from `src/data/chords.ts`.
 - **Strum direction asymmetry (physical-realism tuning):** `playStrum(chord, direction)` differentiates up vs. down on three axes:

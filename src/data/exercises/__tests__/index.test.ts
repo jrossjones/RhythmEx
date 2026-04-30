@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest'
 import { allExercises, exercisesByDifficulty, exerciseById } from '../index'
 
 describe('allExercises', () => {
-  it('contains 27 exercises total (9 drums + 9 handpan + 9 strumming)', () => {
-    expect(allExercises).toHaveLength(27)
+  it('contains 30 exercises total (9 drums + 9 handpan + 12 strumming)', () => {
+    expect(allExercises).toHaveLength(30)
   })
 
   it('all exercises have required fields', () => {
@@ -34,7 +34,7 @@ describe('allExercises', () => {
 
   it('all strumming exercises have instrument: strumming', () => {
     const strummingExercises = allExercises.filter((e) => e.instrument === 'strumming')
-    expect(strummingExercises).toHaveLength(9)
+    expect(strummingExercises).toHaveLength(12)
   })
 })
 
@@ -59,7 +59,7 @@ describe('exercisesByDifficulty', () => {
 
   it('returns beginner exercises for strumming only', () => {
     const exercises = exercisesByDifficulty('beginner', 'strumming')
-    expect(exercises).toHaveLength(3)
+    expect(exercises).toHaveLength(6)
     exercises.forEach((e) => {
       expect(e.difficulty).toBe('beginner')
       expect(e.instrument).toBe('strumming')
@@ -68,7 +68,7 @@ describe('exercisesByDifficulty', () => {
 
   it('returns all beginner exercises when no instrument filter', () => {
     const exercises = exercisesByDifficulty('beginner')
-    expect(exercises).toHaveLength(9)
+    expect(exercises).toHaveLength(12)
   })
 
   it('returns intermediate exercises for each instrument', () => {
