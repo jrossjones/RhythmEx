@@ -77,9 +77,14 @@ export function VerticalTimeline({
     Math.min(playheadY - hitLineY, renderedHeight - containerHeight)
   )
 
-  // Next beat index for pulse effect
+  // Pulse the most recent unjudged beat at or behind the playhead (never ahead of it)
   const playheadMs = progress * durationMs
-  const nextBeatIndex = times.findIndex((t) => t > playheadMs)
+  let nextBeatIndex = -1
+  for (let i = 0; i < times.length; i++) {
+    if (times[i] > playheadMs) break
+    if (beatJudgments?.get(i)) continue
+    nextBeatIndex = i
+  }
 
   // Measure line positions (Y axis, inverted)
   const msPerMeasure = beatsPerMeasure * msPerBeat(bpm)
