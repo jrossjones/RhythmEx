@@ -71,11 +71,10 @@ export function VerticalTimeline({
   // Inverted Y: beat 0 near bottom, last beat near top. Playhead drops from bottom to top.
   const playheadY = topPadding + (1 - progress) * exercisePixels
 
-  // Scroll offset: pin playhead at hit line position
-  const scrollOffset = Math.max(
-    0,
-    Math.min(playheadY - hitLineY, renderedHeight - containerHeight)
-  )
+  // Scroll offset: pin playhead at hit line position.
+  // Upper clamp keeps beat 0 in view during lead-in; no lower clamp so the
+  // playhead can reach the last beat and past beats can exit downward.
+  const scrollOffset = Math.min(playheadY - hitLineY, renderedHeight - containerHeight)
 
   // Pulse the most recent unjudged beat at or behind the playhead (never ahead of it)
   const playheadMs = progress * durationMs

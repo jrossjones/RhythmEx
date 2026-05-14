@@ -75,7 +75,7 @@ export function VerticalDrumTimeline({
         className="absolute left-0 right-0"
         style={{
           height: renderedHeight,
-          transform: `translateY(-${scrollOffset}px)`,
+          transform: `translateY(${-scrollOffset}px)`,
           willChange: 'transform',
         }}
       >

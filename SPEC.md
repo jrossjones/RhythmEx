@@ -245,7 +245,7 @@ Strumming exercises may additionally include top-level `key` and `chords` fields
 - Three new beginner strumming exercises that walk through the Bibi Blocksberg theme: `bibi-blocksberg-intro` (8 measures), `bibi-blocksberg-verse` (16 measures), and `bibi-blocksberg-chorus` (6 measures). All in 4/4 at 80 BPM with a D-D-D-D pattern. Two-chord measures place the change on beat 3 (chord A on beats 1–2, chord B on beats 3–4). The chorus's final measure has a rest on beat 1 followed by C–D–G on beats 2–4. Chords used: C, D, G, Em, Am — all already in the diagram set.
 - Beginner strumming count grows from 3 → 6, total exercises 27 → 30.
 
-
+### Phase 7 — Free Play Mode (Not Started)
 
 #### Overview
 A dedicated screen for open-ended instrument play without exercises, timelines, or scoring. Accessible from the exercise select screen as a "Free Play" option.
@@ -349,28 +349,33 @@ Integrated reference material: note values, time signatures, rhythm notation. Co
 - [ ] add tutorial/overview 
 - [ ] add ability to enter chord progression to play (save locally?)
 - [ ] add ability to enter rhythm patterns to play (save locally?)
-- [ ] make chord changes more visible (different background)
+- [x] make chord changes more visible (different background)
   - [ ] create playlists of chord progressions
   - [ ] create procedural progressions
 - [x] display chord fingering next to timeline
 - [ ] have a strumming/rhythm library(maybe even org by song)
   - [ ] link to online rhythm library
+  
 
 ### Usability
-- [ ] add addional patterns 
+- [ ] play multiple notes simultaneously
+- [ ] add additional patterns 
 - [ ] add additional strum feel (like yellow submarine)
 - [x] change from menu based to scroll?
 - [ ] Realtime BPM change while playing
-- [ ] fix sounds to not depend on length of button press
+- [x] fix sounds to not depend on length of button press
 - [ ] move the selections from the settings menu to
-- [ ] fix end of section not ending on the beat
-- [ ] remove delay at end of excersize 
+- [x] fix end of section not ending on the beat
+- [ ] remove delay at end of exercise 
 - [ ] fix loop not working in listen mode
 - [ ] show arm movements in the background (constant motion down up down up)
 - [ ] create a synth playground to adjust the sound of each instrument
 - [x] confirm strum up different than down
+- [x] chord sound sometimes doesnt switch if they note isnt played at the right time
+- [ ] sound of chord is different in play vs listen mode
+- [ ] change handpan keyboard shortcuts to be numpad layout
 
 ### Bugs
 - [ ] fix zoom/ disable scrolling on small screens
-- [ ] ensure that the marker line is aligned with beat when pressed
-- [ ] in listen the strum samples change with the chord changes, but when playing the samples are always the same
+- [x] ensure that the marker line is aligned with beat when pressed
+- [x] in listen the strum samples change with the chord changes, but when playing the samples are always the same

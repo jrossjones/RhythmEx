@@ -70,7 +70,7 @@ export function VerticalStrumTimeline({
         style={{
           height: renderedHeight,
           width: columnWidth,
-          transform: `translateY(-${scrollOffset}px)`,
+          transform: `translateY(${-scrollOffset}px)`,
           willChange: 'transform',
         }}
       >
@@ -142,7 +142,7 @@ export function VerticalStrumTimeline({
             left: columnWidth,
             width: SCROLL_DIAGRAM_COLUMN_WIDTH,
             height: renderedHeight,
-            transform: `translateY(-${scrollOffset}px)`,
+            transform: `translateY(${-scrollOffset}px)`,
             willChange: 'transform',
           }}
         >
