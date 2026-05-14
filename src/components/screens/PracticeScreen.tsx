@@ -274,6 +274,37 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
     return null
   }, [exercise.beats, activeJudgments])
 
+  // Approach ring: shrinks over msPerBeat(bpm) toward the next unjudged beat.
+  // Covers all pads scheduled at that same beat time. Shown during countdown,
+  // playing, listen/demo, and learn (active/countdown). Hidden in idle/done.
+  const approachRings = useMemo((): Map<string, number> => {
+    const map = new Map<string, number>()
+    const active = isLearnMode
+      ? (learnPhase === 'countdown' || learnPhase === 'active')
+      : (phase === 'countdown' || phase === 'playing')
+    if (!active) return map
+    const progress = isLearnMode ? learnProgress : rawProgress
+    const playheadMs = progress * durationMs
+    const beatWindow = msPerBeat(bpm)
+    let nextTime: number | null = null
+    for (let i = 0; i < exercise.beats.length; i++) {
+      if (beatTimes[i] < playheadMs) continue
+      if (activeJudgments.has(i)) continue
+      nextTime = beatTimes[i]
+      break
+    }
+    if (nextTime == null) return map
+    const delta = nextTime - playheadMs
+    if (delta > beatWindow) return map
+    const ringProgress = 1 - delta / beatWindow
+    for (let i = 0; i < exercise.beats.length; i++) {
+      if (beatTimes[i] !== nextTime) continue
+      if (activeJudgments.has(i)) continue
+      map.set(exercise.beats[i].note, ringProgress)
+    }
+    return map
+  }, [isLearnMode, learnPhase, phase, learnProgress, rawProgress, durationMs, bpm, activeJudgments, beatTimes, exercise.beats])
+
   // Strum tap handler
   const handleStrumTap = useCallback(async (direction: string) => {
     if (phase !== 'playing' && (!isLearnMode || learnPhase !== 'active')) {
@@ -567,6 +598,7 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
             disabled={isDemoMode}
             activePads={activePads}
             nextExpectedPad={nextExpectedPad}
+            approachProgress={approachRings}
           />
         ) : instrument === 'strumming' ? (
           <StrumZone
@@ -576,6 +608,7 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
             disabled={isDemoMode}
             currentChord={currentChord}
             nextExpectedDirection={nextExpectedDirection}
+            approachProgress={approachRings}
           />
         ) : instrument === 'handpan' ? (
           <HandpanPad
@@ -585,6 +618,7 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
             disabled={isDemoMode}
             scaleNotes={handpanScaleNotes}
             nextExpectedNote={nextExpectedNote}
+            approachProgress={approachRings}
           />
         ) : (
           <TapZone

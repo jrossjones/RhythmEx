@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import type { TimingJudgment } from '@/types'
 import { HANDPAN_PAD_COLORS, HANDPAN_PAD_MUTED_COLORS, pitchClass } from '@/components/practice/timelineConstants'
+import { ApproachRing } from '@/components/instruments/ApproachRing'
 
 interface TapFeedback {
   judgment: TimingJudgment
@@ -14,6 +15,7 @@ interface HandpanPadProps {
   disabled: boolean
   scaleNotes: string[]
   nextExpectedNote?: string | null
+  approachProgress?: Map<string, number>
 }
 
 // Numpad spatial keys for tone fields in 9-note scales (clockwise from top).
@@ -35,6 +37,7 @@ export function HandpanPad({
   disabled,
   scaleNotes,
   nextExpectedNote,
+  approachProgress,
 }: HandpanPadProps) {
   const onTapRef = useRef(onTap)
   const disabledRef = useRef(disabled)
@@ -122,6 +125,9 @@ export function HandpanPad({
             disabled={disabled}
             onPointerDown={(e) => { if (!disabled) { e.preventDefault(); onTap(ding) } }}
           >
+            {approachProgress?.get(ding) !== undefined && (
+              <ApproachRing shape="circle" progress={approachProgress.get(ding)!} />
+            )}
             <span className="text-sm">{ding}</span>
             <span className="text-[10px] opacity-75">{isNumpadLayout ? 5 : 1}</span>
           </button>
@@ -149,6 +155,9 @@ export function HandpanPad({
               disabled={disabled}
               onPointerDown={(e) => { if (!disabled) { e.preventDefault(); onTap(note) } }}
             >
+              {approachProgress?.get(note) !== undefined && (
+                <ApproachRing shape="circle" progress={approachProgress.get(note)!} />
+              )}
               <span className="text-xs">{note}</span>
               <span className="text-[10px] opacity-75">{keyNum}</span>
             </button>

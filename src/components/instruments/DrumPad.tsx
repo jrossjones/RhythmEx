@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import type { DrumPad as DrumPadType, TimingJudgment } from '@/types'
 import { DRUM_PAD_MUTED_COLORS } from '@/components/practice/timelineConstants'
+import { ApproachRing } from '@/components/instruments/ApproachRing'
 
 interface TapFeedback {
   judgment: TimingJudgment
@@ -14,6 +15,7 @@ interface DrumPadProps {
   disabled: boolean
   activePads: DrumPadType[]
   nextExpectedPad?: DrumPadType | null
+  approachProgress?: Map<string, number>
 }
 
 const padConfig: Record<DrumPadType, { color: string; label: string; key: string }> = {
@@ -46,6 +48,7 @@ export function DrumPad({
   disabled,
   activePads,
   nextExpectedPad,
+  approachProgress,
 }: DrumPadProps) {
   const onTapRef = useRef(onTap)
   const disabledRef = useRef(disabled)
@@ -138,12 +141,13 @@ export function DrumPad({
   const renderSinglePad = (pad: DrumPadType) => {
     const config = padConfig[pad]
     const color = getPadColor(pad)
+    const ringProgress = approachProgress?.get(pad)
     return (
       <button
         key={pad}
         type="button"
         data-testid={`drum-pad-${pad}`}
-        className={`flex min-h-[64px] min-w-[64px] flex-col items-center justify-center rounded-2xl px-6 py-3 text-white font-bold shadow-md select-none transition-colors duration-100 ${color}`}
+        className={`relative flex min-h-[64px] min-w-[64px] flex-col items-center justify-center rounded-2xl px-6 py-3 text-white font-bold shadow-md select-none transition-colors duration-100 ${color}`}
         disabled={disabled}
         onPointerDown={(e) => {
           if (!disabled) {
@@ -152,6 +156,7 @@ export function DrumPad({
           }
         }}
       >
+        {ringProgress !== undefined && <ApproachRing shape="rect" progress={ringProgress} />}
         <span className="text-lg">{config.label}</span>
         <span className="text-xs opacity-75">{config.key.toUpperCase()}</span>
       </button>

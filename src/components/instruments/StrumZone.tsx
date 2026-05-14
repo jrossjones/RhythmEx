@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import type { TimingJudgment } from '@/types'
 import type { StrumDirection } from '@/components/practice/timelineConstants'
 import { STRUM_DIRECTION_COLORS, STRUM_DIRECTION_MUTED_COLORS } from '@/components/practice/timelineConstants'
+import { ApproachRing } from '@/components/instruments/ApproachRing'
 
 interface TapFeedback {
   judgment: TimingJudgment
@@ -15,6 +16,7 @@ interface StrumZoneProps {
   disabled: boolean
   currentChord?: string | null
   nextExpectedDirection?: StrumDirection | null
+  approachProgress?: Map<string, number>
 }
 
 const feedbackColors: Record<TimingJudgment, string> = {
@@ -31,6 +33,7 @@ export function StrumZone({
   disabled,
   currentChord,
   nextExpectedDirection,
+  approachProgress,
 }: StrumZoneProps) {
   const onTapRef = useRef(onTap)
   const disabledRef = useRef(disabled)
@@ -91,22 +94,28 @@ export function StrumZone({
         <button
           type="button"
           data-testid="strum-button-down"
-          className={`flex items-center justify-center rounded-xl text-white font-bold shadow-md select-none transition-colors duration-100 ${getButtonColor('down')}`}
+          className={`relative flex items-center justify-center rounded-xl text-white font-bold shadow-md select-none transition-colors duration-100 ${getButtonColor('down')}`}
           style={{ minHeight: 64 }}
           disabled={disabled}
           onPointerDown={(e) => { if (!disabled) { e.preventDefault(); onTap('down') } }}
         >
+          {approachProgress?.get('down') !== undefined && (
+            <ApproachRing shape="rect" progress={approachProgress.get('down')!} />
+          )}
           <span className="text-2xl mr-2">{'\u2193'}</span>
           Down
         </button>
         <button
           type="button"
           data-testid="strum-button-up"
-          className={`flex items-center justify-center rounded-xl text-white font-bold shadow-md select-none transition-colors duration-100 ${getButtonColor('up')}`}
+          className={`relative flex items-center justify-center rounded-xl text-white font-bold shadow-md select-none transition-colors duration-100 ${getButtonColor('up')}`}
           style={{ minHeight: 64 }}
           disabled={disabled}
           onPointerDown={(e) => { if (!disabled) { e.preventDefault(); onTap('up') } }}
         >
+          {approachProgress?.get('up') !== undefined && (
+            <ApproachRing shape="rect" progress={approachProgress.get('up')!} />
+          )}
           <span className="text-2xl mr-2">{'\u2191'}</span>
           Up
         </button>
