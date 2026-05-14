@@ -98,8 +98,7 @@ export function HandpanPad({
               top: containerSize / 2 - 32,
             }}
             disabled={disabled}
-            onClick={() => { if (!disabled) onTap(ding) }}
-            onTouchStart={(e) => { if (!disabled) { e.preventDefault(); onTap(ding) } }}
+            onPointerDown={(e) => { if (!disabled) { e.preventDefault(); onTap(ding) } }}
           >
             <span className="text-sm">{ding}</span>
             <span className="text-[10px] opacity-75">1</span>
@@ -126,8 +125,7 @@ export function HandpanPad({
                 top: cy,
               }}
               disabled={disabled}
-              onClick={() => { if (!disabled) onTap(note) }}
-              onTouchStart={(e) => { if (!disabled) { e.preventDefault(); onTap(note) } }}
+              onPointerDown={(e) => { if (!disabled) { e.preventDefault(); onTap(note) } }}
             >
               <span className="text-xs">{note}</span>
               <span className="text-[10px] opacity-75">{keyNum}</span>

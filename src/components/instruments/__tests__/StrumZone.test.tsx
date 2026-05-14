@@ -18,25 +18,18 @@ describe('StrumZone', () => {
     expect(screen.getByTestId('strum-button-up')).toBeInTheDocument()
   })
 
-  it('calls onTap with down on click', () => {
+  it('calls onTap with down on pointerdown', () => {
     const onTap = vi.fn()
     render(<StrumZone {...defaultProps} onTap={onTap} />)
-    fireEvent.click(screen.getByTestId('strum-button-down'))
+    fireEvent.pointerDown(screen.getByTestId('strum-button-down'))
     expect(onTap).toHaveBeenCalledWith('down')
   })
 
-  it('calls onTap with up on click', () => {
+  it('calls onTap with up on pointerdown', () => {
     const onTap = vi.fn()
     render(<StrumZone {...defaultProps} onTap={onTap} />)
-    fireEvent.click(screen.getByTestId('strum-button-up'))
+    fireEvent.pointerDown(screen.getByTestId('strum-button-up'))
     expect(onTap).toHaveBeenCalledWith('up')
-  })
-
-  it('calls onTap on touchStart', () => {
-    const onTap = vi.fn()
-    render(<StrumZone {...defaultProps} onTap={onTap} />)
-    fireEvent.touchStart(screen.getByTestId('strum-button-down'))
-    expect(onTap).toHaveBeenCalledWith('down')
   })
 
   it('ArrowDown triggers down', () => {
@@ -77,7 +70,7 @@ describe('StrumZone', () => {
   it('no-op when disabled', () => {
     const onTap = vi.fn()
     render(<StrumZone {...defaultProps} onTap={onTap} disabled={true} />)
-    fireEvent.click(screen.getByTestId('strum-button-down'))
+    fireEvent.pointerDown(screen.getByTestId('strum-button-down'))
     expect(onTap).not.toHaveBeenCalled()
 
     fireEvent.keyDown(window, { code: 'ArrowDown' })

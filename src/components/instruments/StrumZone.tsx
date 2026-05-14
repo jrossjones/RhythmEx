@@ -94,8 +94,7 @@ export function StrumZone({
           className={`flex items-center justify-center rounded-xl text-white font-bold shadow-md select-none transition-colors duration-100 ${getButtonColor('down')}`}
           style={{ minHeight: 64 }}
           disabled={disabled}
-          onClick={() => { if (!disabled) onTap('down') }}
-          onTouchStart={(e) => { if (!disabled) { e.preventDefault(); onTap('down') } }}
+          onPointerDown={(e) => { if (!disabled) { e.preventDefault(); onTap('down') } }}
         >
           <span className="text-2xl mr-2">{'\u2193'}</span>
           Down
@@ -106,8 +105,7 @@ export function StrumZone({
           className={`flex items-center justify-center rounded-xl text-white font-bold shadow-md select-none transition-colors duration-100 ${getButtonColor('up')}`}
           style={{ minHeight: 64 }}
           disabled={disabled}
-          onClick={() => { if (!disabled) onTap('up') }}
-          onTouchStart={(e) => { if (!disabled) { e.preventDefault(); onTap('up') } }}
+          onPointerDown={(e) => { if (!disabled) { e.preventDefault(); onTap('up') } }}
         >
           <span className="text-2xl mr-2">{'\u2191'}</span>
           Up

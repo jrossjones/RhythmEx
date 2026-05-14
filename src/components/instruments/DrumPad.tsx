@@ -145,10 +145,7 @@ export function DrumPad({
         data-testid={`drum-pad-${pad}`}
         className={`flex min-h-[64px] min-w-[64px] flex-col items-center justify-center rounded-2xl px-6 py-3 text-white font-bold shadow-md select-none transition-colors duration-100 ${color}`}
         disabled={disabled}
-        onClick={() => {
-          if (!disabled) onTap(pad)
-        }}
-        onTouchStart={(e) => {
+        onPointerDown={(e) => {
           if (!disabled) {
             e.preventDefault()
             onTap(pad)

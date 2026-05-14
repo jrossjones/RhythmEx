@@ -41,23 +41,15 @@ describe('DrumPad', () => {
     expect(screen.getByText('Snare')).toBeInTheDocument()
   })
 
-  it('calls onTap with pad name on click', () => {
+  it('calls onTap with pad name on pointerdown', () => {
     const onTap = vi.fn()
     render(<DrumPad {...defaultProps} onTap={onTap} />)
 
-    fireEvent.click(screen.getByTestId('drum-pad-kick'))
+    fireEvent.pointerDown(screen.getByTestId('drum-pad-kick'))
     expect(onTap).toHaveBeenCalledWith('kick')
 
-    fireEvent.click(screen.getByTestId('drum-pad-snare'))
+    fireEvent.pointerDown(screen.getByTestId('drum-pad-snare'))
     expect(onTap).toHaveBeenCalledWith('snare')
-  })
-
-  it('calls onTap on touchStart', () => {
-    const onTap = vi.fn()
-    render(<DrumPad {...defaultProps} onTap={onTap} />)
-
-    fireEvent.touchStart(screen.getByTestId('drum-pad-kick'))
-    expect(onTap).toHaveBeenCalledWith('kick')
   })
 
   it('keyboard shortcut f triggers kick', () => {
@@ -120,7 +112,7 @@ describe('DrumPad', () => {
     const onTap = vi.fn()
     render(<DrumPad {...defaultProps} onTap={onTap} disabled={true} />)
 
-    fireEvent.click(screen.getByTestId('drum-pad-kick'))
+    fireEvent.pointerDown(screen.getByTestId('drum-pad-kick'))
     expect(onTap).not.toHaveBeenCalled()
 
     fireEvent.keyDown(window, { key: 'f' })

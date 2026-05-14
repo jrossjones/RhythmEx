@@ -31,23 +31,15 @@ describe('HandpanPad', () => {
     expect(screen.queryByTestId('handpan-pad-Bb3')).not.toBeInTheDocument()
   })
 
-  it('calls onTap with note on click', () => {
+  it('calls onTap with note on pointerdown', () => {
     const onTap = vi.fn()
     render(<HandpanPad {...defaultProps} onTap={onTap} />)
 
-    fireEvent.click(screen.getByTestId('handpan-pad-D3'))
+    fireEvent.pointerDown(screen.getByTestId('handpan-pad-D3'))
     expect(onTap).toHaveBeenCalledWith('D3')
 
-    fireEvent.click(screen.getByTestId('handpan-pad-A3'))
+    fireEvent.pointerDown(screen.getByTestId('handpan-pad-A3'))
     expect(onTap).toHaveBeenCalledWith('A3')
-  })
-
-  it('calls onTap on touchStart', () => {
-    const onTap = vi.fn()
-    render(<HandpanPad {...defaultProps} onTap={onTap} />)
-
-    fireEvent.touchStart(screen.getByTestId('handpan-pad-D3'))
-    expect(onTap).toHaveBeenCalledWith('D3')
   })
 
   it('keyboard shortcut 1 triggers first note (ding)', () => {
@@ -102,7 +94,7 @@ describe('HandpanPad', () => {
     const onTap = vi.fn()
     render(<HandpanPad {...defaultProps} onTap={onTap} disabled={true} />)
 
-    fireEvent.click(screen.getByTestId('handpan-pad-D3'))
+    fireEvent.pointerDown(screen.getByTestId('handpan-pad-D3'))
     expect(onTap).not.toHaveBeenCalled()
 
     fireEvent.keyDown(window, { key: '1' })
