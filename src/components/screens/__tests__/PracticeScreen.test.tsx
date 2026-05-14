@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, act } from '@testing-library/react'
-import type { Exercise, ExerciseResult, TapResult } from '@/types'
+import type { Exercise, ExerciseResult, TapResult, TimingJudgment } from '@/types'
 
 // --- Hook mocks ---------------------------------------------------------
 // The hooks are unit-tested separately; here we mock them so we can drive
@@ -78,13 +78,14 @@ vi.mock('@/hooks/useExercise', async () => {
 const timingState = {
   tapResults: [] as TapResult[],
   finalized: false,
+  beatJudgments: new Map<number, TimingJudgment>(),
 }
 
 vi.mock('@/hooks/useTiming', () => ({
   useTiming: () => ({
     lastTapFeedback: null,
     lastFeedbackPad: null,
-    beatJudgments: new Map(),
+    beatJudgments: timingState.beatJudgments,
     tapMarkers: [],
     recordTap: vi.fn(),
     finalize: () => {
@@ -112,12 +113,19 @@ vi.mock('@/hooks/useLearnMode', async () => {
   }
 })
 
+const audioMocks = {
+  playDrum: vi.fn(),
+  playHandpan: vi.fn(),
+  playStrum: vi.fn(),
+  playMetronomeClick: vi.fn(),
+}
+
 vi.mock('@/hooks/useAudio', () => ({
   useAudio: () => ({
-    playDrum: vi.fn(),
-    playHandpan: vi.fn(),
-    playStrum: vi.fn(),
-    playMetronomeClick: vi.fn(),
+    playDrum: audioMocks.playDrum,
+    playHandpan: audioMocks.playHandpan,
+    playStrum: audioMocks.playStrum,
+    playMetronomeClick: audioMocks.playMetronomeClick,
     startAudioContext: vi.fn().mockResolvedValue(undefined),
     isAudioReady: true,
   }),
@@ -164,6 +172,11 @@ function resetState() {
   exerciseState.onDone = () => {}
   timingState.tapResults = []
   timingState.finalized = false
+  timingState.beatJudgments = new Map()
+  audioMocks.playDrum.mockClear()
+  audioMocks.playHandpan.mockClear()
+  audioMocks.playStrum.mockClear()
+  audioMocks.playMetronomeClick.mockClear()
 }
 
 describe('PracticeScreen', () => {
@@ -418,6 +431,70 @@ describe('PracticeScreen', () => {
     expect(timingState.finalized).toBe(false)
     expect(onFinish).not.toHaveBeenCalled()
     expect(mockSaveResult).not.toHaveBeenCalled()
+  })
+
+  it('strum tap plays the chord at the nearest unmatched beat, not a stuck missed beat', async () => {
+    // Strumming exercise with chord change on the last beat: [C, C, C, D].
+    // Simulate: beats 0-1 matched (on-time), beat 2 missed (NOT in beatJudgments
+    // mid-exercise), playhead now at beat 3 (the D chord). A strum tap should
+    // play D, not the stuck C from the missed beat.
+    const strumExercise: Exercise = {
+      id: 'strum-stuck-chord',
+      name: 'Stuck Chord Repro',
+      difficulty: 'beginner',
+      instrument: 'strumming',
+      key: 'C',
+      chords: ['C', 'D'],
+      timeSignature: [4, 4],
+      bpm: 100,
+      measures: 1,
+      beats: [
+        { time: '0:0:0', duration: '4n', note: 'down', chord: 'C' },
+        { time: '0:1:0', duration: '4n', note: 'down', chord: 'C' },
+        { time: '0:2:0', duration: '4n', note: 'down', chord: 'C' },
+        { time: '0:3:0', duration: '4n', note: 'down', chord: 'D' },
+      ],
+    }
+
+    timingState.beatJudgments = new Map<number, TimingJudgment>([
+      [0, 'on-time'],
+      [1, 'on-time'],
+      // index 2 intentionally missing (mid-exercise miss)
+    ])
+
+    const onFinish = vi.fn()
+    const { rerender } = render(
+      <PracticeScreen
+        exercise={strumExercise}
+        instrument="strumming"
+        onFinish={onFinish}
+        onBack={vi.fn()}
+      />
+    )
+    rerenderPracticeScreen = () =>
+      rerender(
+        <PracticeScreen
+          exercise={strumExercise}
+          instrument="strumming"
+          onFinish={onFinish}
+          onBack={vi.fn()}
+        />
+      )
+
+    // Start playing, position playhead at beat 3 (the D-chord beat).
+    // durationMs at 100 BPM × 4 beats = 2400 ms; beat 3 is at 1800 ms → rawProgress 0.75.
+    await act(async () => {
+      fireEvent.click(screen.getByText('Start'))
+    })
+    exerciseState.rawProgress = 1800 / 2400
+    triggerRerender()
+
+    await act(async () => {
+      fireEvent.pointerDown(screen.getByTestId('strum-button-down'))
+    })
+
+    expect(audioMocks.playStrum).toHaveBeenCalledTimes(1)
+    expect(audioMocks.playStrum).toHaveBeenCalledWith('D', 'down')
   })
 
   it('Back button calls onBack and stops exercise', () => {

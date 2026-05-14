@@ -279,15 +279,30 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
       return
     }
     if (settings.tapSoundOn) {
-      // Use chord from next unjudged beat for audio (not playhead-based currentChord)
-      const nextBeat = exercise.beats.find((_, i) => !activeJudgments.has(i))
-      const tapChord = nextBeat?.chord ?? currentChord
+      // Mirror useTiming's nearest-unmatched-beat-by-time selection so the
+      // chord played matches the beat this tap will actually be scored against.
+      // Avoids a "stuck chord" when a missed beat (which stays in activeJudgments
+      // as un-set until finalize) anchors the lookup to the earliest unjudged beat.
+      const tapMs = rawProgress * durationMs
+      let nearestIdx = -1
+      let nearestDist = Infinity
+      for (let i = 0; i < beatTimes.length; i++) {
+        if (activeJudgments.has(i)) continue
+        const d = Math.abs(tapMs - beatTimes[i])
+        if (d < nearestDist) {
+          nearestDist = d
+          nearestIdx = i
+        }
+      }
+      const matchedChord =
+        nearestIdx !== -1 && nearestDist <= 240 ? exercise.beats[nearestIdx].chord : null
+      const tapChord = matchedChord ?? currentChord
       if (tapChord) {
         playStrum(tapChord, direction as StrumDirection)
       }
     }
     recordTap(direction)
-  }, [isLearnMode, settings.tapSoundOn, currentChord, activeJudgments, playStrum, recordTap, recordLearnTap, exercise.beats, learnBeatJudgments])
+  }, [isLearnMode, settings.tapSoundOn, currentChord, activeJudgments, playStrum, recordTap, recordLearnTap, exercise.beats, learnBeatJudgments, beatTimes, durationMs, rawProgress])
 
   // Handpan tap handler
   const handleHandpanTap = useCallback((note: string) => {
