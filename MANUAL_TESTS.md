@@ -763,3 +763,57 @@ Run `npm run dev` and open the app in a browser to execute these tests.
 - [ ] Two-chord measures audibly switch on beat 3.
 - [ ] Chord diagrams (fixed and scroll mode) update correctly through every chord change.
 - [ ] Listen mode plays the chord progression cleanly end-to-end with audible chord switches.
+
+---
+
+## Phase 6.2 — Practice-screen Polish
+
+### 8.1 Playhead Reaches the Last Beat
+- [ ] Start any exercise (drums, handpan, or strumming) and let it play to completion without tapping
+- [ ] The final beat marker travels all the way down to the hit line (not stopping ~1.5 beats above it)
+- [ ] After the last beat crosses the hit line, beats continue scrolling downward and exit past the bottom of the timeline during the outro
+- [ ] Repeat at 60 BPM and 200 BPM — last beat still reaches the hit line at any tempo
+- [ ] Repeat for a long exercise (Endurance Run, Strum Marathon, Endurance Flow) — last beat still reaches the hit line
+
+### 8.2 Beat-Marker Pulse Synced with Playhead
+- [ ] Start any exercise and watch the pulsing (slightly enlarged, animated) beat marker
+- [ ] The pulse is on the beat **at the hit line**, not the beat above it (the pulse is no longer one beat ahead of the playhead)
+- [ ] When the playhead is between beats N and N+1, beat N continues pulsing until the playhead reaches N+1
+- [ ] During the 4-beat lead-in (countdown), no beat pulses yet (pulse only starts once the playhead reaches beat 0)
+- [ ] After a beat is tapped, its pulse stops (replaced by the hollow judgment outline)
+
+### 8.3 Handpan Numpad Keyboard Layout (9-note scales)
+- [ ] Select Handpan + an exercise using D Kurd or F Pygmy scale (9 notes total)
+- [ ] On-pad key labels match the numpad grid:
+  - center ding = `5`
+  - top = `8`, top-right = `9`, right = `6`, bottom-right = `3`, bottom = `2`, bottom-left = `1`, left = `4`, top-left = `7`
+- [ ] Press `5` → the ding plays (center pad flashes)
+- [ ] Press `8` → the top tone-field note plays (in D Kurd: A3)
+- [ ] Press `9` → the top-right note plays (in D Kurd: Bb3)
+- [ ] Press `7` → the top-left note plays (in D Kurd: A4)
+- [ ] Press `1` → the bottom-left note plays (in D Kurd: F4)
+- [ ] Both top-row digits and numpad digits (with NumLock on) trigger the same notes
+- [ ] Space still triggers the next expected note during a lesson
+
+### 8.4 Handpan Sequential Fallback (non-9-note scales)
+- [ ] Find/use a handpan exercise referencing the C Amara scale (8 notes total)
+- [ ] On-pad key labels follow sequential order: ding = `1`, tone fields = `2`–`8` clockwise from top
+- [ ] Pressing `1` plays the ding (C3 for C Amara)
+- [ ] Pressing `2`–`8` plays the tone fields in clockwise order
+- [ ] `9` does nothing (no 9th pad)
+
+### 8.5 Pads Playable Outside the Scoring Window
+- [ ] On a fresh page load (no Start/Listen/Learn pressed yet), tap a drum/handpan/strum pad
+  - The very first tap may have a brief startup delay (~50–200 ms) while audio initializes
+  - After that, every tap plays sound immediately
+- [ ] Verify the same with keyboard shortcuts (drum `f/d/j/k/l`, handpan `1`–`9`, strum `↓/↑/Space`) — they also initialize audio and play sound on first press
+- [ ] In idle (before any lesson), pads use **active** colors (not muted)
+- [ ] During countdown, pads remain tappable and play sound; no judgment is recorded
+- [ ] After an exercise ends (during outro scroll, before results), pads still accept taps and play sound
+- [ ] Pads in idle/countdown/done play sound **regardless** of the "Tap Sounds" setting (even with the setting off)
+- [ ] During the `playing` phase, the "Tap Sounds" setting still controls whether taps make sound (no behavior change there)
+- [ ] **Listen / Demo mode is the only exception:** pads are disabled and silent while a demo is playing
+- [ ] In Learn mode's idle phase (before pressing Learn, or after completion), pads accept taps and play sound
+- [ ] In Learn mode's active phase, only the correct tap plays sound (existing behavior unchanged)
+- [ ] Tapping in idle/countdown/done does NOT record a judgment or affect scoring on the next lesson run
+- [ ] Strum idle taps play the exercise's first chord (since no playhead has crossed any beat yet)

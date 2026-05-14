@@ -40,7 +40,7 @@ Young practicing musicians, ages 5 and up. The UI must be simple, colorful, and 
 
 ### 5. Virtual Instruments
 - **Drums** — Kick, snare, hi-hat, tom1, tom2 with Tone.js synth sounds (MembraneSynth, NoiseSynth, MetalSynth). On-screen pads with keyboard shortcuts (f/d/j/k/l). Adaptive grid layout based on exercise difficulty. Multi-lane timeline.
-- **Handpan** — Pitched FM synth notes in a circular pad layout (center ding + surrounding tone fields). 3 scale presets (D Kurd, C Amara, F Pygmy). Keyboard shortcuts (1–9 keys). Note-colored timeline markers. 9 exercises across 3 difficulty levels.
+- **Handpan** — Pitched FM synth notes in a circular pad layout (center ding + surrounding tone fields). 3 scale presets (D Kurd, C Amara, F Pygmy). Keyboard shortcuts: for 9-note scales (D Kurd, F Pygmy) the `1`–`9` keys follow the numeric keypad's spatial grid — `5` = center ding, surrounding pads = 7/8/9, 4/6, 1/2/3 by visual position. Other scale lengths use sequential `1..N` mapping. Note-colored timeline markers. 9 exercises across 3 difficulty levels.
 - **Strumming** — Guitar/ukulele strum patterns with chord display. Two stacked down/up tap buttons (mobile) + arrow keys (desktop) for strum direction. Real acoustic-guitar samples via `Tone.Sampler` (12 MP3 anchors in `public/samples/guitar-acoustic/`, E2–G4). Down-strums play the full voicing with 25 ms note stagger at full velocity; up-strums skip the 1–2 lowest bass notes, play faster (10 ms stagger) and quieter (velocity ≈ 0.6) for physical realism. Chord change labels on vertical timeline. Playhead-based chord display above strum buttons.
 - **Kalimba** — Thumb piano with pitched tines in a fan/arc layout. Tone.js plucked synth sound. Scale presets (C major, G major, etc.). Keyboard shortcuts for tines. Single-column timeline with note-colored markers (similar to handpan). — *not yet implemented*
 - Instrument selection screen; user picks before starting an exercise
@@ -245,6 +245,13 @@ Strumming exercises may additionally include top-level `key` and `chords` fields
 - Three new beginner strumming exercises that walk through the Bibi Blocksberg theme: `bibi-blocksberg-intro` (8 measures), `bibi-blocksberg-verse` (16 measures), and `bibi-blocksberg-chorus` (6 measures). All in 4/4 at 80 BPM with a D-D-D-D pattern. Two-chord measures place the change on beat 3 (chord A on beats 1–2, chord B on beats 3–4). The chorus's final measure has a rest on beat 1 followed by C–D–G on beats 2–4. Chords used: C, D, G, Em, Am — all already in the diagram set.
 - Beginner strumming count grows from 3 → 6, total exercises 27 → 30.
 
+### Phase 6.2 — Practice-screen Polish (Complete)
+- **Playhead reaches the last beat:** Removed the `Math.max(0, …)` floor on `VerticalTimeline`'s `scrollOffset` so it can go negative near the end of the exercise. The upper clamp is kept (still needed during lead-in). Companion fix: the four `translateY` interpolations in `VerticalDrumTimeline`, `VerticalSingleTimeline`, and `VerticalStrumTimeline` switched from `` `translateY(-${scrollOffset}px)` `` to `` `translateY(${-scrollOffset}px)` `` — a negative `scrollOffset` was producing invalid CSS (`translateY(--40px)`) and being silently dropped, freezing the scroll ~1.5 beats before the end.
+- **Beat marker pulse synced with playhead:** The "next beat" pulse used `findIndex(t > playheadMs)`, which pulsed the beat one slot above the hit line (one ahead of the playhead). Now pulses the most recent unjudged beat at or behind the playhead (`findLastIndex(t <= playheadMs && !judged)`), so the highlight lights up only when the playhead reaches a beat and stays there until it crosses the next.
+- **Handpan numpad keyboard layout (9-note scales):** Key `5` = center ding; surrounding pads follow the numeric keypad grid by visual position — `7 8 9` (top row), `4 _ 6` (middle), `1 2 3` (bottom row). Implemented in `HandpanPad.tsx` via `NUMPAD_TONE_FIELD_KEYS = [8, 9, 6, 3, 2, 1, 4, 7]` indexed by tone-field position. On-pad labels update to match. Scales with other lengths (e.g. 8-note C Amara) keep sequential `1..N`.
+- **Instrument pads playable outside the scoring window:** `disabled` for `DrumPad`/`HandpanPad`/`StrumZone` collapses to just `isDemoMode` — pads accept taps in main idle, countdown, done, and learn-mode idle/done (only listen/demo disables them). Each tap handler has a free-play branch at the top: when not in `playing`/`learn-active`, it `await startAudioContext()` then plays the sound directly and returns, bypassing the `tapSoundOn` gate so the very first tap on a fresh page reliably initializes audio. Keyboard shortcuts use the same handlers. In-lesson scoring behavior is unchanged. Strum free-play uses the exercise's current chord (which falls back to the first chord before the playhead has crossed any beats).
+- Tests: 347 → 347 (3 `HandpanPad` tests rewritten to assert the new numpad mapping; no net count change).
+
 ### Phase 7 — Free Play Mode (Not Started)
 
 #### Overview
@@ -355,6 +362,7 @@ Integrated reference material: note values, time signatures, rhythm notation. Co
 - [x] display chord fingering next to timeline
 - [ ] have a strumming/rhythm library(maybe even org by song)
   - [ ] link to online rhythm library
+  - [ ] show shrinking circles around pads to increase clarify around note to play
   
 
 ### Usability
@@ -373,7 +381,7 @@ Integrated reference material: note values, time signatures, rhythm notation. Co
 - [x] confirm strum up different than down
 - [x] chord sound sometimes doesnt switch if they note isnt played at the right time
 - [ ] sound of chord is different in play vs listen mode
-- [ ] change handpan keyboard shortcuts to be numpad layout
+- [x] change handpan keyboard shortcuts to be numpad layout
 
 ### Bugs
 - [ ] fix zoom/ disable scrolling on small screens

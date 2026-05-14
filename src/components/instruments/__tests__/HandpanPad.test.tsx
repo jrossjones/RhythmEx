@@ -42,27 +42,30 @@ describe('HandpanPad', () => {
     expect(onTap).toHaveBeenCalledWith('A3')
   })
 
-  it('keyboard shortcut 1 triggers first note (ding)', () => {
+  // 9-note scale uses numpad spatial layout:
+  //   ding (D3) = 5; surround clockwise from top: A3=8, Bb3=9, C4=6, D4=3,
+  //   E4=2, F4=1, G4=4, A4=7
+  it('keyboard shortcut 5 triggers the ding (center) in 9-note scale', () => {
     const onTap = vi.fn()
     render(<HandpanPad {...defaultProps} onTap={onTap} />)
 
-    fireEvent.keyDown(window, { key: '1' })
+    fireEvent.keyDown(window, { key: '5' })
     expect(onTap).toHaveBeenCalledWith('D3')
   })
 
-  it('keyboard shortcut 2 triggers second note', () => {
+  it('keyboard shortcut 8 triggers the top tone field in 9-note scale', () => {
     const onTap = vi.fn()
     render(<HandpanPad {...defaultProps} onTap={onTap} />)
 
-    fireEvent.keyDown(window, { key: '2' })
+    fireEvent.keyDown(window, { key: '8' })
     expect(onTap).toHaveBeenCalledWith('A3')
   })
 
-  it('keyboard shortcut 9 triggers ninth note', () => {
+  it('keyboard shortcut 7 triggers the top-left tone field in 9-note scale', () => {
     const onTap = vi.fn()
     render(<HandpanPad {...defaultProps} onTap={onTap} />)
 
-    fireEvent.keyDown(window, { key: '9' })
+    fireEvent.keyDown(window, { key: '7' })
     expect(onTap).toHaveBeenCalledWith('A4')
   })
 

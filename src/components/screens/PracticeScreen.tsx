@@ -211,7 +211,13 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
   }, [exercise.beats, activeJudgments])
 
   // Drum tap handler
-  const handleDrumTap = useCallback((pad: DrumPadType) => {
+  const handleDrumTap = useCallback(async (pad: DrumPadType) => {
+    // Free-play: outside the scoring window, always sound the pad
+    if (phase !== 'playing' && (!isLearnMode || learnPhase !== 'active')) {
+      await startAudioContext()
+      playDrum(pad)
+      return
+    }
     if (isLearnMode) {
       recordLearnTap(pad)
       // Play sound on correct tap (learn mode always plays correct pad sound)
@@ -223,7 +229,7 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
     }
     if (settings.tapSoundOn) playDrum(pad)
     recordTap(pad)
-  }, [isLearnMode, settings.tapSoundOn, playDrum, recordTap, recordLearnTap, exercise.beats, learnBeatJudgments])
+  }, [phase, isLearnMode, learnPhase, settings.tapSoundOn, playDrum, recordTap, recordLearnTap, exercise.beats, learnBeatJudgments, startAudioContext])
 
   // Derive current chord from playhead position (not judgment state)
   const beatTimes = useMemo(() => beatTimesMs({ ...exercise, bpm }), [exercise, bpm])
@@ -269,7 +275,12 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
   }, [exercise.beats, activeJudgments])
 
   // Strum tap handler
-  const handleStrumTap = useCallback((direction: string) => {
+  const handleStrumTap = useCallback(async (direction: string) => {
+    if (phase !== 'playing' && (!isLearnMode || learnPhase !== 'active')) {
+      await startAudioContext()
+      if (currentChord) playStrum(currentChord, direction as StrumDirection)
+      return
+    }
     if (isLearnMode) {
       recordLearnTap(direction)
       const expected = exercise.beats.find((_, i) => !learnBeatJudgments.has(i))
@@ -302,10 +313,15 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
       }
     }
     recordTap(direction)
-  }, [isLearnMode, settings.tapSoundOn, currentChord, activeJudgments, playStrum, recordTap, recordLearnTap, exercise.beats, learnBeatJudgments, beatTimes, durationMs, rawProgress])
+  }, [phase, learnPhase, startAudioContext, isLearnMode, settings.tapSoundOn, currentChord, activeJudgments, playStrum, recordTap, recordLearnTap, exercise.beats, learnBeatJudgments, beatTimes, durationMs, rawProgress])
 
   // Handpan tap handler
-  const handleHandpanTap = useCallback((note: string) => {
+  const handleHandpanTap = useCallback(async (note: string) => {
+    if (phase !== 'playing' && (!isLearnMode || learnPhase !== 'active')) {
+      await startAudioContext()
+      playHandpan(note)
+      return
+    }
     if (isLearnMode) {
       recordLearnTap(note)
       const expected = exercise.beats.find((_, i) => !learnBeatJudgments.has(i))
@@ -316,7 +332,7 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
     }
     if (settings.tapSoundOn) playHandpan(note)
     recordTap(note)
-  }, [isLearnMode, settings.tapSoundOn, playHandpan, recordTap, recordLearnTap, exercise.beats, learnBeatJudgments])
+  }, [phase, isLearnMode, learnPhase, settings.tapSoundOn, playHandpan, recordTap, recordLearnTap, exercise.beats, learnBeatJudgments, startAudioContext])
 
   // Start with audio context
   const handleStart = useCallback(async () => {
@@ -548,7 +564,7 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
             onTap={handleDrumTap}
             lastFeedback={isLearnMode && wrongPad ? { judgment: 'miss' as const, timestamp: performance.now() } : lastTapFeedback}
             lastFeedbackPad={isLearnMode && wrongPad ? wrongPad as DrumPadType : lastFeedbackPad as DrumPadType | null}
-            disabled={isLearnMode ? (learnPhase === 'idle' || learnPhase === 'done') : (phase === 'idle' || phase === 'done' || isDemoMode)}
+            disabled={isDemoMode}
             activePads={activePads}
             nextExpectedPad={nextExpectedPad}
           />
@@ -557,7 +573,7 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
             onTap={handleStrumTap}
             lastFeedback={isLearnMode && wrongPad ? { judgment: 'miss' as const, timestamp: performance.now() } : lastTapFeedback}
             lastFeedbackPad={isLearnMode && wrongPad ? wrongPad : lastFeedbackPad}
-            disabled={isLearnMode ? (learnPhase === 'idle' || learnPhase === 'done') : (phase === 'idle' || phase === 'done' || isDemoMode)}
+            disabled={isDemoMode}
             currentChord={currentChord}
             nextExpectedDirection={nextExpectedDirection}
           />
@@ -566,7 +582,7 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
             onTap={handleHandpanTap}
             lastFeedback={isLearnMode && wrongPad ? { judgment: 'miss' as const, timestamp: performance.now() } : lastTapFeedback}
             lastFeedbackPad={isLearnMode && wrongPad ? wrongPad : lastFeedbackPad}
-            disabled={isLearnMode ? (learnPhase === 'idle' || learnPhase === 'done') : (phase === 'idle' || phase === 'done' || isDemoMode)}
+            disabled={isDemoMode}
             scaleNotes={handpanScaleNotes}
             nextExpectedNote={nextExpectedNote}
           />
