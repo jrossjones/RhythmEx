@@ -16,6 +16,11 @@ interface HandpanPadProps {
   nextExpectedNote?: string | null
 }
 
+// Numpad spatial keys for tone fields in 9-note scales (clockwise from top).
+// Matches the visual ring order: top, top-right, right, bottom-right, bottom,
+// bottom-left, left, top-left. Ding (center) uses 5.
+const NUMPAD_TONE_FIELD_KEYS = [8, 9, 6, 3, 2, 1, 4, 7]
+
 const feedbackColors: Record<TimingJudgment, string> = {
   'on-time': 'bg-green-400',
   early: 'bg-yellow-400',
@@ -56,9 +61,25 @@ export function HandpanPad({
       }
 
       const num = parseInt(e.key)
-      if (num >= 1 && num <= 9 && num <= scaleNotesRef.current.length) {
+      if (!(num >= 1 && num <= 9)) return
+      const notes = scaleNotesRef.current
+      if (notes.length === 9) {
+        // Numpad spatial layout: 5=ding (center), surround = NUMPAD_TONE_FIELD_KEYS
+        if (num === 5) {
+          e.preventDefault()
+          onTapRef.current(notes[0])
+          return
+        }
+        const idx = NUMPAD_TONE_FIELD_KEYS.indexOf(num)
+        if (idx !== -1) {
+          e.preventDefault()
+          onTapRef.current(notes[idx + 1])
+        }
+        return
+      }
+      if (num <= notes.length) {
         e.preventDefault()
-        onTapRef.current(scaleNotesRef.current[num - 1])
+        onTapRef.current(notes[num - 1])
       }
     }
     window.addEventListener('keydown', handleKeyDown)
@@ -76,6 +97,7 @@ export function HandpanPad({
 
   const ding = scaleNotes[0]
   const toneFields = scaleNotes.slice(1)
+  const isNumpadLayout = scaleNotes.length === 9
   const ringRadius = 100
   const containerSize = 280
 
@@ -101,7 +123,7 @@ export function HandpanPad({
             onPointerDown={(e) => { if (!disabled) { e.preventDefault(); onTap(ding) } }}
           >
             <span className="text-sm">{ding}</span>
-            <span className="text-[10px] opacity-75">1</span>
+            <span className="text-[10px] opacity-75">{isNumpadLayout ? 5 : 1}</span>
           </button>
         )}
 
@@ -110,7 +132,7 @@ export function HandpanPad({
           const angle = (2 * Math.PI * i) / toneFields.length - Math.PI / 2
           const cx = containerSize / 2 + ringRadius * Math.cos(angle) - 26
           const cy = containerSize / 2 + ringRadius * Math.sin(angle) - 26
-          const keyNum = i + 2
+          const keyNum = isNumpadLayout ? NUMPAD_TONE_FIELD_KEYS[i] : i + 2
 
           return (
             <button
