@@ -6,6 +6,8 @@ import {
   getAllScores,
   loadStickerState,
   saveStickerState,
+  clearStickerState,
+  clearAllScores,
 } from '../storage'
 import type { ExerciseResult } from '@/types'
 
@@ -162,5 +164,17 @@ describe('sticker state', () => {
   it('returns empty state on corrupt JSON', () => {
     localStorage.setItem('rhythmex-stickers', 'not json{')
     expect(loadStickerState()).toEqual({ earned: {}, practiceDays: [] })
+  })
+
+  it('clearStickerState resets to empty state', () => {
+    saveStickerState({ earned: { unicorn: 123 }, practiceDays: ['2026-06-11'] })
+    clearStickerState()
+    expect(loadStickerState()).toEqual({ earned: {}, practiceDays: [] })
+  })
+
+  it('clearAllScores removes all saved scores', () => {
+    saveResult(makeResult())
+    clearAllScores()
+    expect(getAllScores()).toEqual({})
   })
 })

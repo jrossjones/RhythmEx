@@ -72,3 +72,11 @@ export function loadStickerState(): StickerState {
 export function saveStickerState(state: StickerState): void {
   localStorage.setItem(STICKER_KEY, JSON.stringify(state))
 }
+
+export function clearStickerState(): void {
+  localStorage.removeItem(STICKER_KEY)
+}
+
+export function clearAllScores(): void {
+  localStorage.removeItem(STORAGE_KEY)
+}

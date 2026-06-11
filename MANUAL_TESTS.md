@@ -847,6 +847,12 @@ Run `npm run dev` and open the app in a browser to execute these tests.
 - [ ] Earned stickers show their emoji + name; unearned show "❓" + "???" with the goal description as a hint
 - [ ] Back button returns to Home
 - [ ] Earned stickers survive a page reload (localStorage)
+- [ ] With stickers earned, a small "Reset stickers" link appears at the bottom of the sticker book
+- [ ] Tapping it asks for confirmation; declining keeps all stickers
+- [ ] Confirming clears the collection back to 0 / 13 (and hides the reset link)
+- [ ] A "Reset all progress" link appears whenever stickers OR scores exist
+- [ ] Confirming "Reset all progress" clears stickers AND all stars/best scores (exercise select shows no stars afterwards)
+- [ ] Declining the full-reset confirmation keeps everything
 
 ### 9.4 Daily Challenge
 - [ ] Exercise select shows a gradient "📅 Daily Challenge" card at the top for every instrument
