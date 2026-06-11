@@ -100,6 +100,20 @@ export interface SavedScores {
 // Exercise lifecycle phases
 export type ExercisePhase = 'idle' | 'countdown' | 'playing' | 'done'
 
+// A collectible sticker achievement
+export interface StickerDefinition {
+  id: string
+  emoji: string
+  name: string
+  description: string
+}
+
+// Earned stickers + practice-day history in localStorage
+export interface StickerState {
+  earned: Record<string, number> // sticker id → earned timestamp
+  practiceDays: string[] // distinct local dates, "YYYY-MM-DD"
+}
+
 // App screens
 export type Screen =
   | 'home'
@@ -107,6 +121,7 @@ export type Screen =
   | 'exercise-select'
   | 'practice'
   | 'results'
+  | 'sticker-book'
 
 // Full app navigation state
 export interface AppState {
@@ -114,4 +129,5 @@ export interface AppState {
   selectedInstrument: InstrumentType | null
   selectedExercise: Exercise | null
   lastResult: ExerciseResult | null
+  newStickers: StickerDefinition[] | null
 }

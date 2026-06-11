@@ -1,5 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { loadScores, saveResult, getBestScore, getAllScores } from '../storage'
+import {
+  loadScores,
+  saveResult,
+  getBestScore,
+  getAllScores,
+  loadStickerState,
+  saveStickerState,
+} from '../storage'
 import type { ExerciseResult } from '@/types'
 
 const mockStorage: Record<string, string> = {}
@@ -138,5 +145,22 @@ describe('getAllScores', () => {
     expect(Object.keys(all)).toHaveLength(2)
     expect(all['test-ex::drums']).toBeDefined()
     expect(all['test-ex::handpan']).toBeDefined()
+  })
+})
+
+describe('sticker state', () => {
+  it('returns empty state when nothing saved', () => {
+    expect(loadStickerState()).toEqual({ earned: {}, practiceDays: [] })
+  })
+
+  it('round-trips sticker state', () => {
+    const state = { earned: { unicorn: 123 }, practiceDays: ['2026-06-11'] }
+    saveStickerState(state)
+    expect(loadStickerState()).toEqual(state)
+  })
+
+  it('returns empty state on corrupt JSON', () => {
+    localStorage.setItem('rhythmex-stickers', 'not json{')
+    expect(loadStickerState()).toEqual({ earned: {}, practiceDays: [] })
   })
 })

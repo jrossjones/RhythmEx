@@ -1,6 +1,13 @@
-import type { ExerciseResult, InstrumentType, SavedScoreEntry, SavedScores } from '@/types'
+import type {
+  ExerciseResult,
+  InstrumentType,
+  SavedScoreEntry,
+  SavedScores,
+  StickerState,
+} from '@/types'
 
 const STORAGE_KEY = 'rhythmex-scores'
+const STICKER_KEY = 'rhythmex-stickers'
 
 function scoreKey(exerciseId: string, instrument: InstrumentType): string {
   return `${exerciseId}::${instrument}`
@@ -50,4 +57,18 @@ export function getBestScore(
 
 export function getAllScores(): SavedScores {
   return loadScores()
+}
+
+export function loadStickerState(): StickerState {
+  try {
+    const raw = localStorage.getItem(STICKER_KEY)
+    if (!raw) return { earned: {}, practiceDays: [] }
+    return JSON.parse(raw) as StickerState
+  } catch {
+    return { earned: {}, practiceDays: [] }
+  }
+}
+
+export function saveStickerState(state: StickerState): void {
+  localStorage.setItem(STICKER_KEY, JSON.stringify(state))
 }

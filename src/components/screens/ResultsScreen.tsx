@@ -3,8 +3,11 @@ import { Layout } from '@/components/ui/Layout'
 import { Navigation } from '@/components/ui/Navigation'
 import { Button } from '@/components/ui/Button'
 import { StarDisplay } from '@/components/ui/StarDisplay'
+import { Confetti } from '@/components/ui/Confetti'
+import { StickerReveal } from '@/components/ui/StickerReveal'
 import { getBestScore } from '@/utils/storage'
-import type { ExerciseResult, TimingJudgment } from '@/types'
+import { encouragements } from '@/data/encouragements'
+import type { ExerciseResult, StickerDefinition, TimingJudgment } from '@/types'
 
 interface ResultsScreenProps {
   result: ExerciseResult
@@ -12,6 +15,7 @@ interface ResultsScreenProps {
   onRetry: () => void
   onNewExercise: () => void
   speedTrainerNextBpm?: number
+  newStickers?: StickerDefinition[]
 }
 
 const judgmentColors: Record<TimingJudgment, string> = {
@@ -34,6 +38,7 @@ export function ResultsScreen({
   onRetry,
   onNewExercise,
   speedTrainerNextBpm,
+  newStickers,
 }: ResultsScreenProps) {
   const counts = useMemo(() => {
     const c: Record<TimingJudgment, number> = {
@@ -60,18 +65,42 @@ export function ResultsScreen({
     best.attempts > 1 &&
     result.accuracy >= best.bestAccuracy
 
+  const isFullCombo = totalTaps > 0 && counts.miss === 0
+
+  // Stable per attempt (timestamp), varies between attempts — no RNG in render.
+  const message =
+    encouragements[result.stars][result.timestamp % encouragements[result.stars].length]
+
   return (
     <Layout>
+      {result.stars === 3 && <Confetti seed={result.timestamp} />}
       <Navigation title={exerciseName} />
 
       <div className="flex flex-col items-center gap-6 pt-4 text-center">
         {/* Stars */}
         <StarDisplay stars={result.stars} size="lg" />
 
+        {/* Encouragement */}
+        <p className="text-lg font-semibold text-indigo-600" data-testid="encouragement">
+          {message}
+        </p>
+
         {/* Accuracy */}
         <p className="text-4xl font-bold text-gray-800">
           {Math.round(result.accuracy)}%
         </p>
+
+        {/* New stickers */}
+        {newStickers && newStickers.length > 0 && (
+          <StickerReveal stickers={newStickers} />
+        )}
+
+        {/* Full Combo badge */}
+        {isFullCombo && (
+          <span className="rounded-full bg-purple-500 px-4 py-1 text-sm font-bold text-white">
+            Full Combo! 💯
+          </span>
+        )}
 
         {/* Speed Trainer next BPM hint */}
         {speedTrainerNextBpm !== undefined && (
@@ -130,6 +159,13 @@ export function ResultsScreen({
           <div className="text-sm text-gray-500">
             Personal best: {Math.round(best.bestAccuracy)}%
           </div>
+        )}
+
+        {/* Effort */}
+        {best !== null && best.attempts > 1 && (
+          <p className="text-sm text-gray-500" data-testid="try-count">
+            That was try #{best.attempts} — keep it up!
+          </p>
         )}
 
         {/* Action buttons */}

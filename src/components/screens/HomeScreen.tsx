@@ -3,9 +3,10 @@ import { Button } from '@/components/ui/Button'
 
 interface HomeScreenProps {
   onStart: () => void
+  onStickerBook: () => void
 }
 
-export function HomeScreen({ onStart }: HomeScreenProps) {
+export function HomeScreen({ onStart, onStickerBook }: HomeScreenProps) {
   return (
     <Layout>
       <div className="flex flex-col items-center justify-center pt-16 text-center">
@@ -15,9 +16,14 @@ export function HomeScreen({ onStart }: HomeScreenProps) {
         <p className="mb-12 text-lg text-gray-500">
           Practice your rhythm skills!
         </p>
-        <Button size="lg" onClick={onStart}>
-          Start Playing
-        </Button>
+        <div className="flex flex-col items-center gap-4">
+          <Button size="lg" onClick={onStart}>
+            Start Playing
+          </Button>
+          <Button variant="secondary" onClick={onStickerBook}>
+            Sticker Book 📒
+          </Button>
+        </div>
       </div>
     </Layout>
   )

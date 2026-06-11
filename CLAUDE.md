@@ -36,7 +36,7 @@ Three principles that override defaults when in tension:
 src/
   App.tsx               # Root component — state machine navigation across screens
   main.tsx              # Entry point — renders App into DOM
-  index.css             # Tailwind CSS import
+  index.css             # Tailwind CSS import + @theme keyframes (confetti-fall, sticker-pop)
   types/
     index.ts            # All shared TypeScript types and interfaces
   components/
@@ -45,12 +45,15 @@ src/
       InstrumentSelectScreen.tsx
       ExerciseSelectScreen.tsx
       PracticeScreen.tsx        # Exercise lifecycle, BPM controls, beat timeline, tap input
-      ResultsScreen.tsx         # Full results: stars, accuracy, tap breakdown, personal best
+      ResultsScreen.tsx         # Full results: stars, accuracy, tap breakdown, personal best, celebration (confetti/message/full-combo/sticker reveal)
+      StickerBookScreen.tsx     # Sticker collection grid: earned vs "???" mystery tiles, N/13 counter
     ui/                 # Shared reusable UI components
       Button.tsx        # Variant/size props, 44px+ touch targets
       Layout.tsx        # Page wrapper with gradient bg, max-width
       Navigation.tsx    # Back button + screen title
       StarDisplay.tsx   # 1-3 filled/unfilled stars
+      Confetti.tsx      # 30 CSS-animated confetti pieces, deterministic via seed prop (mulberry32)
+      StickerReveal.tsx # "New sticker earned!" pop-in card on results screen
     instruments/        # Virtual instrument UIs
       DrumPad.tsx       # Grid of color-coded drum pads with keyboard shortcuts (f/d/j/k/l)
       HandpanPad.tsx    # Circular pad layout: center ding + surrounding tone fields, keyboard 1-9
@@ -90,6 +93,13 @@ src/
       index.ts          # Aggregator: allExercises (30), exercisesByDifficulty(diff, instrument?), exerciseById()
     chords.ts           # ChordVoicing type, 8 open guitar voicings, getChord() lookup
     chordDiagrams.ts    # ChordDiagram type, fret/open/muted layout for 7 beginner shapes (G/C/D/Em/Am/A/E), getChordDiagram() lookup
+    encouragements.ts   # Kid-voiced results messages keyed by star count (1/2/3)
+    stickers.ts         # 13 emoji sticker achievement definitions (metadata only — predicates in utils/achievements.ts)
+    cells/              # One-measure rhythm cells for the procedural exercise generator
+      index.ts          # CellBeat/RhythmCell types, cellsFor(instrument, difficulty), re-exports strumProgressions
+      drumCells.ts      # Drum patterns per difficulty (quarter pulse, backbeat, tresillo, tom fill...)
+      handpanCells.ts   # Handpan patterns in scale degrees "1"-"9" (mapped to d-kurd at generation)
+      strumCells.ts     # Strum patterns (folk strum, reggae offbeats...) + strumProgressions per difficulty
     handpan/
       scales.ts         # HandpanScale type, 3 presets (D Kurd, C Amara, F Pygmy), getScale()
     samples/
@@ -97,11 +107,16 @@ src/
   utils/
     rhythm.ts           # transportTimeToMs, msPerBeat, exerciseDurationMs, beatTimesMs, exerciseDrumPads, pitchClass, exerciseChords
     scoring.ts          # TIMING_WINDOWS, judgeTap, calculateAccuracy, calculateStars
-    storage.ts          # localStorage CRUD: compound key per instrument, attempt tracking, getAllScores
+    storage.ts          # localStorage CRUD: compound key per instrument, attempt tracking, getAllScores, sticker state load/save
+    random.ts           # mulberry32 PRNG, hashStringToSeed, pick — shared by Confetti and generator
+    achievements.ts     # checkAchievements (pure predicates per sticker id) + evaluateAndStoreAchievements wrapper
+    generator.ts        # generateExercise/dailyChallengeExercise/surpriseExercise + localDateStr (4/4 only)
     __tests__/          # Vitest unit tests
       rhythm.test.ts
       scoring.test.ts
       storage.test.ts
+      achievements.test.ts
+      generator.test.ts
   hooks/
     __tests__/
       useExercise.test.ts
@@ -117,6 +132,7 @@ src/
         ResultsScreen.test.tsx
         PracticeScreen.test.tsx
         ExerciseSelectScreen.test.tsx
+        StickerBookScreen.test.tsx
     instruments/
       __tests__/
         DrumPad.test.tsx
@@ -142,6 +158,9 @@ src/
         chords.test.ts      # Chord voicing count, lookup, unknown returns undefined
     __tests__/
       chordDiagrams.test.ts # Diagram coverage for all strumming-exercise chords + shape integrity
+    cells/
+      __tests__/
+        cells.test.ts       # Cell pools non-empty, positions within one 4/4 measure, progression chord coverage
     handpan/
       __tests__/
         scales.test.ts      # Scale presets, lookup, defaults
@@ -222,9 +241,12 @@ public/
 - **Strum timeline:** `VerticalStrumTimeline` — single centered column (120px). Triangle markers with rotation (180deg=down, 0deg=up). Blue for down, amber for up. Chord change labels rendered as left-aligned pill badges inside the column (`left: 4px`).
 - **BeatMarker rotation:** Optional `rotation` prop for directional markers. Labels counter-rotate to stay upright.
 - **Strum chord display:** `currentChord` in `PracticeScreen` derived from playhead position (`rawProgress * durationMs`), not judgment state. Walks `beatTimesMs` backwards from the playhead to find the most recent chord change. Updates every RAF frame. `handleStrumTap` uses the next unjudged beat's chord for audio playback (stays in sync with tap matching).
-- **Exercise select layout:** `ExerciseSelectScreen` shows all 9 exercises for the selected instrument stacked vertically under three colored section headers (Beginner=green, Intermediate=yellow, Advanced=red). No tab state. Sections with zero exercises are omitted. Card styling and per-instrument best-score display are unchanged.
+- **Exercise select layout:** `ExerciseSelectScreen` shows all 9 exercises for the selected instrument stacked vertically under three colored section headers (Beginner=green, Intermediate=yellow, Advanced=red). No tab state. Sections with zero exercises are omitted. Card styling and per-instrument best-score display are unchanged. A gradient Daily Challenge card sits above the sections; each section header carries a "Surprise Me! 🎲" button. Today's date is a module-level constant (`localDateStr(new Date())`) to keep render pure.
 - **Chord diagrams:** `ChordDiagram` component renders a 6-string × 4-fret SVG with filled dots for fingered notes, `O` for open strings, `X` for muted. No finger numbers or barre indicators. Sizes: `sm` (~70px), `md` (~100px). `dimmed` prop reduces opacity to 0.45 for "next chord" preview. Returns `null` for unknown chord names. Diagram fingering data lives in `src/data/chordDiagrams.ts` (separate from `chords.ts` voicing data); covers G/C/D/Em/Am/A/E.
 - **Chord diagram modes (strumming practice):** `chordDiagramMode` is local state in `PracticeScreen` (default `'fixed'`). `'fixed'`: a sibling column right of the timeline shows current chord (md) above the next upcoming chord (sm, dimmed); `nextChord` is computed by walking forward from the playhead. `'scroll'`: `VerticalStrumTimeline` widens by 80px and renders an inline scrolling diagram column at each chord-change Y, sharing the timeline's `scrollOffset`. Toggle is a two-button pill control beneath the timeline. Diagrams are gated on `instrument === 'strumming'`.
+- **Results celebration:** 3-star results render `<Confetti seed={result.timestamp} />` — 30 CSS pieces animated via `@keyframes confetti-fall` in `index.css` (`@theme` block). Encouraging message picked from `data/encouragements.ts` by `result.timestamp % bucket.length`. "Full Combo! 💯" badge when `counts.miss === 0 && totalTaps > 0`. Try-count line uses `best.attempts` (already includes the current attempt since `saveResult` runs before render). **No `Math.random()`/`new Date()` in render** — the `react-hooks/purity` ESLint rule flags impure calls; use seeded `mulberry32` in `useMemo` or module-level constants instead. Loop-mode 2s overlay deliberately has no celebration.
+- **Sticker achievements:** Definitions (id/emoji/name/description) in `data/stickers.ts`; one pure predicate per id in `utils/achievements.ts` `CHECKS`. `evaluateAndStoreAchievements(result)` is called in `App.tsx` from both `finishExercise` (after `saveResult`) and `showResults` (loop-exit path, already saved per-loop); it records the practice day (deduped local `YYYY-MM-DD`), persists newly earned ids, and returns them → `state.newStickers` → `ResultsScreen` → `StickerReveal`. `newStickers` is cleared on `navigate()`/`selectExercise()`. Sticker state lives under localStorage key `rhythmex-stickers` (`StickerState`: `earned` map + `practiceDays`).
+- **Procedural exercise generator:** `utils/generator.ts` composes exercises from one-measure cells in `data/cells/` (monophonic, 4/4 only — `transportTimeToMs` hardcodes 4 beats/measure). Seeded `mulberry32`: picks 2 distinct cells, arranges AABA, BPM = difficulty base (70/85/95) ± 5. Handpan cells use scale degrees `"1"`-`"9"` mapped to d-kurd notes; strumming assigns one chord per measure from `strumProgressions` (diagram-covered chords only) and sets `key`/`chords`. **Daily Challenge** (ExerciseSelectScreen top card): seed = `hashStringToSeed(date + instrument)`, beginner/intermediate only, stable id `daily-YYYY-MM-DD` so scores persist all day. **Surprise Me** (per difficulty header): `Math.random()` seed in the click handler, id `surprise-<seed>`. Generated exercises ride `selectedExercise` through the normal App state machine — Retry/loop/results/saving work unchanged; `exerciseById()` won't find them (only used in tests). The `daily-`/`surprise-` id prefixes drive the 🌞/🎲 sticker predicates.
 
 ## Upcoming Phases (see SPEC.md for full detail)
 - **Future improvements:** Column-to-pyramid alignment (match drum column widths to pad centers). Approach animation (osu!-style shrinking ring). Colorblind mode toggle.

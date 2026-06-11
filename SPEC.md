@@ -252,6 +252,29 @@ Strumming exercises may additionally include top-level `key` and `chords` fields
 - **Instrument pads playable outside the scoring window:** `disabled` for `DrumPad`/`HandpanPad`/`StrumZone` collapses to just `isDemoMode` — pads accept taps in main idle, countdown, done, and learn-mode idle/done (only listen/demo disables them). Each tap handler has a free-play branch at the top: when not in `playing`/`learn-active`, it `await startAudioContext()` then plays the sound directly and returns, bypassing the `tapSoundOn` gate so the very first tap on a fresh page reliably initializes audio. Keyboard shortcuts use the same handlers. In-lesson scoring behavior is unchanged. Strum free-play uses the exercise's current chord (which falls back to the first chord before the playhead has crossed any beats).
 - Tests: 347 → 347 (3 `HandpanPad` tests rewritten to assert the new numpad mapping; no net count change).
 
+### Phase 6.3 — Engagement: Celebration, Sticker Book, Generated Exercises (Complete)
+
+#### Results celebration
+- **Confetti** for 3-star results: ~30 CSS-animated pieces (`Confetti.tsx`), deterministic layout seeded by `result.timestamp` (no `Math.random()` in render — keeps `react-hooks/purity` clean).
+- **Encouraging messages:** kid-voiced copy per star count (`src/data/encouragements.ts`), indexed by `result.timestamp % bucket.length` — stable per attempt, varies between attempts.
+- **"Full Combo! 💯" badge** when no beats were missed.
+- **Effort line:** "That was try #N — keep it up!" shown from the 2nd attempt on (surfaces the previously hidden `attempts` counter).
+- Celebration appears only on the full results screen; the 2s loop-mode overlay is unchanged.
+
+#### Sticker book
+- 13 emoji sticker achievements (`src/data/stickers.ts`) — e.g. first exercise 🎵, full combo 💯, practice on 3/7 days 📆🏆, all 3 instruments 🎪, 3-star all beginner exercises per instrument 🥁🪘🎸, daily challenge 🌞, surprise exercise 🎲, and the rare unicorn 🦄 (every tap on-time).
+- Earn conditions are pure predicates in `src/utils/achievements.ts` (`checkAchievements`); `evaluateAndStoreAchievements` runs in `App.tsx` after each saved result and on loop exit.
+- Sticker state persisted under `rhythmex-stickers` in localStorage (`earned` map + distinct `practiceDays`).
+- "New sticker earned!" pop-in reveal on the results screen (`StickerReveal.tsx`).
+- `StickerBookScreen` (from Home): earned stickers vs. "???" mystery tiles with goal hints, "N / 13 collected" counter.
+
+#### Rhythm-cell exercise generator
+- Library of authentic one-measure rhythm cells per instrument/difficulty (`src/data/cells/`): drum grooves (backbeat, tresillo, clave, tom fills), handpan phrases in scale degrees (mapped to D Kurd), strum patterns (folk strum, reggae offbeats) + chord progressions limited to diagram-covered chords. Cells are monophonic, matching existing exercises.
+- `generateExercise(instrument, difficulty, seed)` (`src/utils/generator.ts`): seeded mulberry32 PRNG, picks two distinct cells, arranges AABA, 4/4 only, BPM jittered ±5. Same seed → identical exercise.
+- **Daily Challenge:** card at the top of the exercise select screen. Seed = hash of date + instrument; difficulty beginner/intermediate only; stable id `daily-YYYY-MM-DD` so stars/attempts persist all day. Completing it earns the 🌞 sticker.
+- **Surprise Me! 🎲** button per difficulty section header: random seed, id `surprise-<seed>`. Earns the 🎲 sticker.
+- Tests: 345 → 405.
+
 ### Phase 7 — Free Play Mode (Not Started)
 
 #### Overview
@@ -363,7 +386,7 @@ Integrated reference material: note values, time signatures, rhythm notation. Co
 - [ ] have a strumming/rhythm library(maybe even org by song)
   - [ ] link to online rhythm library
   - [ ] show shrinking circles around pads to increase clarify around note to play
-  
+  - [x] add unicorn sticker achievements
 
 ### Usability
 - [ ] play multiple notes simultaneously

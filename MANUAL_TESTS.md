@@ -817,3 +817,49 @@ Run `npm run dev` and open the app in a browser to execute these tests.
 - [ ] In Learn mode's active phase, only the correct tap plays sound (existing behavior unchanged)
 - [ ] Tapping in idle/countdown/done does NOT record a judgment or affect scoring on the next lesson run
 - [ ] Strum idle taps play the exercise's first chord (since no playhead has crossed any beat yet)
+
+---
+
+## Phase 6.3 — Engagement: Celebration, Sticker Book, Generated Exercises
+
+### 9.1 Results Celebration
+- [ ] Complete an exercise with 3 stars → colorful confetti rains down over the results screen
+- [ ] Complete with 1 or 2 stars → no confetti
+- [ ] An encouraging message appears under the stars; the tone matches the star count (cheering for 3 stars, motivating for 1)
+- [ ] Retry the same exercise → the message changes between attempts
+- [ ] Complete an exercise with zero missed beats → "Full Combo! 💯" badge appears
+- [ ] Miss at least one beat → no Full Combo badge
+- [ ] On the 2nd+ attempt of an exercise, "That was try #N — keep it up!" appears with the correct count
+- [ ] First-ever attempt of an exercise → no try-count line
+- [ ] In loop mode, the quick 2s overlay between loops shows no confetti/message (celebration only on the full results screen after exiting)
+
+### 9.2 Sticker Earning & Reveal
+- [ ] Complete your very first exercise → "New sticker earned!" card pops in on results with 🎵 First Notes
+- [ ] Complete the same exercise again → the 🎵 sticker is NOT re-awarded
+- [ ] Earn 3 stars on any exercise → ⭐ Triple Star sticker
+- [ ] Finish with zero misses → 💯 Full Combo sticker
+- [ ] Finish with every tap "On Time" → 🦄 Unicorn sticker
+- [ ] Multiple stickers earned in one run all appear together in the reveal card
+
+### 9.3 Sticker Book Screen
+- [ ] Home screen shows a "Sticker Book 📒" button below "Start Playing"
+- [ ] Sticker book shows "N / 13 collected" matching your earned count
+- [ ] Earned stickers show their emoji + name; unearned show "❓" + "???" with the goal description as a hint
+- [ ] Back button returns to Home
+- [ ] Earned stickers survive a page reload (localStorage)
+
+### 9.4 Daily Challenge
+- [ ] Exercise select shows a gradient "📅 Daily Challenge" card at the top for every instrument
+- [ ] Playing it twice on the same day gives the exact same exercise (same beats, same BPM)
+- [ ] Stars earned on the daily challenge appear on the card and persist for the rest of the day
+- [ ] Different instruments get different daily exercises on the same day
+- [ ] Completing a daily challenge earns the 🌞 Daily Winner sticker
+- [ ] The daily exercise is always beginner or intermediate difficulty (never advanced)
+
+### 9.5 Surprise Me
+- [ ] Each difficulty section header has a "Surprise Me! 🎲" button
+- [ ] Tapping it starts a generated exercise of that difficulty for the selected instrument
+- [ ] Two Surprise Me presses produce different exercises (occasionally they may match — re-press to confirm variety)
+- [ ] Retry on a Surprise Me results screen replays the SAME generated exercise
+- [ ] Completing a Surprise Me exercise earns the 🎲 Adventurer sticker
+- [ ] Generated handpan exercises play D Kurd notes; generated strumming exercises show chord diagrams for every chord used

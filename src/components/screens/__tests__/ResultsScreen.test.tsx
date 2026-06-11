@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { ResultsScreen } from '../ResultsScreen'
+import { encouragements } from '@/data/encouragements'
 import type { ExerciseResult, TapResult } from '@/types'
 
 vi.mock('@/utils/storage', () => ({
@@ -172,5 +173,140 @@ describe('ResultsScreen', () => {
       />,
     )
     expect(screen.getByText('Half Notes')).toBeInTheDocument()
+  })
+
+  it('shows confetti for 3 stars', () => {
+    render(
+      <ResultsScreen
+        result={makeResult({ stars: 3 })}
+        exerciseName="Quarter Notes"
+        onRetry={vi.fn()}
+        onNewExercise={vi.fn()}
+      />,
+    )
+    expect(screen.getByTestId('confetti')).toBeInTheDocument()
+  })
+
+  it('does not show confetti below 3 stars', () => {
+    render(
+      <ResultsScreen
+        result={makeResult({ stars: 2 })}
+        exerciseName="Quarter Notes"
+        onRetry={vi.fn()}
+        onNewExercise={vi.fn()}
+      />,
+    )
+    expect(screen.queryByTestId('confetti')).not.toBeInTheDocument()
+  })
+
+  it('shows "Full Combo!" when there are no misses', () => {
+    render(
+      <ResultsScreen
+        result={makeResult({
+          tapResults: [makeTap('on-time'), makeTap('early'), makeTap('late')],
+        })}
+        exerciseName="Quarter Notes"
+        onRetry={vi.fn()}
+        onNewExercise={vi.fn()}
+      />,
+    )
+    expect(screen.getByText(/Full Combo!/)).toBeInTheDocument()
+  })
+
+  it('does not show "Full Combo!" when a beat was missed', () => {
+    render(
+      <ResultsScreen
+        result={makeResult()}
+        exerciseName="Quarter Notes"
+        onRetry={vi.fn()}
+        onNewExercise={vi.fn()}
+      />,
+    )
+    expect(screen.queryByText(/Full Combo!/)).not.toBeInTheDocument()
+  })
+
+  it('shows an encouragement message from the matching star bucket', () => {
+    const result = makeResult({ stars: 2, timestamp: 1234 })
+    render(
+      <ResultsScreen
+        result={result}
+        exerciseName="Quarter Notes"
+        onRetry={vi.fn()}
+        onNewExercise={vi.fn()}
+      />,
+    )
+    const expected =
+      encouragements[2][result.timestamp % encouragements[2].length]
+    expect(screen.getByTestId('encouragement')).toHaveTextContent(expected)
+  })
+
+  it('shows try count after multiple attempts', () => {
+    mockGetBestScore.mockReturnValue({
+      bestStars: 2,
+      bestAccuracy: 85,
+      lastPlayed: 1000,
+      instrument: 'drums',
+      attempts: 7,
+      totalAccuracy: 500,
+    })
+
+    render(
+      <ResultsScreen
+        result={makeResult()}
+        exerciseName="Quarter Notes"
+        onRetry={vi.fn()}
+        onNewExercise={vi.fn()}
+      />,
+    )
+    expect(screen.getByTestId('try-count')).toHaveTextContent('That was try #7')
+  })
+
+  it('shows sticker reveal when new stickers are passed', () => {
+    render(
+      <ResultsScreen
+        result={makeResult()}
+        exerciseName="Quarter Notes"
+        onRetry={vi.fn()}
+        onNewExercise={vi.fn()}
+        newStickers={[
+          { id: 'unicorn', emoji: '🦄', name: 'Unicorn', description: 'All on time' },
+        ]}
+      />,
+    )
+    expect(screen.getByTestId('sticker-reveal')).toBeInTheDocument()
+    expect(screen.getByText('🦄')).toBeInTheDocument()
+  })
+
+  it('does not show sticker reveal without new stickers', () => {
+    render(
+      <ResultsScreen
+        result={makeResult()}
+        exerciseName="Quarter Notes"
+        onRetry={vi.fn()}
+        onNewExercise={vi.fn()}
+      />,
+    )
+    expect(screen.queryByTestId('sticker-reveal')).not.toBeInTheDocument()
+  })
+
+  it('does not show try count on first attempt', () => {
+    mockGetBestScore.mockReturnValue({
+      bestStars: 2,
+      bestAccuracy: 85,
+      lastPlayed: 1000,
+      instrument: 'drums',
+      attempts: 1,
+      totalAccuracy: 85,
+    })
+
+    render(
+      <ResultsScreen
+        result={makeResult()}
+        exerciseName="Quarter Notes"
+        onRetry={vi.fn()}
+        onNewExercise={vi.fn()}
+      />,
+    )
+    expect(screen.queryByTestId('try-count')).not.toBeInTheDocument()
   })
 })
