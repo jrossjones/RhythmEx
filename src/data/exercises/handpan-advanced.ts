@@ -155,4 +155,57 @@ export const handpanAdvancedExercises: Exercise[] = [
       ]
     }).flat(),
   },
+  {
+    // Fleetwood Mac "Never Going Back Again" (Travis picking) — two-voice polyrhythm.
+    // Bass/thumb pedal -> center ding (C3), finger melody -> C Amara scale notes.
+    // Coincident beats (same time) require striking both together. Timing-only.
+    id: 'handpan-polyrhythm-never-going-back',
+    name: 'Polyrhythm: Never Going Back',
+    difficulty: 'advanced',
+    instrument: 'handpan',
+    scale: 'c-amara',
+    timeSignature: [4, 4],
+    bpm: 80,
+    measures: 4,
+    beats: [
+      // M1
+      { time: '0:0:0', duration: '4n', note: 'C3' },
+      { time: '0:0:0', duration: '8n', note: 'C4' },
+      { time: '0:0:2', duration: '4n', note: 'D4' },
+      { time: '0:1:0', duration: '8n', note: 'C3' },
+      { time: '0:1:2', duration: '8n', note: 'C3' },
+      { time: '0:1:2', duration: '4n.', note: 'E4' },
+      { time: '0:2:0', duration: '4n', note: 'C3' },
+      { time: '0:3:0', duration: '8n', note: 'C3' },
+      { time: '0:3:0', duration: '4n', note: 'D4' },
+      { time: '0:3:2', duration: '8n', note: 'C3' },
+      // M2
+      { time: '1:0:0', duration: '4n', note: 'C3' },
+      { time: '1:0:0', duration: '8n', note: 'C4' },
+      { time: '1:0:2', duration: '4n', note: 'B3' },
+      { time: '1:1:0', duration: '4n', note: 'C3' },
+      { time: '1:1:2', duration: '2n', note: 'A3' },
+      { time: '1:2:0', duration: '4n', note: 'C3' },
+      { time: '1:3:0', duration: '8n', note: 'C3' },
+      { time: '1:3:2', duration: '8n', note: 'C3' },
+      // M3
+      { time: '2:0:0', duration: '4n', note: 'C3' },
+      { time: '2:0:0', duration: '8n', note: 'A3' },
+      { time: '2:0:2', duration: '4n', note: 'B3' },
+      { time: '2:1:0', duration: '8n', note: 'C3' },
+      { time: '2:1:2', duration: '8n', note: 'C3' },
+      { time: '2:1:2', duration: '4n.', note: 'C4' },
+      { time: '2:2:0', duration: '4n', note: 'C3' },
+      { time: '2:3:0', duration: '8n', note: 'C3' },
+      { time: '2:3:0', duration: '8n', note: 'B3' },
+      { time: '2:3:2', duration: '8n', note: 'C3' },
+      { time: '2:3:2', duration: '4n', note: 'B3' },
+      // M4
+      { time: '3:0:0', duration: '4n', note: 'C3' },
+      { time: '3:0:2', duration: '2n', note: 'A3' },
+      { time: '3:1:0', duration: '4n', note: 'C3' },
+      { time: '3:2:0', duration: '4n', note: 'C3' },
+      { time: '3:3:0', duration: '4n', note: 'C3' },
+    ],
+  },
 ]

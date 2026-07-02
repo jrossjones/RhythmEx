@@ -1,0 +1,2041 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 4.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">
+<score-partwise version="4.0">
+    <work>
+        <work-title/>
+    </work>
+    <identification>
+        <encoding>
+            <encoding-date>2026-07-02</encoding-date>
+            <software>TuxGuitar 2.0.1</software>
+        </encoding>
+    </identification>
+    <part-list>
+        <score-part id="P1">
+            <part-name>Track 1</part-name>
+            <score-instrument id="P1-I1">
+                <instrument-name>Steel String Guitar 1</instrument-name>
+            </score-instrument>
+            <midi-instrument id="P1-I1">
+                <midi-channel>1</midi-channel>
+                <midi-program>26</midi-program>
+            </midi-instrument>
+        </score-part>
+    </part-list>
+    <part id="P1">
+        <measure number="1">
+            <attributes>
+                <divisions>960</divisions>
+                <key>
+                    <fifths>0</fifths>
+                </key>
+                <time>
+                    <beats>4</beats>
+                    <beat-type>4</beat-type>
+                </time>
+                <staves>2</staves>
+                <part-symbol>none</part-symbol>
+                <clef number="1">
+                    <sign>G</sign>
+                    <line>2</line>
+                    <clef-octave-change>-1</clef-octave-change>
+                </clef>
+                <clef number="2">
+                    <sign>TAB</sign>
+                </clef>
+                <staff-details number="2">
+                    <staff-type>alternate</staff-type>
+                    <staff-lines>6</staff-lines>
+                    <staff-tuning line="1">
+                        <tuning-step>E</tuning-step>
+                        <tuning-octave>2</tuning-octave>
+                    </staff-tuning>
+                    <staff-tuning line="2">
+                        <tuning-step>A</tuning-step>
+                        <tuning-octave>2</tuning-octave>
+                    </staff-tuning>
+                    <staff-tuning line="3">
+                        <tuning-step>D</tuning-step>
+                        <tuning-octave>3</tuning-octave>
+                    </staff-tuning>
+                    <staff-tuning line="4">
+                        <tuning-step>G</tuning-step>
+                        <tuning-octave>3</tuning-octave>
+                    </staff-tuning>
+                    <staff-tuning line="5">
+                        <tuning-step>B</tuning-step>
+                        <tuning-octave>3</tuning-octave>
+                    </staff-tuning>
+                    <staff-tuning line="6">
+                        <tuning-step>E</tuning-step>
+                        <tuning-octave>4</tuning-octave>
+                    </staff-tuning>
+                </staff-details>
+            </attributes>
+            <direction placement="above">
+                <direction-type>
+                    <metronome>
+                        <beat-unit>quarter</beat-unit>
+                        <per-minute>80</per-minute>
+                    </metronome>
+                </direction-type>
+            </direction>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>A</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>C</step>
+                    <octave>4</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>A</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>D</step>
+                    <octave>4</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="start"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+                <notations>
+                    <tied orientation="over" type="start"/>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>B</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="start"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+                <notations>
+                    <tied orientation="over" type="start"/>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>A</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>B</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="stop"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+                <notations>
+                    <tied orientation="over" type="stop"/>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>D</step>
+                    <octave>4</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="stop"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+                <notations>
+                    <tied orientation="over" type="stop"/>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>A</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>C</step>
+                    <octave>4</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="start"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+                <notations>
+                    <tied orientation="over" type="start"/>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>E</step>
+                    <octave>4</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="start"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+                <notations>
+                    <tied orientation="over" type="start"/>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>A</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>960</duration>
+                <voice>1</voice>
+                <type>quarter</type>
+                <staff>1</staff>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>E</step>
+                    <octave>4</octave>
+                </pitch>
+                <duration>960</duration>
+                <tie type="stop"/>
+                <voice>1</voice>
+                <type>quarter</type>
+                <staff>1</staff>
+                <notations>
+                    <tied orientation="over" type="stop"/>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>C</step>
+                    <octave>4</octave>
+                </pitch>
+                <duration>960</duration>
+                <tie type="stop"/>
+                <voice>1</voice>
+                <type>quarter</type>
+                <staff>1</staff>
+                <notations>
+                    <tied orientation="over" type="stop"/>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>A</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>D</step>
+                    <octave>4</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>B</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>A</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+            </note>
+            <backup>
+                <duration>3840</duration>
+            </backup>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>A</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>0</fret>
+                        <string>5</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>C</step>
+                    <octave>4</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>1</fret>
+                        <string>2</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>A</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>2</fret>
+                        <string>3</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>D</step>
+                    <octave>4</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="start"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>3</fret>
+                        <string>2</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>B</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="start"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>4</fret>
+                        <string>3</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>A</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>0</fret>
+                        <string>5</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>B</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="stop"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>4</fret>
+                        <string>3</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>D</step>
+                    <octave>4</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="stop"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>3</fret>
+                        <string>2</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>A</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>0</fret>
+                        <string>5</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>C</step>
+                    <octave>4</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="start"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>5</fret>
+                        <string>3</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>E</step>
+                    <octave>4</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="start"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>5</fret>
+                        <string>2</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>A</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>960</duration>
+                <voice>1</voice>
+                <type>quarter</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>0</fret>
+                        <string>5</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>E</step>
+                    <octave>4</octave>
+                </pitch>
+                <duration>960</duration>
+                <tie type="stop"/>
+                <voice>1</voice>
+                <type>quarter</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>5</fret>
+                        <string>2</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>C</step>
+                    <octave>4</octave>
+                </pitch>
+                <duration>960</duration>
+                <tie type="stop"/>
+                <voice>1</voice>
+                <type>quarter</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>5</fret>
+                        <string>3</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>A</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>0</fret>
+                        <string>5</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>D</step>
+                    <octave>4</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>3</fret>
+                        <string>2</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>B</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>4</fret>
+                        <string>3</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>A</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>0</fret>
+                        <string>5</string>
+                    </technical>
+                </notations>
+            </note>
+        </measure>
+        <measure number="2">
+            <note dynamics="100.0">
+                <pitch>
+                    <step>C</step>
+                    <octave>4</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>A</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>A</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>B</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="start"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+                <notations>
+                    <tied orientation="over" type="start"/>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>G</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="start"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+                <notations>
+                    <tied orientation="over" type="start"/>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>G</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="stop"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+                <notations>
+                    <tied orientation="over" type="stop"/>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>B</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="stop"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+                <notations>
+                    <tied orientation="over" type="stop"/>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>A</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>E</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="start"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+                <notations>
+                    <tied orientation="over" type="start"/>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>A</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="start"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+                <notations>
+                    <tied orientation="over" type="start"/>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>A</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>960</duration>
+                <tie type="stop"/>
+                <voice>1</voice>
+                <type>quarter</type>
+                <staff>1</staff>
+                <notations>
+                    <tied orientation="over" type="stop"/>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>E</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>960</duration>
+                <tie type="stop"/>
+                <voice>1</voice>
+                <type>quarter</type>
+                <staff>1</staff>
+                <notations>
+                    <tied orientation="over" type="stop"/>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>A</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>960</duration>
+                <voice>1</voice>
+                <type>quarter</type>
+                <staff>1</staff>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>A</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>E</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+            </note>
+            <backup>
+                <duration>3840</duration>
+            </backup>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>C</step>
+                    <octave>4</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>1</fret>
+                        <string>2</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>A</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>2</fret>
+                        <string>3</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>A</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>0</fret>
+                        <string>5</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>B</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="start"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>0</fret>
+                        <string>2</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>G</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="start"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>0</fret>
+                        <string>3</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>G</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="stop"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>0</fret>
+                        <string>3</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>B</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="stop"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>0</fret>
+                        <string>2</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>A</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>0</fret>
+                        <string>5</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>E</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="start"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>2</fret>
+                        <string>4</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>A</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="start"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>2</fret>
+                        <string>3</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>A</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>960</duration>
+                <tie type="stop"/>
+                <voice>1</voice>
+                <type>quarter</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>2</fret>
+                        <string>3</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>E</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>960</duration>
+                <tie type="stop"/>
+                <voice>1</voice>
+                <type>quarter</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>2</fret>
+                        <string>4</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>A</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>960</duration>
+                <voice>1</voice>
+                <type>quarter</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>0</fret>
+                        <string>5</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>A</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>0</fret>
+                        <string>5</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>E</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>0</fret>
+                        <string>6</string>
+                    </technical>
+                </notations>
+            </note>
+        </measure>
+        <measure number="3">
+            <note dynamics="100.0">
+                <pitch>
+                    <step>A</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>F</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>F</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>B</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="start"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+                <notations>
+                    <tied orientation="over" type="start"/>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>G</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="start"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+                <notations>
+                    <tied orientation="over" type="start"/>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>G</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="stop"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+                <notations>
+                    <tied orientation="over" type="stop"/>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>B</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="stop"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+                <notations>
+                    <tied orientation="over" type="stop"/>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>F</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>F</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>C</step>
+                    <octave>4</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="start"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+                <notations>
+                    <tied orientation="over" type="start"/>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>A</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="start"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+                <notations>
+                    <tied orientation="over" type="start"/>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>A</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>960</duration>
+                <tie type="stop"/>
+                <voice>1</voice>
+                <type>quarter</type>
+                <staff>1</staff>
+                <notations>
+                    <tied orientation="over" type="stop"/>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>C</step>
+                    <octave>4</octave>
+                </pitch>
+                <duration>960</duration>
+                <tie type="stop"/>
+                <voice>1</voice>
+                <type>quarter</type>
+                <staff>1</staff>
+                <notations>
+                    <tied orientation="over" type="stop"/>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>F</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>960</duration>
+                <voice>1</voice>
+                <type>quarter</type>
+                <staff>1</staff>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>G</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>B</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>F</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>F</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>G</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="start"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+                <notations>
+                    <tied orientation="over" type="start"/>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>B</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="start"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+                <notations>
+                    <tied orientation="over" type="start"/>
+                </notations>
+            </note>
+            <backup>
+                <duration>3840</duration>
+            </backup>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>A</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>2</fret>
+                        <string>3</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>F</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>3</fret>
+                        <string>4</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>F</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>1</fret>
+                        <string>6</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>B</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="start"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>0</fret>
+                        <string>2</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>G</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="start"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>0</fret>
+                        <string>3</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>G</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="stop"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>0</fret>
+                        <string>3</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>B</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="stop"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>0</fret>
+                        <string>2</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>F</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>1</fret>
+                        <string>6</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>F</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>1</fret>
+                        <string>6</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>C</step>
+                    <octave>4</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="start"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>1</fret>
+                        <string>2</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>A</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="start"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>2</fret>
+                        <string>3</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>A</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>960</duration>
+                <tie type="stop"/>
+                <voice>1</voice>
+                <type>quarter</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>2</fret>
+                        <string>3</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>C</step>
+                    <octave>4</octave>
+                </pitch>
+                <duration>960</duration>
+                <tie type="stop"/>
+                <voice>1</voice>
+                <type>quarter</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>1</fret>
+                        <string>2</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>F</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>960</duration>
+                <voice>1</voice>
+                <type>quarter</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>1</fret>
+                        <string>6</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>G</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>0</fret>
+                        <string>3</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>B</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>0</fret>
+                        <string>2</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>F</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>1</fret>
+                        <string>6</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>F</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>1</fret>
+                        <string>6</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>G</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="start"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>0</fret>
+                        <string>3</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>B</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="start"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>0</fret>
+                        <string>2</string>
+                    </technical>
+                </notations>
+            </note>
+        </measure>
+        <measure number="4">
+            <barline>
+                <repeat direction="backward" times="11"/>
+            </barline>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>B</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="stop"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+                <notations>
+                    <tied orientation="over" type="stop"/>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>G</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="stop"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+                <notations>
+                    <tied orientation="over" type="stop"/>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>F</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>A</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="start"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+                <notations>
+                    <tied orientation="over" type="start"/>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>F</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="start"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <staff>1</staff>
+                <notations>
+                    <tied orientation="over" type="start"/>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>F</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>960</duration>
+                <tie type="stop"/>
+                <voice>1</voice>
+                <type>quarter</type>
+                <staff>1</staff>
+                <notations>
+                    <tied orientation="over" type="stop"/>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>A</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>960</duration>
+                <tie type="stop"/>
+                <voice>1</voice>
+                <type>quarter</type>
+                <staff>1</staff>
+                <notations>
+                    <tied orientation="over" type="stop"/>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>F</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>960</duration>
+                <voice>1</voice>
+                <type>quarter</type>
+                <staff>1</staff>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>F</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>960</duration>
+                <voice>1</voice>
+                <type>quarter</type>
+                <staff>1</staff>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>F</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>960</duration>
+                <voice>1</voice>
+                <type>quarter</type>
+                <staff>1</staff>
+            </note>
+            <backup>
+                <duration>3840</duration>
+            </backup>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>B</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="stop"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>0</fret>
+                        <string>2</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>G</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="stop"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>0</fret>
+                        <string>3</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>F</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>480</duration>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>1</fret>
+                        <string>6</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>A</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="start"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>2</fret>
+                        <string>3</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>F</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>480</duration>
+                <tie type="start"/>
+                <voice>1</voice>
+                <type>eighth</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>3</fret>
+                        <string>4</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>F</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>960</duration>
+                <tie type="stop"/>
+                <voice>1</voice>
+                <type>quarter</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>3</fret>
+                        <string>4</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>A</step>
+                    <octave>3</octave>
+                </pitch>
+                <duration>960</duration>
+                <tie type="stop"/>
+                <voice>1</voice>
+                <type>quarter</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>2</fret>
+                        <string>3</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <chord/>
+                <pitch>
+                    <step>F</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>960</duration>
+                <voice>1</voice>
+                <type>quarter</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>1</fret>
+                        <string>6</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>F</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>960</duration>
+                <voice>1</voice>
+                <type>quarter</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>1</fret>
+                        <string>6</string>
+                    </technical>
+                </notations>
+            </note>
+            <note dynamics="100.0">
+                <pitch>
+                    <step>F</step>
+                    <octave>2</octave>
+                </pitch>
+                <duration>960</duration>
+                <voice>1</voice>
+                <type>quarter</type>
+                <stem>none</stem>
+                <staff>2</staff>
+                <notations>
+                    <technical>
+                        <fret>1</fret>
+                        <string>6</string>
+                    </technical>
+                </notations>
+            </note>
+        </measure>
+    </part>
+</score-partwise>

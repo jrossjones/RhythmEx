@@ -43,7 +43,7 @@ describe('ExerciseSelectScreen', () => {
   it('calls onBack from the navigation back button', () => {
     const onBack = vi.fn()
     render(<ExerciseSelectScreen instrument="drums" onSelect={() => {}} onBack={onBack} />)
-    fireEvent.click(screen.getByText(/back/i))
+    fireEvent.click(screen.getByRole('button', { name: /^← Back$/ }))
     expect(onBack).toHaveBeenCalled()
   })
 

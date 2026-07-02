@@ -259,5 +259,6 @@ public/
 - All audio must be triggered by user interaction (no autoplay)
 - Performance matters: rhythm apps need <10ms input latency where possible
 - Exercises are data-driven — adding new exercises should only require adding JSON
+- **Importing rhythms from MusicXML:** to turn a real song into an exercise, export MusicXML (not TuxGuitar `.tg`) and run `references/musicxml_to_beats.py` to generate `beats: [...]`. See `references/MUSICXML_IMPORT.md` for the pipeline and gotchas (ties = sustain not re-strike; duplicate notation/TAB staves; two-voice → coincident beats, timing-only). Example: the `polyrhythm-never-going-back` drum + handpan exercises.
 - `beat.note` convention varies by instrument: drum pad names for drums, note names (C4, D4) for handpan/kalimba, strum direction (down/up) for strumming
 - Four planned instrument types: `drums` (implemented), `handpan` (implemented), `strumming` (implemented), `kalimba` (planned)

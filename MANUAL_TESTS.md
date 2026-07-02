@@ -869,3 +869,38 @@ Run `npm run dev` and open the app in a browser to execute these tests.
 - [ ] Retry on a Surprise Me results screen replays the SAME generated exercise
 - [ ] Completing a Surprise Me exercise earns the 🎲 Adventurer sticker
 - [ ] Generated handpan exercises play D Kurd notes; generated strumming exercises show chord diagrams for every chord used
+
+---
+
+## Phase 6.4 — Two-Voice Polyrhythm Exercises (MusicXML import)
+
+Covers `polyrhythm-never-going-back` (drums) and `handpan-polyrhythm-never-going-back`
+(handpan), imported from `references/FleetwoodMac_R.musicxml`. Both are advanced, 4/4,
+4 measures, 80 BPM, and encode two simultaneous voices (bass + melody).
+
+### 10.1 Exercise Availability
+- [ ] Drums → Advanced section shows "Polyrhythm: Never Going Back" (now 4 advanced drum exercises)
+- [ ] Handpan → Advanced section shows "Polyrhythm: Never Going Back" (now 4 advanced handpan exercises)
+- [ ] The handpan version uses the **C Amara** scale (pad layout shows C Amara notes, not D Kurd)
+
+### 10.2 Two Voices Render Simultaneously
+- [ ] **Drums:** timeline shows exactly 2 columns (kick + hi-hat)
+- [ ] At beats where both voices strike (e.g. measure 1, beat 1), a kick marker and a hi-hat marker appear **side by side at the same height**
+- [ ] **Handpan:** at coincident beats, the ding (full-width line) and the melody note appear at the same vertical position, horizontally offset
+- [ ] No marker overlap hides another marker
+
+### 10.3 Ties Render as Sustains (not extra strikes)
+- [ ] In measures 1–3, the melody (hi-hat / higher note) does **not** re-strike on beats 2 and 3 — it holds while the bass keeps hitting
+- [ ] Held melody notes show a longer marker (duration `4n.`/`2n`) than the eighth-note strikes
+- [ ] Measure 4 melody strikes only once (on the "&" of beat 1); the bass continues on every beat
+- [ ] The bass (kick / ding) hits more often than the melody — the two rhythms are visibly independent
+
+### 10.4 Both Voices Are Tappable (timing-only)
+- [ ] During playing, striking two pads together at a coincident beat registers both (kick + hi-hat within the same instant both judge)
+- [ ] Play with **strict mode OFF** (intended mode) — timing is scored across both voices
+- [ ] Listen/Demo mode auto-fires both voices at the right times (you can hear the bass pulse under the syncopated melody)
+- [ ] Handpan Listen mode: the melody is recognizable ("Never Going Back Again") over the ding pulse
+
+### 10.5 Regression — Existing Advanced Exercises
+- [ ] Other advanced exercises (Sixteenth Note Blitz, Syncopation Swing, Handpan Rain, etc.) still appear and play normally
+- [ ] Exercise-select back button still works (the "…Never Going Back" name does not break navigation)
