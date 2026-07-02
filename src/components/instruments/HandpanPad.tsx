@@ -121,10 +121,14 @@ export function HandpanPad({
   const ringOrder = HANDPAN_RING_ORDER[toneFields.length]
   const hasNumpadLayout = !!numpadKeys && !!ringOrder
   const dingKey = hasNumpadLayout ? DING_KEY : 1
-  const ringRadius = 140
-  const containerSize = 400
-  const dingSize = 96
-  const toneSize = 76
+  // Footprint stays phone-friendly (~280px). Pads are enlarged and the ring
+  // radius tightened so they sit close together. Sizes are chosen for the
+  // tightest case (8 tone fields): adjacent chord = 2*95*sin(pi/8) ~= 73px,
+  // so a 68px tone pad clears its neighbour, and 95 + 68/2 = 129 < 140 fits.
+  const ringRadius = 95
+  const containerSize = 280
+  const dingSize = 76
+  const toneSize = 68
 
   return (
     <div data-testid="handpan-pad-container" className="flex justify-center">
@@ -150,8 +154,8 @@ export function HandpanPad({
             {approachProgress?.get(ding) !== undefined && (
               <ApproachRing shape="circle" progress={approachProgress.get(ding)!} />
             )}
-            <span className="text-lg">{ding}</span>
-            <span className="text-xs opacity-75">{dingKey}</span>
+            <span className="text-base">{ding}</span>
+            <span className="text-[10px] opacity-75">{dingKey}</span>
           </button>
         )}
 
@@ -184,8 +188,8 @@ export function HandpanPad({
               {approachProgress?.get(note) !== undefined && (
                 <ApproachRing shape="circle" progress={approachProgress.get(note)!} />
               )}
-              <span className="text-base">{note}</span>
-              <span className="text-xs opacity-75">{keyNum}</span>
+              <span className="text-sm">{note}</span>
+              <span className="text-[10px] opacity-75">{keyNum}</span>
             </button>
           )
         })}
