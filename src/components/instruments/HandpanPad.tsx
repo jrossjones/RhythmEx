@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import type { TimingJudgment } from '@/types'
-import { HANDPAN_PAD_COLORS, HANDPAN_PAD_MUTED_COLORS, pitchClass } from '@/components/practice/timelineConstants'
+import { HANDPAN_PAD_COLORS, HANDPAN_PAD_MUTED_COLORS, HANDPAN_RING_ORDER, pitchClass } from '@/components/practice/timelineConstants'
 import { ApproachRing } from '@/components/instruments/ApproachRing'
 
 interface TapFeedback {
@@ -18,10 +18,24 @@ interface HandpanPadProps {
   approachProgress?: Map<string, number>
 }
 
-// Numpad spatial keys for tone fields in 9-note scales (clockwise from top).
-// Matches the visual ring order: top, top-right, right, bottom-right, bottom,
-// bottom-left, left, top-left. Ding (center) uses 5.
-const NUMPAD_TONE_FIELD_KEYS = [8, 9, 6, 3, 2, 1, 4, 7]
+// Numpad key at each ring position (clockwise from top), per tone-field count.
+// The ring position → note mapping is shared with the timeline via
+// HANDPAN_RING_ORDER, so pads and markers stay aligned. The ding (scaleNotes[0])
+// is always the center, key 5.
+//
+// To support a new pad count, add an entry here plus one to HANDPAN_RING_ORDER
+// (same key). Counts with no entry fall back to the sequential layout
+// (ding = 1, ring = 2..N in scale order).
+const DING_KEY = 5
+
+const HANDPAN_NUMPAD_KEYS: Record<number, number[]> = {
+  // 9-note scales (8 tone fields): full numpad ring.
+  // top, top-right, right, bottom-right, bottom, bottom-left, left, top-left.
+  8: [8, 9, 6, 3, 2, 1, 4, 7],
+  // 8-note scales (7 tone fields): numpad ring with the bottom-center (2) slot
+  // left open. Yields keys {1,3,4,5,6,7,8,9}.
+  7: [8, 9, 6, 3, 1, 4, 7],
+}
 
 const feedbackColors: Record<TimingJudgment, string> = {
   'on-time': 'bg-green-400',
@@ -66,17 +80,20 @@ export function HandpanPad({
       const num = parseInt(e.key)
       if (!(num >= 1 && num <= 9)) return
       const notes = scaleNotesRef.current
-      if (notes.length === 9) {
-        // Numpad spatial layout: 5=ding (center), surround = NUMPAD_TONE_FIELD_KEYS
-        if (num === 5) {
+      const toneFields = notes.slice(1)
+      const numpadKeys = HANDPAN_NUMPAD_KEYS[toneFields.length]
+      const ringOrder = HANDPAN_RING_ORDER[toneFields.length]
+      if (numpadKeys && ringOrder) {
+        // Numpad spatial layout: 5 = ding (center), ring keys per numpadKeys
+        if (num === DING_KEY) {
           e.preventDefault()
           onTapRef.current(notes[0])
           return
         }
-        const idx = NUMPAD_TONE_FIELD_KEYS.indexOf(num)
-        if (idx !== -1) {
+        const pos = numpadKeys.indexOf(num)
+        if (pos !== -1) {
           e.preventDefault()
-          onTapRef.current(notes[idx + 1])
+          onTapRef.current(toneFields[ringOrder[pos]])
         }
         return
       }
@@ -100,9 +117,14 @@ export function HandpanPad({
 
   const ding = scaleNotes[0]
   const toneFields = scaleNotes.slice(1)
-  const isNumpadLayout = scaleNotes.length === 9
-  const ringRadius = 100
-  const containerSize = 280
+  const numpadKeys = HANDPAN_NUMPAD_KEYS[toneFields.length]
+  const ringOrder = HANDPAN_RING_ORDER[toneFields.length]
+  const hasNumpadLayout = !!numpadKeys && !!ringOrder
+  const dingKey = hasNumpadLayout ? DING_KEY : 1
+  const ringRadius = 140
+  const containerSize = 400
+  const dingSize = 96
+  const toneSize = 76
 
   return (
     <div data-testid="handpan-pad-container" className="flex justify-center">
@@ -117,10 +139,10 @@ export function HandpanPad({
             data-testid={`handpan-pad-${ding}`}
             className={`absolute flex flex-col items-center justify-center rounded-full text-white font-bold shadow-md select-none transition-colors duration-100 ${getPadColor(ding)}`}
             style={{
-              width: 64,
-              height: 64,
-              left: containerSize / 2 - 32,
-              top: containerSize / 2 - 32,
+              width: dingSize,
+              height: dingSize,
+              left: containerSize / 2 - dingSize / 2,
+              top: containerSize / 2 - dingSize / 2,
             }}
             disabled={disabled}
             onPointerDown={(e) => { if (!disabled) { e.preventDefault(); onTap(ding) } }}
@@ -128,17 +150,21 @@ export function HandpanPad({
             {approachProgress?.get(ding) !== undefined && (
               <ApproachRing shape="circle" progress={approachProgress.get(ding)!} />
             )}
-            <span className="text-sm">{ding}</span>
-            <span className="text-[10px] opacity-75">{isNumpadLayout ? 5 : 1}</span>
+            <span className="text-lg">{ding}</span>
+            <span className="text-xs opacity-75">{dingKey}</span>
           </button>
         )}
 
-        {/* Surrounding tone field pads */}
-        {toneFields.map((note, i) => {
-          const angle = (2 * Math.PI * i) / toneFields.length - Math.PI / 2
-          const cx = containerSize / 2 + ringRadius * Math.cos(angle) - 26
-          const cy = containerSize / 2 + ringRadius * Math.sin(angle) - 26
-          const keyNum = isNumpadLayout ? NUMPAD_TONE_FIELD_KEYS[i] : i + 2
+        {/* Surrounding tone field pads. Position index runs clockwise from the
+            top; the note placed there follows layout.noteOrder (real-handpan
+            arrangement) or scale order when no numpad layout exists. */}
+        {toneFields.map((_, pos) => {
+          const noteIdx = hasNumpadLayout ? ringOrder[pos] : pos
+          const note = toneFields[noteIdx]
+          const keyNum = hasNumpadLayout ? numpadKeys[pos] : pos + 2
+          const angle = (2 * Math.PI * pos) / toneFields.length - Math.PI / 2
+          const cx = containerSize / 2 + ringRadius * Math.cos(angle) - toneSize / 2
+          const cy = containerSize / 2 + ringRadius * Math.sin(angle) - toneSize / 2
 
           return (
             <button
@@ -147,8 +173,8 @@ export function HandpanPad({
               data-testid={`handpan-pad-${note}`}
               className={`absolute flex flex-col items-center justify-center rounded-full text-white font-bold shadow-md select-none transition-colors duration-100 ${getPadColor(note)}`}
               style={{
-                width: 52,
-                height: 52,
+                width: toneSize,
+                height: toneSize,
                 left: cx,
                 top: cy,
               }}
@@ -158,8 +184,8 @@ export function HandpanPad({
               {approachProgress?.get(note) !== undefined && (
                 <ApproachRing shape="circle" progress={approachProgress.get(note)!} />
               )}
-              <span className="text-xs">{note}</span>
-              <span className="text-[10px] opacity-75">{keyNum}</span>
+              <span className="text-base">{note}</span>
+              <span className="text-xs opacity-75">{keyNum}</span>
             </button>
           )
         })}

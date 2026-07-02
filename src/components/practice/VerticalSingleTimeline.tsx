@@ -98,8 +98,9 @@ export function VerticalSingleTimeline({
             )
           }
 
-          // Other notes get horizontal offset
-          const xFrac = handpanNoteOffset(noteIdx, total)
+          // Other notes get horizontal offset (total counts the ding, so the
+          // tone-field count is total - 1)
+          const xFrac = handpanNoteOffset(noteIdx, total - 1)
           const xPos = xFrac * columnWidth
 
           return (

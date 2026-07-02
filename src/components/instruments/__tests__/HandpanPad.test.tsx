@@ -69,6 +69,38 @@ describe('HandpanPad', () => {
     expect(onTap).toHaveBeenCalledWith('A4')
   })
 
+  // 8-note scale (C Amara, 7 tone fields) uses a numpad ring with the
+  // bottom-center (2) slot open and notes in real-handpan order:
+  //   ding (C3) = 5; G3=1, A3=3, B3=4, C4=6, D4=7, E4=9, G4=8
+  const cAmaraNotes = ['C3', 'G3', 'A3', 'B3', 'C4', 'D4', 'E4', 'G4']
+
+  it('8-note scale: key 5 triggers the ding', () => {
+    const onTap = vi.fn()
+    render(<HandpanPad {...defaultProps} scaleNotes={cAmaraNotes} onTap={onTap} />)
+    fireEvent.keyDown(window, { key: '5' })
+    expect(onTap).toHaveBeenCalledWith('C3')
+  })
+
+  it('8-note scale: numpad keys map to handpan-ordered tone fields', () => {
+    const onTap = vi.fn()
+    render(<HandpanPad {...defaultProps} scaleNotes={cAmaraNotes} onTap={onTap} />)
+    const expected: Record<string, string> = {
+      '1': 'G3', '3': 'A3', '4': 'B3', '6': 'C4', '7': 'D4', '9': 'E4', '8': 'G4',
+    }
+    for (const [key, note] of Object.entries(expected)) {
+      onTap.mockClear()
+      fireEvent.keyDown(window, { key })
+      expect(onTap).toHaveBeenCalledWith(note)
+    }
+  })
+
+  it('8-note scale: key 2 (open bottom slot) triggers nothing', () => {
+    const onTap = vi.fn()
+    render(<HandpanPad {...defaultProps} scaleNotes={cAmaraNotes} onTap={onTap} />)
+    fireEvent.keyDown(window, { key: '2' })
+    expect(onTap).not.toHaveBeenCalled()
+  })
+
   it('Space key triggers nextExpectedNote', () => {
     const onTap = vi.fn()
     render(<HandpanPad {...defaultProps} onTap={onTap} nextExpectedNote="C4" />)

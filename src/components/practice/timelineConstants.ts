@@ -163,10 +163,30 @@ export const HANDPAN_COLUMN_WIDTH = 160
 // Drum column order (left to right, matches visual layout)
 export const DRUM_COLUMN_ORDER: DrumPad[] = ['hihat', 'tom1', 'tom2', 'snare', 'kick']
 
-export function handpanNoteOffset(noteIndex: number, totalToneFields: number): number {
-  if (noteIndex === 0) return 0.5 // ding centered
-  const angle = ((noteIndex - 1) / (totalToneFields - 1)) * 2 * Math.PI - Math.PI / 2
-  return 0.5 + Math.cos(angle) * 0.35 // 0.15 to 0.85 range
+// Ring arrangement of tone fields per tone-field count (ding excluded):
+// index = ring position (clockwise from top), value = tone-field index
+// (0-based into scaleNotes.slice(1)). This is the single source of truth for
+// where each note sits on the ring — HandpanPad places its pads with it and
+// handpanNoteOffset lines the timeline markers up with those pads.
+// Counts with no entry fall back to sequential placement (scale order clockwise).
+export const HANDPAN_RING_ORDER: Record<number, number[]> = {
+  // 9-note scales (8 tone fields): notes in scale order.
+  8: [0, 1, 2, 3, 4, 5, 6, 7],
+  // 8-note scales (7 tone fields): real-handpan arrangement — lowest tone field
+  // by the ding (lower-left), ascending by crossing side to side up to the top.
+  7: [6, 5, 3, 1, 0, 2, 4],
+}
+
+// Horizontal position (0..1 fraction of the handpan timeline column) for a note
+// at scale index `noteIndex` (0 = ding). Mirrors HandpanPad's ring layout so the
+// marker sits above the pad it maps to. 0.15–0.85 range keeps markers in-column.
+export function handpanNoteOffset(noteIndex: number, toneFieldCount: number): number {
+  if (noteIndex === 0 || toneFieldCount < 1) return 0.5 // ding centered
+  const ringOrder = HANDPAN_RING_ORDER[toneFieldCount]
+  const ringPos = ringOrder ? ringOrder.indexOf(noteIndex - 1) : noteIndex - 1
+  const pos = ringPos === -1 ? noteIndex - 1 : ringPos
+  const angle = (2 * Math.PI * pos) / toneFieldCount - Math.PI / 2
+  return 0.5 + Math.cos(angle) * 0.35
 }
 
 // Strumming timeline constants
