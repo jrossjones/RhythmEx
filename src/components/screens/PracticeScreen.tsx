@@ -9,6 +9,7 @@ import { HandpanPad } from '@/components/instruments/HandpanPad'
 import { StrumZone } from '@/components/instruments/StrumZone'
 import { ResultsOverlay } from '@/components/practice/ResultsOverlay'
 import { SettingsPopover } from '@/components/practice/SettingsPopover'
+import { DebugOverlay } from '@/components/practice/DebugOverlay'
 import { ChordDiagram } from '@/components/practice/ChordDiagram'
 import { useExercise, LEAD_IN_BEATS } from '@/hooks/useExercise'
 import { useTiming } from '@/hooks/useTiming'
@@ -41,6 +42,7 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
     loopMode: false,
     seamlessLoop: false,
     speedTrainerStep: 5,
+    debugStatsOn: false,
   })
 
   const [isDemoMode, setIsDemoMode] = useState(false)
@@ -50,7 +52,7 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
 
   const [chordDiagramMode, setChordDiagramMode] = useState<'fixed' | 'scroll'>('fixed')
 
-  const { playDrum, playHandpan, playStrum, playMetronomeClick, startAudioContext } = useAudio()
+  const { playDrum, playHandpan, playStrum, playMetronomeClick, startAudioContext, audioDebugRef } = useAudio()
 
   // Refs to break circular dependency between useExercise and useTiming/settings
   const finalizeRef = useRef<() => TapResult[]>(() => [])
@@ -660,6 +662,8 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
           speedTrainerNextBpm={loopOverlay.nextBpm}
         />
       )}
+
+      {settings.debugStatsOn && <DebugOverlay audioDebugRef={audioDebugRef} />}
     </Layout>
   )
 }

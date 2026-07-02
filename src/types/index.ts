@@ -67,6 +67,7 @@ export interface PracticeSettings {
   loopMode: boolean
   seamlessLoop: boolean
   speedTrainerStep: number
+  debugStatsOn: boolean
 }
 
 // Star rating (1-3)

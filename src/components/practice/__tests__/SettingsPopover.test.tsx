@@ -11,6 +11,7 @@ const defaultSettings: PracticeSettings = {
   loopMode: false,
   seamlessLoop: false,
   speedTrainerStep: 5,
+  debugStatsOn: false,
 }
 
 describe('SettingsPopover', () => {
@@ -155,7 +156,7 @@ describe('SettingsPopover', () => {
     expect(screen.queryByTestId('settings-popover')).not.toBeInTheDocument()
   })
 
-  it('renders 5 toggles total', () => {
+  it('renders 6 toggles total', () => {
     render(
       <SettingsPopover settings={defaultSettings} onSettingsChange={vi.fn()} disabled={false} />
     )
@@ -163,7 +164,7 @@ describe('SettingsPopover', () => {
     fireEvent.click(screen.getByTestId('settings-gear'))
 
     const switches = screen.getAllByRole('switch')
-    expect(switches).toHaveLength(5)
+    expect(switches).toHaveLength(6)
   })
 
   it('shows seamless sub-toggle when loop mode is on', () => {
@@ -174,9 +175,9 @@ describe('SettingsPopover', () => {
 
     fireEvent.click(screen.getByTestId('settings-gear'))
     expect(screen.getByText('Seamless')).toBeInTheDocument()
-    // 5 base toggles + 1 seamless sub-toggle = 6
+    // 6 base toggles + 1 seamless sub-toggle = 7
     const switches = screen.getAllByRole('switch')
-    expect(switches).toHaveLength(6)
+    expect(switches).toHaveLength(7)
   })
 
   it('does not show seamless sub-toggle when loop mode is off', () => {

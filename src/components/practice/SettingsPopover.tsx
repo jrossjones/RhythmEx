@@ -140,6 +140,14 @@ export function SettingsPopover({ settings, onSettingsChange, disabled }: Settin
                 />
               </div>
             )}
+            <div className="mt-1 border-t border-gray-100 pt-1">
+              <Toggle
+                label="Debug Stats"
+                checked={settings.debugStatsOn}
+                onChange={(val) => onSettingsChange({ ...settings, debugStatsOn: val })}
+                disabled={disabled}
+              />
+            </div>
           </div>
         </div>
       )}

@@ -15,6 +15,14 @@ interface Synths {
   strumming: Tone.Sampler
 }
 
+// Live audio-scheduling stats for the debug overlay. Updated on every tap-driven
+// sound so the overlay can show real per-tap numbers, not just theoretical ones.
+export interface AudioDebugStats {
+  tapCount: number
+  lastTapPerfMs: number
+  lastScheduleAheadMs: number
+}
+
 export interface UseAudioReturn {
   playDrum: (pad: DrumPad) => void
   playHandpan: (note: string) => void
@@ -22,11 +30,26 @@ export interface UseAudioReturn {
   playMetronomeClick: (accent?: boolean) => void
   startAudioContext: () => Promise<void>
   isAudioReady: boolean
+  audioDebugRef: React.RefObject<AudioDebugStats>
 }
 
 export function useAudio(): UseAudioReturn {
   const [isAudioReady, setIsAudioReady] = useState(false)
   const synthsRef = useRef<Synths | null>(null)
+  const audioDebugRef = useRef<AudioDebugStats>({
+    tapCount: 0,
+    lastTapPerfMs: 0,
+    lastScheduleAheadMs: 0,
+  })
+
+  // Record how far ahead of the audio clock a sound was scheduled (the audible
+  // scheduling lag, driven by Tone's lookAhead). `scheduledTime` is a Tone.now() value.
+  const recordTapDebug = useCallback((scheduledTime: number) => {
+    const stats = audioDebugRef.current
+    stats.tapCount += 1
+    stats.lastTapPerfMs = performance.now()
+    stats.lastScheduleAheadMs = (scheduledTime - Tone.getContext().currentTime) * 1000
+  }, [])
 
   const createSynths = useCallback(async (): Promise<Synths> => {
     const kick = new Tone.MembraneSynth({
@@ -114,6 +137,7 @@ export function useAudio(): UseAudioReturn {
     if (!synths) return
 
     const now = Tone.now()
+    recordTapDebug(now)
     switch (pad) {
       case 'kick':
         synths.kick.triggerAttackRelease('C1', '8n', now)
@@ -131,14 +155,16 @@ export function useAudio(): UseAudioReturn {
         synths.tom2.triggerAttackRelease('E1', '8n', now)
         break
     }
-  }, [])
+  }, [recordTapDebug])
 
   const playHandpan = useCallback((note: string) => {
     const synths = synthsRef.current
     if (!synths) return
 
-    synths.handpan.triggerAttackRelease(note, '0.8', Tone.now())
-  }, [])
+    const now = Tone.now()
+    recordTapDebug(now)
+    synths.handpan.triggerAttackRelease(note, '0.8', now)
+  }, [recordTapDebug])
 
   const playStrum = useCallback((chord: string, direction: StrumDirection) => {
     const synths = synthsRef.current
@@ -157,10 +183,11 @@ export function useAudio(): UseAudioReturn {
     const velocity = isUp ? 0.6 : 1
 
     const now = Tone.now()
+    recordTapDebug(now)
     notes.forEach((note, i) => {
       synths.strumming.triggerAttackRelease(note, '2n', now + i * stagger, velocity)
     })
-  }, [])
+  }, [recordTapDebug])
 
   const playMetronomeClick = useCallback((accent?: boolean) => {
     const synths = synthsRef.current
@@ -188,5 +215,5 @@ export function useAudio(): UseAudioReturn {
     }
   }, [])
 
-  return { playDrum, playHandpan, playStrum, playMetronomeClick, startAudioContext, isAudioReady }
+  return { playDrum, playHandpan, playStrum, playMetronomeClick, startAudioContext, isAudioReady, audioDebugRef }
 }

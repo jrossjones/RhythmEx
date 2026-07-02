@@ -77,6 +77,7 @@ vi.mock('tone', () => ({
   start: vi.fn().mockResolvedValue(undefined),
   loaded: vi.fn().mockResolvedValue(undefined),
   now: vi.fn().mockReturnValue(0),
+  getContext: vi.fn().mockReturnValue({ currentTime: 0, lookAhead: 0.1 }),
   MembraneSynth: MockMembraneSynth,
   NoiseSynth: MockNoiseSynth,
   MetalSynth: MockMetalSynth,
