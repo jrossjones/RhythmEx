@@ -31,6 +31,7 @@ interface VerticalSingleTimelineProps {
   tapMarkers?: ProcessedTapMarker[]
   containerHeight: number
   scaleNotes?: string[]
+  loopBoundaryLines?: number[]
 }
 
 export function VerticalSingleTimeline({
@@ -42,6 +43,7 @@ export function VerticalSingleTimeline({
   tapMarkers = [],
   containerHeight,
   scaleNotes = [],
+  loopBoundaryLines = [],
 }: VerticalSingleTimelineProps) {
   const columnWidth = HANDPAN_COLUMN_WIDTH
 
@@ -66,6 +68,16 @@ export function VerticalSingleTimeline({
           <div
             key={`m-${i}`}
             className="absolute left-0 right-0 h-px bg-gray-200"
+            style={{ top: yPos }}
+          />
+        ))}
+
+        {/* Loop seam — translucent red band at each end→start boundary */}
+        {loopBoundaryLines.map((yPos, i) => (
+          <div
+            key={`loop-${i}`}
+            data-testid="loop-boundary-line"
+            className="absolute left-0 right-0 z-10 h-2.5 -translate-y-1/2 bg-red-500/30"
             style={{ top: yPos }}
           />
         ))}

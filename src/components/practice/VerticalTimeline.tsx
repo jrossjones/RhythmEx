@@ -35,6 +35,10 @@ interface VerticalTimelineProps {
   activePads?: DrumPad[]
   scaleNotes?: string[]
   chordDiagramMode?: 'fixed' | 'scroll'
+  // Seamless-loop continuous scroll: also render the incoming (next) and
+  // outgoing (previous) iterations so the wrap has no visual jump.
+  showLoopGhosts?: boolean
+  prevBeatJudgments?: Map<number, TimingJudgment> | null
 }
 
 export function VerticalTimeline({
@@ -47,6 +51,8 @@ export function VerticalTimeline({
   activePads = [],
   scaleNotes = [],
   chordDiagramMode = 'fixed',
+  showLoopGhosts = false,
+  prevBeatJudgments = null,
 }: VerticalTimelineProps) {
   const isDrum = instrument === 'drums'
   const isHandpan = instrument === 'handpan'
@@ -85,12 +91,43 @@ export function VerticalTimeline({
     nextBeatIndex = i
   }
 
-  // Measure line positions (Y axis, inverted)
+  // Iterations to render. Current only (0), plus the incoming next iteration (+1)
+  // and — once at least one loop has completed — the outgoing previous one (-1).
+  const iterationOffsets = useMemo(
+    () => (showLoopGhosts ? (prevBeatJudgments ? [-1, 0, 1] : [0, 1]) : [0]),
+    [showLoopGhosts, prevBeatJudgments],
+  )
+
+  // Measure line positions (Y axis, inverted). During a seamless loop, draw a
+  // continuous grid (including iteration boundaries) so the lines never jump.
   const msPerMeasure = beatsPerMeasure * msPerBeat(bpm)
   const measureLines: number[] = []
-  for (let i = 1; i < exercise.measures; i++) {
-    const frac = (i * msPerMeasure) / durationMs
-    measureLines.push(topPadding + (1 - frac) * exercisePixels)
+  if (showLoopGhosts) {
+    // Internal dividers only (i>=1); the iteration boundary (i=0) is drawn as
+    // the red loop-seam line below so it isn't doubled up in gray.
+    for (const k of iterationOffsets) {
+      for (let i = 1; i < exercise.measures; i++) {
+        const frac = i / exercise.measures
+        measureLines.push(topPadding + (1 - (frac + k)) * exercisePixels)
+      }
+    }
+  } else {
+    for (let i = 1; i < exercise.measures; i++) {
+      const frac = (i * msPerMeasure) / durationMs
+      measureLines.push(topPadding + (1 - frac) * exercisePixels)
+    }
+  }
+
+  // Loop seam: a marker at each iteration boundary (end → new start), shown only
+  // during a seamless loop. Scrolls with the content so it passes the hit line
+  // exactly at each wrap.
+  const loopBoundaryLines: number[] = []
+  if (showLoopGhosts) {
+    const minK = Math.min(...iterationOffsets)
+    const maxK = Math.max(...iterationOffsets)
+    for (let f = minK; f <= maxK + 1; f++) {
+      loopBoundaryLines.push(topPadding + (1 - f) * exercisePixels)
+    }
   }
 
   // Build note index lookup for handpan
@@ -100,11 +137,17 @@ export function VerticalTimeline({
     return map
   }, [scaleNotes])
 
-  // Build markers
-  const markers = exercise.beats.map((beat, i) => {
+  // Build the markers for one iteration. iterationOffset shifts the whole set
+  // vertically by one exercise length (+1 = incoming above, -1 = outgoing below).
+  // Ghost iterations use their own judgment map and never pulse.
+  const buildIterationMarkers = (
+    iterationOffset: number,
+    judgments: Map<number, TimingJudgment> | null | undefined,
+  ) =>
+    exercise.beats.map((beat, i) => {
     const frac = durationMs > 0 ? times[i] / durationMs : 0
-    const yPosition = topPadding + (1 - frac) * exercisePixels
-    const judgment = beatJudgments?.get(i)
+    const yPosition = topPadding + (1 - (frac + iterationOffset)) * exercisePixels
+    const judgment = judgments?.get(i)
 
     const baseColor = isDrum
       ? (DRUM_PAD_COLORS[beat.note as keyof typeof DRUM_PAD_COLORS] ?? 'bg-gray-400')
@@ -114,7 +157,7 @@ export function VerticalTimeline({
           ? (STRUM_DIRECTION_COLORS[beat.note as StrumDirection] ?? 'bg-gray-400')
           : (DURATION_COLORS[beat.duration] ?? 'bg-gray-400')
     const color = judgment ? JUDGMENT_COLORS[judgment] : baseColor
-    const isNext = i === nextBeatIndex && !judgment
+    const isNext = iterationOffset === 0 && i === nextBeatIndex && !judgment
     const isJudged = !!judgment
     const isHollow = !!judgment
     const borderColor = judgment ? JUDGMENT_BORDER_COLORS[judgment] : undefined
@@ -148,7 +191,8 @@ export function VerticalTimeline({
     }
 
     return {
-      beatIndex: i,
+      // Offset keeps React keys unique across the ghost iterations.
+      beatIndex: i + iterationOffset * 100000,
       yPosition,
       color,
       isNext,
@@ -164,6 +208,14 @@ export function VerticalTimeline({
     }
   })
 
+  // Current iteration, plus incoming/outgoing ghosts during a seamless loop.
+  const markers = iterationOffsets.flatMap((k) =>
+    buildIterationMarkers(
+      k,
+      k === 0 ? beatJudgments : k < 0 ? prevBeatJudgments : undefined,
+    ),
+  )
+
   // Process tap markers (Y positions, inverted)
   const processedTapMarkers = (tapMarkers ?? []).map((tm) => {
     const frac = durationMs > 0 ? tm.ms / durationMs : 0
@@ -176,24 +228,25 @@ export function VerticalTimeline({
     }
   })
 
-  // Compute chord changes for strumming timeline
+  // Compute chord changes for strumming timeline (repeated per rendered iteration)
   const chordChanges = useMemo(() => {
     if (!isStrumming) return []
-    const changes: { chord: string; yPosition: number }[] = []
+    const base: { chord: string; frac: number }[] = []
     let lastChord = ''
     for (let i = 0; i < exercise.beats.length; i++) {
       const chord = exercise.beats[i].chord
       if (chord && chord !== lastChord) {
         lastChord = chord
-        const frac = durationMs > 0 ? times[i] / durationMs : 0
-        changes.push({
-          chord,
-          yPosition: topPadding + (1 - frac) * exercisePixels,
-        })
+        base.push({ chord, frac: durationMs > 0 ? times[i] / durationMs : 0 })
       }
     }
-    return changes
-  }, [isStrumming, exercise.beats, durationMs, times, topPadding, exercisePixels])
+    return iterationOffsets.flatMap((k) =>
+      base.map((b) => ({
+        chord: b.chord,
+        yPosition: topPadding + (1 - (b.frac + k)) * exercisePixels,
+      })),
+    )
+  }, [isStrumming, exercise.beats, durationMs, times, topPadding, exercisePixels, iterationOffsets])
 
   return (
     <div data-testid="vertical-timeline" className="rounded-2xl bg-white shadow-md p-2">
@@ -208,6 +261,7 @@ export function VerticalTimeline({
           containerHeight={containerHeight}
           chordChanges={chordChanges}
           chordDiagramMode={chordDiagramMode}
+          loopBoundaryLines={loopBoundaryLines}
         />
       ) : isDrum ? (
         <VerticalDrumTimeline
@@ -219,6 +273,7 @@ export function VerticalTimeline({
           activePads={activePads}
           tapMarkers={processedTapMarkers}
           containerHeight={containerHeight}
+          loopBoundaryLines={loopBoundaryLines}
         />
       ) : (
         <VerticalSingleTimeline
@@ -230,6 +285,7 @@ export function VerticalTimeline({
           tapMarkers={processedTapMarkers}
           containerHeight={containerHeight}
           scaleNotes={scaleNotes}
+          loopBoundaryLines={loopBoundaryLines}
         />
       )}
     </div>

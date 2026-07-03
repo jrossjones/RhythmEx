@@ -38,6 +38,7 @@ interface VerticalStrumTimelineProps {
   containerHeight: number
   chordChanges: ChordChange[]
   chordDiagramMode?: 'fixed' | 'scroll'
+  loopBoundaryLines?: number[]
 }
 
 export function VerticalStrumTimeline({
@@ -50,6 +51,7 @@ export function VerticalStrumTimeline({
   containerHeight,
   chordChanges,
   chordDiagramMode = 'fixed',
+  loopBoundaryLines = [],
 }: VerticalStrumTimelineProps) {
   const columnWidth = STRUM_COLUMN_WIDTH
   const showScrollDiagrams = chordDiagramMode === 'scroll'
@@ -79,6 +81,16 @@ export function VerticalStrumTimeline({
           <div
             key={`m-${i}`}
             className="absolute left-0 h-px bg-gray-200"
+            style={{ top: yPos, width: columnWidth }}
+          />
+        ))}
+
+        {/* Loop seam — translucent red band at each end→start boundary */}
+        {loopBoundaryLines.map((yPos, i) => (
+          <div
+            key={`loop-${i}`}
+            data-testid="loop-boundary-line"
+            className="absolute left-0 z-10 h-2.5 -translate-y-1/2 bg-red-500/30"
             style={{ top: yPos, width: columnWidth }}
           />
         ))}

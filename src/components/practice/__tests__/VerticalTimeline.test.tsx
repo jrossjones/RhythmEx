@@ -137,6 +137,76 @@ describe('VerticalTimeline', () => {
     expect(visualY).toBeCloseTo(210, 0)
   })
 
+  it('renders only the current iteration when showLoopGhosts is off', () => {
+    render(
+      <VerticalTimeline exercise={drumExercise} progress={0.5} bpm={120} instrument="drums" activePads={['kick', 'snare', 'hihat', 'tom1']} />
+    )
+    expect(screen.getAllByTestId('beat-marker')).toHaveLength(4)
+  })
+
+  it('adds the incoming iteration ghost when showLoopGhosts is on', () => {
+    // Current (4) + next iteration ghost (4) = 8; no prev ghost without prevBeatJudgments
+    render(
+      <VerticalTimeline exercise={drumExercise} progress={0.5} bpm={120} instrument="drums" activePads={['kick', 'snare', 'hihat', 'tom1']} showLoopGhosts />
+    )
+    expect(screen.getAllByTestId('beat-marker')).toHaveLength(8)
+  })
+
+  it('adds the outgoing iteration ghost once a loop has completed', () => {
+    // prev (4) + current (4) + next (4) = 12
+    const prev = new Map<number, TimingJudgment>([[0, 'on-time'], [1, 'miss']])
+    render(
+      <VerticalTimeline exercise={drumExercise} progress={0.5} bpm={120} instrument="drums" activePads={['kick', 'snare', 'hihat', 'tom1']} showLoopGhosts prevBeatJudgments={prev} />
+    )
+    expect(screen.getAllByTestId('beat-marker')).toHaveLength(12)
+  })
+
+  it('incoming ghost beat 0 lands on the hit line exactly at the wrap (progress=1)', () => {
+    // Seamless-continuity invariant: as the current iteration ends (progress→1),
+    // the next iteration's first beat must be pinned at the hit line, so the wrap
+    // (which resets progress to 0) produces no visual jump.
+    render(
+      <VerticalTimeline exercise={drumExercise} progress={1} bpm={120} instrument="drums" activePads={['kick', 'snare', 'hihat', 'tom1']} showLoopGhosts />
+    )
+    const scrollContent = screen.getByTestId('vertical-scroll-content')
+    // transform is `translateY(<T>px)` where T = -scrollOffset (can be negative)
+    const translateY = parseFloat(scrollContent.style.transform.match(/-?\d+\.?\d*/)![0])
+    const markers = screen.getAllByTestId('beat-marker')
+    // markers[0..3] = current iteration, markers[4] = next-iteration ghost beat 0
+    const nextBeat0VisualY = parseFloat(markers[4].style.top) + translateY
+    expect(nextBeat0VisualY).toBeCloseTo(210, 0) // hit line at 70% of 300px
+  })
+
+  it('shows no loop seam line when not looping', () => {
+    render(
+      <VerticalTimeline exercise={drumExercise} progress={0.5} bpm={120} instrument="drums" activePads={['kick', 'snare']} />
+    )
+    expect(screen.queryAllByTestId('loop-boundary-line')).toHaveLength(0)
+  })
+
+  it('draws a loop seam line at each iteration boundary during a seamless loop', () => {
+    // offsets [0,1] → boundaries at f = 0, 1, 2 = 3 seam lines
+    const { rerender } = render(
+      <VerticalTimeline exercise={drumExercise} progress={0.5} bpm={120} instrument="drums" activePads={['kick', 'snare']} showLoopGhosts />
+    )
+    expect(screen.getAllByTestId('loop-boundary-line')).toHaveLength(3)
+
+    // Once a loop has completed, the outgoing ghost adds one more boundary (f = -1..2)
+    const prev = new Map<number, TimingJudgment>([[0, 'on-time']])
+    rerender(
+      <VerticalTimeline exercise={drumExercise} progress={0.5} bpm={120} instrument="drums" activePads={['kick', 'snare']} showLoopGhosts prevBeatJudgments={prev} />
+    )
+    expect(screen.getAllByTestId('loop-boundary-line')).toHaveLength(4)
+  })
+
+  it('draws the loop seam for handpan (single) timeline too', () => {
+    render(
+      <VerticalTimeline exercise={handpanExercise} progress={0.5} bpm={120} instrument="handpan" scaleNotes={['D3', 'A3', 'Bb3', 'C4', 'D4']} showLoopGhosts />
+    )
+    expect(screen.getByTestId('vertical-single-timeline')).toBeInTheDocument()
+    expect(screen.getAllByTestId('loop-boundary-line')).toHaveLength(3)
+  })
+
   it('renders tap markers', () => {
     const tapMarkers = [
       { ms: 20, pad: 'kick' as const, judgment: 'on-time' as const, expectedMs: 0 },

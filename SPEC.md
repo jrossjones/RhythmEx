@@ -197,7 +197,7 @@ Strumming exercises may additionally include top-level `key` and `chords` fields
 
 ### Pre-Phase 6b — Timeline Lead-in, Outro Scroll, Learn Mode (Complete)
 - **Timeline lead-in:** Replaced full-screen `CountdownOverlay` with an animated timeline lead-in. RAF starts during countdown with negative elapsed time (`startTimeRef = performance.now() + leadInMs`). `elapsedMs` starts at `-leadInMs` and reaches 0 when playing begins. `rawProgress` (unclamped, can be negative) passed to `VerticalTimeline` — empty runway scrolls, then beats approach the hit line. Small non-blocking countdown badge (4-3-2-1) overlaid in timeline corner. `CountdownOverlay.tsx` deleted.
-- **Outro scroll:** After `elapsed >= durationMs`, `setPhase('done')` fires (stops taps), but RAF continues for one extra measure (`outroDurationMs`). `onDone` callback fires at `durationMs + outroDurationMs` after beats scroll past the hit line. Fixes seamless loop phase override — `setPhase('done')` before `onDone` means seamless restart's `setPhase('playing')` wins the React batch.
+- **Outro scroll:** After `elapsed >= durationMs`, `setPhase('done')` fires (stops taps), but RAF continues for `outroDurationMs` before the `onDone` callback fires at `durationMs + outroDurationMs`, so beats scroll past the hit line first. Fixes seamless loop phase override — `setPhase('done')` before `onDone` means seamless restart's `setPhase('playing')` wins the React batch. (Originally one full measure; **later refined in Phase 6.4** to one beat for single/non-seamless play and 0 for seamless loop.)
 - **Idle timeline position:** In idle, timeline pre-positions at lead-in start (`idleProgress = -(LEAD_IN_BEATS * msPerBeat(bpm)) / durationMs`). No visual jump when Start is pressed — RAF starts from the same position.
 - **Pads enabled during countdown:** Pads are visually active during countdown (both exercise and learn mode). Taps are silently ignored by `useTiming` since `phase !== 'playing'`.
 - **Learn mode:** New "Learn" button alongside "Start" and "Listen". `useLearnMode` hook manages step-through state independently of `useExercise`. Phases: `idle → countdown → active → done`. Countdown uses same 4-beat lead-in with RAF animation (negative progress scrolling to beat 0), metronome clicks, and countdown badge. During active phase, correct taps trigger smooth ease-out animation to the next beat position (tween duration = `msPerBeat(bpm)`). Wrong pad flashes red for 400ms. "Learning" badge shown. Auto-resets to idle after 600ms on completion. No scoring, no results screen.
@@ -274,6 +274,22 @@ Strumming exercises may additionally include top-level `key` and `chords` fields
 - **Daily Challenge:** card at the top of the exercise select screen. Seed = hash of date + instrument; difficulty beginner/intermediate only; stable id `daily-YYYY-MM-DD` so stars/attempts persist all day. Completing it earns the 🌞 sticker.
 - **Surprise Me! 🎲** button per difficulty section header: random seed, id `surprise-<seed>`. Earns the 🎲 sticker.
 - Tests: 345 → 405.
+
+### Phase 6.4 — Loop Continuity, Loop Seam & Debug Overlay (Complete)
+
+#### Loop timing fix (outro)
+- `useExercise(exercise, onDone, initialBpm?, seamless = false)` — the outro is now `outroDurationMs = (seamless ? 0 : 1) * msPerBeat(bpm)`. Single play and non-seamless loop scroll **one trailing beat** past the hit line before results/restart (was a full measure — the source of the "end feels too long" gap); seamless loop uses **0** and wraps exactly at `durationMs`. Exercises place the last beat one beat before the bar ends, so a seamless wrap keeps an even pulse (exactly one musical beat between the final note and the next round's first note). `PracticeScreen` passes `seamless = settings.loopMode && settings.seamlessLoop`.
+
+#### Seamless loop continuous scroll
+- Fixes the "restart pops directly onto the first beat" jump. During a seamless loop (`showLoopGhosts`), `VerticalTimeline` renders up to three stacked iterations via `buildIterationMarkers(iterationOffset, judgments)`: incoming next (`+1`, fresh), current (`0`, live judgments), and — only after the first wrap — outgoing previous (`-1`, `prevBeatJudgments`). Markers shift by `iterationOffset * exercisePixels`; ghosts never pulse and use keys offset by `iterationOffset * 100000`. Geometry is exact: as `progress → 1` the next-iteration ghost's beat 0 sits on the hit line — the same screen position the real beat 0 takes at `progress = 0` after the wrap — so the restart produces no visual jump. `PracticeScreen` snapshots the finishing iteration's `beatJudgments` into `prevLoopJudgments` inside `onSeamlessRestart` **before** `reset()`, so the outgoing ghost keeps its judged/hollow look; cleared on Start/Stop. Measure lines and strum chord-changes repeat per rendered iteration.
+
+#### Loop seam marker
+- `loopBoundaryLines` (computed in `VerticalTimeline`, only when `showLoopGhosts`) marks each end→new-start boundary at every integer iteration boundary. All three vertical timeline children render it as a **translucent red band** (`h-2.5 -translate-y-1/2 bg-red-500/30 z-10`) centered on the boundary — visible for all instruments (drums, handpan, strumming), readable even over the handpan ding bar. In ghost mode the gray `i=0` divider is skipped so the seam isn't doubled in gray. The band only enters the viewport around each wrap (it marks a point in time).
+
+#### Debug stats overlay
+- `DebugOverlay` renders only when `settings.debugStatsOn` (new `PracticeSettings` field + `SettingsPopover` toggle). Self-contained: measures FPS via its own RAF and reads live Tone.js latency from `Tone.getContext()` (`lookAhead`, `rawContext.baseLatency`/`outputLatency`) plus a real per-tap scheduling offset. `useAudio` exposes `audioDebugRef` (`{ tapCount, lastTapPerfMs, lastScheduleAheadMs }`), updated in `playDrum`/`playHandpan`/`playStrum` via `recordTapDebug()`. `pointer-events-none`, fixed bottom-left. Added to diagnose reactive-tap latency (default Tone `lookAhead` ≈ 100 ms).
+
+- 423 tests passing (adds continuous-scroll / loop-seam coverage to `VerticalTimeline.test.tsx`; updates `SettingsPopover` toggle-count and `useAudio` mock tests for the new toggle and `audioDebugRef`).
 
 ### Phase 7 — Free Play Mode (Not Started)
 

@@ -21,7 +21,7 @@ import { useLoopMode } from '@/hooks/useLoopMode'
 import { calculateAccuracy, calculateStars } from '@/utils/scoring'
 import { beatTimesMs, exerciseDrumPads, exerciseDurationMs, msPerBeat } from '@/utils/rhythm'
 import { getScale, DEFAULT_HANDPAN_SCALE } from '@/data/handpan/scales'
-import type { DrumPad as DrumPadType, Exercise, ExerciseResult, InstrumentType, PracticeSettings, StrumDirection, TapResult } from '@/types'
+import type { DrumPad as DrumPadType, Exercise, ExerciseResult, InstrumentType, PracticeSettings, StrumDirection, TapResult, TimingJudgment } from '@/types'
 
 interface PracticeScreenProps {
   exercise: Exercise
@@ -52,6 +52,10 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
 
   const [chordDiagramMode, setChordDiagramMode] = useState<'fixed' | 'scroll'>('fixed')
 
+  // Judgments from the iteration that just finished, shown on the exiting "ghost"
+  // copy during a seamless loop so beats below the hit line don't flicker at the wrap.
+  const [prevLoopJudgments, setPrevLoopJudgments] = useState<Map<number, TimingJudgment> | null>(null)
+
   const { playDrum, playHandpan, playStrum, playMetronomeClick, startAudioContext, audioDebugRef } = useAudio()
 
   // Refs to break circular dependency between useExercise and useTiming/settings
@@ -66,6 +70,9 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
   const { loopOverlay, lastLoopResult, triggerLoopCompletion, dismissOverlay } = useLoopMode({
     seamlessLoop: settings.seamlessLoop,
     onSeamlessRestart: (nextBpm) => {
+      // Snapshot the finished iteration's judgments for the exiting ghost, then
+      // clear scoring state and wrap immediately to the next iteration.
+      setPrevLoopJudgments(new Map(beatJudgments))
       resetRef.current()
       restartRef.current({ seamless: true, newBpm: nextBpm })
     },
@@ -137,7 +144,7 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
     startExercise,
     stopExercise,
     restart,
-  } = useExercise(exercise, handleDone, initialBpm)
+  } = useExercise(exercise, handleDone, initialBpm, settings.loopMode && settings.seamlessLoop)
 
   // Keep refs in sync — must be in useEffect per react-hooks/refs rule
   useEffect(() => {
@@ -369,6 +376,7 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
 
   // Start with audio context
   const handleStart = useCallback(async () => {
+    setPrevLoopJudgments(null)
     await startAudioContext()
     startExercise()
   }, [startAudioContext, startExercise])
@@ -396,6 +404,7 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
     }
     stopExercise()
     reset()
+    setPrevLoopJudgments(null)
     if (isDemoMode) {
       setIsDemoMode(false)
       isDemoModeRef.current = false
@@ -533,6 +542,8 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
           activePads={activePads}
           scaleNotes={handpanScaleNotes}
           chordDiagramMode={chordDiagramMode}
+          showLoopGhosts={settings.loopMode && settings.seamlessLoop && phase === 'playing' && !isLearnMode && !isDemoMode}
+          prevBeatJudgments={prevLoopJudgments}
         />
         {instrument === 'strumming' && chordDiagramMode === 'fixed' && currentChord && (
           <div

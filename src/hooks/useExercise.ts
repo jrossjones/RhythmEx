@@ -4,7 +4,12 @@ import { exerciseDurationMs, msPerBeat } from '@/utils/rhythm'
 
 export const LEAD_IN_BEATS = 4
 
-export function useExercise(exercise: Exercise, onDone: () => void, initialBpm?: number) {
+export function useExercise(
+  exercise: Exercise,
+  onDone: () => void,
+  initialBpm?: number,
+  seamless = false,
+) {
   const [phase, setPhase] = useState<ExercisePhase>('idle')
   const [countdownValue, setCountdownValue] = useState(0)
   const [elapsedMs, setElapsedMs] = useState(0)
@@ -24,8 +29,11 @@ export function useExercise(exercise: Exercise, onDone: () => void, initialBpm?:
   // Build an exercise-like object with the current BPM for duration calc
   const durationMs = exerciseDurationMs({ ...exercise, bpm })
 
-  // Outro: one extra measure of scroll after scoring
-  const outroDurationMs = exercise.timeSignature[0] * msPerBeat(bpm)
+  // Outro scroll after the last note, before onDone fires.
+  // Seamless loop wraps exactly at durationMs (no gap beyond the natural one
+  // beat baked into the pattern); everything else gets a single trailing beat
+  // so the final marker scrolls just past the hit line before results/restart.
+  const outroDurationMs = (seamless ? 0 : 1) * msPerBeat(bpm)
 
   // Keep refs in sync via useEffect
   useEffect(() => {

@@ -295,9 +295,19 @@ Run `npm run dev` and open the app in a browser to execute these tests.
 ### 5a.2.5 Seamless Loop
 - [ ] Enable Loop Mode, then enable "Seamless" sub-toggle (indented under Loop Mode)
 - [ ] Complete an exercise:
-  - No overlay appears
-  - Exercise restarts immediately with no countdown
-  - Playhead wraps back to start seamlessly
+  - No overlay appears, no 4-3-2-1 countdown between loops
+  - The timeline scrolls **continuously** across the wrap — the next round's beats fall in from the top while the current round's beats exit the bottom (no snap-back, no long dead time at the end)
+  - There is exactly **one beat** of gap between the last note and the next round's first note (the pulse stays even across the loop boundary)
+  - See §5a.2.5b for the red loop-seam band that should sweep through the hit line at each wrap
+- [ ] Scores are still saved each loop (check localStorage attempt count increments)
+
+### 5a.2.5b Loop Seam Marker (seamless only)
+- [ ] With Loop + Seamless on, watch the timeline near the end of each loop
+- [ ] A **translucent red band** drops in from the top over the last ~2 beats and sweeps through the hit line exactly at the wrap, then exits the bottom
+- [ ] The band is clearly distinct from the thin gray measure dividers
+- [ ] Mid-loop (away from the wrap) the band is off-screen — this is expected (it marks the wrap point, not a persistent overlay)
+- [ ] The band appears for **all instruments**: drums, handpan (readable even over the full-width ding bar), and strumming
+- [ ] In non-seamless loop and single play, no red band appears
 
 ### 5a.2.6 Loop Mode + Stop
 - [ ] Enable loop mode and complete at least one loop
@@ -334,8 +344,8 @@ Run `npm run dev` and open the app in a browser to execute these tests.
 - [ ] Loop mode off: no "Seamless" sub-toggle visible
 - [ ] Speed trainer on: step buttons (+2/+5/+10) visible
 - [ ] Loop mode on: "Seamless" sub-toggle visible
-- [ ] Total toggles with nothing expanded: 5 (Metronome, Tap Sounds, Strict Mode, Speed Trainer, Loop Mode)
-- [ ] Total toggles with loop mode on: 6 (+ Seamless)
+- [ ] Total toggles with nothing expanded: 6 (Metronome, Tap Sounds, Strict Mode, Speed Trainer, Loop Mode, Debug Stats)
+- [ ] Total toggles with loop mode on: 7 (+ Seamless)
 
 ### 5a.2.11 Results Overlay
 - [ ] Overlay has a semi-transparent dark background
@@ -408,7 +418,7 @@ Run `npm run dev` and open the app in a browser to execute these tests.
 - [ ] **BPM controls:** +/- buttons work, range 40–200, disabled during playing
 - [ ] **Speed Trainer:** BPM increments on ≥95% accuracy, badge shown, "Next: X BPM" on results
 - [ ] **Loop Mode:** Exercise auto-restarts after brief results overlay
-- [ ] **Seamless Loop:** Exercise restarts immediately with no countdown/overlay
+- [ ] **Seamless Loop:** Exercise wraps with continuous scroll — no countdown/overlay, one-beat gap, red seam band at the wrap
 - [ ] **Score persistence:** Handpan scores saved independently from drum scores
   - Complete an exercise on Handpan, note the score
   - Switch to Drums — handpan score not shown (per-instrument isolation)
@@ -548,17 +558,18 @@ Run `npm run dev` and open the app in a browser to execute these tests.
 
 ### P6b.3 Outro Scroll (Beats Scroll Past After Exercise)
 - [ ] Start an exercise and play through all beats
-- [ ] After the last beat passes the hit line, the timeline continues scrolling for ~1 measure
+- [ ] After the last beat passes the hit line, the timeline continues scrolling for **one beat** (not a full measure) so the last marker clears the hit line
 - [ ] Beats animate past the hit line and disappear below before results appear
 - [ ] The exercise does NOT freeze with the last beat sitting on the hit line
-- [ ] Results screen / scoring fires after the outro scroll completes
-- [ ] In loop mode: exercise restarts after outro scroll (not immediately at last beat)
+- [ ] Results screen / scoring fires shortly after the last note (no long dead time at the end)
+- [ ] In non-seamless loop mode: overlay/restart happens after the one-beat outro (not immediately at last beat)
 
-### P6b.4 Outro Scroll with Seamless Loop
-- [ ] Enable seamless loop mode
+### P6b.4 Seamless Loop — Continuous Scroll (no outro gap)
+- [ ] Enable Loop Mode + Seamless
 - [ ] Play through an exercise
-- [ ] After the last beat, outro scroll plays briefly
-- [ ] Exercise restarts at the new BPM (if speed trainer active) after outro
+- [ ] There is **no extra measure of dead time** at the end — the loop wraps one beat after the last note
+- [ ] The wrap is visually continuous (see §5a.2.5 / §5a.2.5b) — no snap-back to the top, no beat popping onto the hit line
+- [ ] Exercise restarts at the new BPM (if speed trainer active) across the wrap
 - [ ] Pads remain enabled during the seamless restart (not disabled)
 - [ ] Seamless loop works repeatedly without pads getting stuck in disabled state
 
@@ -718,7 +729,7 @@ Run `npm run dev` and open the app in a browser to execute these tests.
 - [ ] **BPM controls:** +/- buttons work, range 40–200, disabled during playing
 - [ ] **Speed Trainer:** BPM increments on ≥95% accuracy, badge shown, "Next: X BPM" on results
 - [ ] **Loop Mode:** Exercise auto-restarts after brief results overlay
-- [ ] **Seamless Loop:** Exercise restarts immediately with no countdown/overlay
+- [ ] **Seamless Loop:** Exercise wraps with continuous scroll — no countdown/overlay, one-beat gap, red seam band at the wrap
 - [ ] **Score persistence:** Strumming scores saved independently from drum/handpan scores
   - Complete an exercise on Strumming, note the score
   - Switch to Drums — strumming score not shown (per-instrument isolation)
@@ -904,3 +915,20 @@ Covers `polyrhythm-never-going-back` (drums) and `handpan-polyrhythm-never-going
 ### 10.5 Regression — Existing Advanced Exercises
 - [ ] Other advanced exercises (Sixteenth Note Blitz, Syncopation Swing, Handpan Rain, etc.) still appear and play normally
 - [ ] Exercise-select back button still works (the "…Never Going Back" name does not break navigation)
+
+---
+
+## Debug Stats Overlay (latency diagnostics)
+
+### 11.1 Toggle
+- [ ] Open the settings popover (gear) in idle phase — a "Debug Stats" toggle appears below the other toggles
+- [ ] Turn it on, then Start an exercise — a small dark panel appears fixed at the bottom-left of the screen
+- [ ] Turn it off — the panel disappears
+- [ ] The panel never blocks taps (pads/keys still work with it showing — it is `pointer-events-none`)
+
+### 11.2 Stats Content
+- [ ] Panel shows: FPS, Audio (context state), Look-ahead, Base latency, Output latency, Est. total lag, Taps, Last sched-ahead, Since last tap
+- [ ] FPS updates live and reads ~60 during smooth play (turns red if it drops below 50)
+- [ ] Before any tap, "Audio" shows a non-running state; after the first tap it reads `running`
+- [ ] Tapping a pad increments the "Taps" counter and updates "Last sched-ahead" / "Since last tap"
+- [ ] "Look-ahead" reflects the Tone.js scheduling delay (default ~100 ms) — this is the lever for diagnosing reactive-tap lag
