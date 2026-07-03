@@ -6,6 +6,9 @@ interface HomeScreenProps {
   onStickerBook: () => void
 }
 
+// Injected at build time; 'dev' during local dev or if git is unavailable.
+const appVersion = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev'
+
 export function HomeScreen({ onStart, onStickerBook }: HomeScreenProps) {
   return (
     <Layout>
@@ -25,6 +28,9 @@ export function HomeScreen({ onStart, onStickerBook }: HomeScreenProps) {
           </Button>
         </div>
       </div>
+      <span className="fixed bottom-2 right-2 text-[10px] text-gray-400 select-none">
+        v{appVersion}
+      </span>
     </Layout>
   )
 }
