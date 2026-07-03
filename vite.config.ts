@@ -15,10 +15,17 @@ function gitVersion(): string {
   }
 }
 
+// Build timestamp (UTC, minute precision) — makes it obvious at a glance that a
+// newer version landed, since the hash alone has no readable ordering.
+function buildDate(): string {
+  return new Date().toISOString().slice(0, 16).replace('T', ' ')
+}
+
 export default defineConfig({
   base: '/RhythmEx/',
   define: {
     __APP_VERSION__: JSON.stringify(gitVersion()),
+    __BUILD_DATE__: JSON.stringify(buildDate()),
   },
   plugins: [react(), tailwindcss()],
   resolve: {

@@ -8,6 +8,7 @@ interface HomeScreenProps {
 
 // Injected at build time; 'dev' during local dev or if git is unavailable.
 const appVersion = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev'
+const buildDate = typeof __BUILD_DATE__ !== 'undefined' ? __BUILD_DATE__ : ''
 
 export function HomeScreen({ onStart, onStickerBook }: HomeScreenProps) {
   return (
@@ -29,7 +30,7 @@ export function HomeScreen({ onStart, onStickerBook }: HomeScreenProps) {
         </div>
       </div>
       <span className="fixed bottom-2 right-2 text-[10px] text-gray-400 select-none">
-        v{appVersion}
+        v{appVersion}{buildDate && ` · ${buildDate} UTC`}
       </span>
     </Layout>
   )
