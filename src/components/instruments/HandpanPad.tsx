@@ -10,8 +10,8 @@ interface TapFeedback {
 
 interface HandpanPadProps {
   onTap: (note: string) => void
-  lastFeedback: TapFeedback | null
-  lastFeedbackPad: string | null
+  /** Judgment flash per note — each pad lights and clears independently. */
+  padFeedback: ReadonlyMap<string, TapFeedback>
   disabled: boolean
   scaleNotes: string[]
   nextExpectedNote?: string | null
@@ -46,8 +46,7 @@ const feedbackColors: Record<TimingJudgment, string> = {
 
 export function HandpanPad({
   onTap,
-  lastFeedback,
-  lastFeedbackPad,
+  padFeedback,
   disabled,
   scaleNotes,
   nextExpectedNote,
@@ -107,8 +106,9 @@ export function HandpanPad({
   }, [])
 
   const getPadColor = (note: string) => {
-    if (lastFeedback && lastFeedbackPad === note) {
-      return feedbackColors[lastFeedback.judgment]
+    const feedback = padFeedback.get(note)
+    if (feedback) {
+      return feedbackColors[feedback.judgment]
     }
     const pc = pitchClass(note)
     if (disabled) return HANDPAN_PAD_MUTED_COLORS[pc] ?? 'bg-gray-200'
@@ -141,7 +141,7 @@ export function HandpanPad({
           <button
             type="button"
             data-testid={`handpan-pad-${ding}`}
-            className={`absolute flex flex-col items-center justify-center rounded-full text-white font-bold shadow-md select-none transition-colors duration-100 ${getPadColor(ding)}`}
+            className={`absolute flex flex-col items-center justify-center rounded-full text-white font-bold shadow-md select-none touch-manipulation transition-colors duration-100 ${getPadColor(ding)}`}
             style={{
               width: dingSize,
               height: dingSize,
@@ -175,7 +175,7 @@ export function HandpanPad({
               key={note}
               type="button"
               data-testid={`handpan-pad-${note}`}
-              className={`absolute flex flex-col items-center justify-center rounded-full text-white font-bold shadow-md select-none transition-colors duration-100 ${getPadColor(note)}`}
+              className={`absolute flex flex-col items-center justify-center rounded-full text-white font-bold shadow-md select-none touch-manipulation transition-colors duration-100 ${getPadColor(note)}`}
               style={{
                 width: toneSize,
                 height: toneSize,

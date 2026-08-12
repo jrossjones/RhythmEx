@@ -11,8 +11,8 @@ interface TapFeedback {
 
 interface StrumZoneProps {
   onTap: (direction: StrumDirection) => void
-  lastFeedback: TapFeedback | null
-  lastFeedbackPad: string | null
+  /** Judgment flash per direction — each button lights and clears independently. */
+  padFeedback: ReadonlyMap<string, TapFeedback>
   disabled: boolean
   currentChord?: string | null
   nextExpectedDirection?: StrumDirection | null
@@ -28,8 +28,7 @@ const feedbackColors: Record<TimingJudgment, string> = {
 
 export function StrumZone({
   onTap,
-  lastFeedback,
-  lastFeedbackPad,
+  padFeedback,
   disabled,
   currentChord,
   nextExpectedDirection,
@@ -73,8 +72,9 @@ export function StrumZone({
   }, [])
 
   const getButtonColor = (direction: StrumDirection) => {
-    if (lastFeedback && lastFeedbackPad === direction) {
-      return feedbackColors[lastFeedback.judgment]
+    const feedback = padFeedback.get(direction)
+    if (feedback) {
+      return feedbackColors[feedback.judgment]
     }
     if (disabled) return STRUM_DIRECTION_MUTED_COLORS[direction]
     return STRUM_DIRECTION_COLORS[direction]
@@ -94,7 +94,7 @@ export function StrumZone({
         <button
           type="button"
           data-testid="strum-button-down"
-          className={`relative flex items-center justify-center rounded-xl text-white font-bold shadow-md select-none transition-colors duration-100 ${getButtonColor('down')}`}
+          className={`relative flex items-center justify-center rounded-xl text-white font-bold shadow-md select-none touch-manipulation transition-colors duration-100 ${getButtonColor('down')}`}
           style={{ minHeight: 64 }}
           disabled={disabled}
           onPointerDown={(e) => { if (!disabled) { e.preventDefault(); onTap('down') } }}
@@ -108,7 +108,7 @@ export function StrumZone({
         <button
           type="button"
           data-testid="strum-button-up"
-          className={`relative flex items-center justify-center rounded-xl text-white font-bold shadow-md select-none transition-colors duration-100 ${getButtonColor('up')}`}
+          className={`relative flex items-center justify-center rounded-xl text-white font-bold shadow-md select-none touch-manipulation transition-colors duration-100 ${getButtonColor('up')}`}
           style={{ minHeight: 64 }}
           disabled={disabled}
           onPointerDown={(e) => { if (!disabled) { e.preventDefault(); onTap('up') } }}

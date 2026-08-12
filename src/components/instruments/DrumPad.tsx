@@ -10,8 +10,8 @@ interface TapFeedback {
 
 interface DrumPadProps {
   onTap: (pad: DrumPadType) => void
-  lastFeedback: TapFeedback | null
-  lastFeedbackPad: DrumPadType | null
+  /** Judgment flash per pad — each pad lights and clears independently. */
+  padFeedback: ReadonlyMap<string, TapFeedback>
   disabled: boolean
   activePads: DrumPadType[]
   nextExpectedPad?: DrumPadType | null
@@ -43,8 +43,7 @@ const keyToPad: Record<string, DrumPadType> = {
 
 export function DrumPad({
   onTap,
-  lastFeedback,
-  lastFeedbackPad,
+  padFeedback,
   disabled,
   activePads,
   nextExpectedPad,
@@ -84,10 +83,11 @@ export function DrumPad({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
-  // Flash is derived from props — useTiming auto-clears feedback after 300ms
+  // Flash is derived from props — useTiming auto-clears each pad's feedback
   const getPadColor = (pad: DrumPadType) => {
-    if (lastFeedback && lastFeedbackPad === pad) {
-      return feedbackColors[lastFeedback.judgment]
+    const feedback = padFeedback.get(pad)
+    if (feedback) {
+      return feedbackColors[feedback.judgment]
     }
     if (disabled) return DRUM_PAD_MUTED_COLORS[pad] ?? 'bg-gray-200'
     return padConfig[pad].color
@@ -147,7 +147,7 @@ export function DrumPad({
         key={pad}
         type="button"
         data-testid={`drum-pad-${pad}`}
-        className={`relative flex min-h-[64px] min-w-[64px] flex-col items-center justify-center rounded-2xl px-6 py-3 text-white font-bold shadow-md select-none transition-colors duration-100 ${color}`}
+        className={`relative flex min-h-[64px] min-w-[64px] flex-col items-center justify-center rounded-2xl px-6 py-3 text-white font-bold shadow-md select-none touch-manipulation transition-colors duration-100 ${color}`}
         disabled={disabled}
         onPointerDown={(e) => {
           if (!disabled) {

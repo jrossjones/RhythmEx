@@ -4,8 +4,7 @@ import { StrumZone } from '../StrumZone'
 
 const defaultProps = {
   onTap: vi.fn(),
-  lastFeedback: null,
-  lastFeedbackPad: null,
+  padFeedback: new Map(),
   disabled: false,
   currentChord: 'G' as string | null,
   nextExpectedDirection: null as 'down' | 'up' | null,
@@ -81,8 +80,7 @@ describe('StrumZone', () => {
     render(
       <StrumZone
         {...defaultProps}
-        lastFeedback={{ judgment: 'on-time', timestamp: performance.now() }}
-        lastFeedbackPad="down"
+        padFeedback={new Map([['down', { judgment: 'on-time', timestamp: 0 }]])}
       />
     )
     const downBtn = screen.getByTestId('strum-button-down')
@@ -93,8 +91,7 @@ describe('StrumZone', () => {
     render(
       <StrumZone
         {...defaultProps}
-        lastFeedback={{ judgment: 'miss', timestamp: performance.now() }}
-        lastFeedbackPad="up"
+        padFeedback={new Map([['up', { judgment: 'miss', timestamp: 0 }]])}
       />
     )
     const upBtn = screen.getByTestId('strum-button-up')

@@ -6,8 +6,7 @@ const dKurdNotes = ['D3', 'A3', 'Bb3', 'C4', 'D4', 'E4', 'F4', 'G4', 'A4']
 
 const defaultProps = {
   onTap: vi.fn(),
-  lastFeedback: null,
-  lastFeedbackPad: null,
+  padFeedback: new Map(),
   disabled: false,
   scaleNotes: dKurdNotes,
   nextExpectedNote: null as string | null,
@@ -140,8 +139,7 @@ describe('HandpanPad', () => {
     render(
       <HandpanPad
         {...defaultProps}
-        lastFeedback={{ judgment: 'on-time', timestamp: performance.now() }}
-        lastFeedbackPad="D3"
+        padFeedback={new Map([['D3', { judgment: 'on-time', timestamp: 0 }]])}
       />
     )
 
@@ -153,8 +151,7 @@ describe('HandpanPad', () => {
     render(
       <HandpanPad
         {...defaultProps}
-        lastFeedback={{ judgment: 'miss', timestamp: performance.now() }}
-        lastFeedbackPad="A3"
+        padFeedback={new Map([['A3', { judgment: 'miss', timestamp: 0 }]])}
       />
     )
 

@@ -16,9 +16,15 @@ interface TapFeedback {
   timestamp: number
 }
 
+/** How long a tap's judgment colour stays lit on a pad. */
+export const FEEDBACK_DURATION_MS = 300
+
 export function useTiming({ exercise, bpm, phase, elapsedMsRef, strictMode }: UseTimingOptions) {
   const [lastTapFeedback, setLastTapFeedback] = useState<TapFeedback | null>(null)
-  const [lastFeedbackPad, setLastFeedbackPad] = useState<DrumPad | string | null>(null)
+  // Per-pad feedback so simultaneous / rapidly alternating pads each flash
+  // independently — a single "last pad" would let every new tap steal the
+  // flash from the previous one, making the other hand look unresponsive.
+  const [padFeedback, setPadFeedback] = useState<Map<string, TapFeedback>>(new Map())
   const [beatJudgments, setBeatJudgments] = useState<Map<number, TimingJudgment>>(new Map())
 
   const tapResultsRef = useRef<TapResult[]>([])
@@ -26,6 +32,7 @@ export function useTiming({ exercise, bpm, phase, elapsedMsRef, strictMode }: Us
   const matchedBeatsRef = useRef<Set<number>>(new Set())
   const beatTimesRef = useRef<number[]>([])
   const feedbackTimeoutRef = useRef<number>(0)
+  const padTimeoutsRef = useRef<Map<string, number>>(new Map())
   const lastTapTimePerPadRef = useRef<Map<string, number>>(new Map())
 
   // Pre-compute beat times whenever exercise/bpm changes
@@ -98,17 +105,33 @@ export function useTiming({ exercise, bpm, phase, elapsedMsRef, strictMode }: Us
       return next
     })
 
-    setLastTapFeedback({ judgment: result.judgment, timestamp: performance.now() })
-    if (pad) {
-      setLastFeedbackPad(pad)
-    }
+    const feedback: TapFeedback = { judgment: result.judgment, timestamp: performance.now() }
+    setLastTapFeedback(feedback)
 
-    // Auto-clear feedback after 300ms
+    // Auto-clear the un-padded feedback (used by TapZone)
     clearTimeout(feedbackTimeoutRef.current)
     feedbackTimeoutRef.current = window.setTimeout(() => {
       setLastTapFeedback(null)
-      setLastFeedbackPad(null)
-    }, 300)
+    }, FEEDBACK_DURATION_MS)
+
+    if (!pad) return
+
+    // Each pad lights and clears on its own timer, so a fast alternation
+    // between two pads leaves both lit rather than one stealing the other.
+    setPadFeedback((prev) => new Map(prev).set(pad, feedback))
+
+    clearTimeout(padTimeoutsRef.current.get(pad))
+    padTimeoutsRef.current.set(
+      pad,
+      window.setTimeout(() => {
+        padTimeoutsRef.current.delete(pad)
+        setPadFeedback((prev) => {
+          const next = new Map(prev)
+          next.delete(pad)
+          return next
+        })
+      }, FEEDBACK_DURATION_MS)
+    )
   }, [phase, elapsedMsRef, getBeatTimes, strictMode, exercise.beats])
 
   const finalize = useCallback((): TapResult[] => {
@@ -140,8 +163,11 @@ export function useTiming({ exercise, bpm, phase, elapsedMsRef, strictMode }: Us
     tapMarkersRef.current = []
     matchedBeatsRef.current = new Set()
     lastTapTimePerPadRef.current = new Map()
+    clearTimeout(feedbackTimeoutRef.current)
+    padTimeoutsRef.current.forEach((id) => clearTimeout(id))
+    padTimeoutsRef.current = new Map()
     setLastTapFeedback(null)
-    setLastFeedbackPad(null)
+    setPadFeedback(new Map())
     setBeatJudgments(new Map())
   }, [])
 
@@ -151,7 +177,7 @@ export function useTiming({ exercise, bpm, phase, elapsedMsRef, strictMode }: Us
     tapMarkers: tapMarkersRef.current,
     tapMarkersRef,
     lastTapFeedback,
-    lastFeedbackPad,
+    padFeedback,
     beatJudgments,
     recordTap,
     finalize,

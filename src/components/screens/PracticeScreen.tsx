@@ -157,7 +157,7 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
 
   const {
     lastTapFeedback,
-    lastFeedbackPad,
+    padFeedback,
     beatJudgments,
     tapMarkers,
     recordTap,
@@ -182,6 +182,17 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
     resetRef.current = reset
     restartRef.current = restart
   })
+
+  // Learn mode flashes only the wrongly-tapped pad; otherwise show the live
+  // per-pad judgment flashes. `timestamp` is 0 because pads colour themselves
+  // from `judgment` alone — learn mode's flash is timed by useLearnMode.
+  const padFeedbackMap = useMemo(
+    () =>
+      isLearnMode && wrongPad
+        ? new Map([[wrongPad, { judgment: 'miss' as const, timestamp: 0 }]])
+        : padFeedback,
+    [isLearnMode, wrongPad, padFeedback]
+  )
 
   const isIdle = phase === 'idle' && !isLearnMode
 
@@ -606,8 +617,7 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
         {instrument === 'drums' ? (
           <DrumPad
             onTap={handleDrumTap}
-            lastFeedback={isLearnMode && wrongPad ? { judgment: 'miss' as const, timestamp: performance.now() } : lastTapFeedback}
-            lastFeedbackPad={isLearnMode && wrongPad ? wrongPad as DrumPadType : lastFeedbackPad as DrumPadType | null}
+            padFeedback={padFeedbackMap}
             disabled={isDemoMode}
             activePads={activePads}
             nextExpectedPad={nextExpectedPad}
@@ -616,8 +626,7 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
         ) : instrument === 'strumming' ? (
           <StrumZone
             onTap={handleStrumTap}
-            lastFeedback={isLearnMode && wrongPad ? { judgment: 'miss' as const, timestamp: performance.now() } : lastTapFeedback}
-            lastFeedbackPad={isLearnMode && wrongPad ? wrongPad : lastFeedbackPad}
+            padFeedback={padFeedbackMap}
             disabled={isDemoMode}
             currentChord={currentChord}
             nextExpectedDirection={nextExpectedDirection}
@@ -626,8 +635,7 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
         ) : instrument === 'handpan' ? (
           <HandpanPad
             onTap={handleHandpanTap}
-            lastFeedback={isLearnMode && wrongPad ? { judgment: 'miss' as const, timestamp: performance.now() } : lastTapFeedback}
-            lastFeedbackPad={isLearnMode && wrongPad ? wrongPad : lastFeedbackPad}
+            padFeedback={padFeedbackMap}
             disabled={isDemoMode}
             scaleNotes={handpanScaleNotes}
             nextExpectedNote={nextExpectedNote}

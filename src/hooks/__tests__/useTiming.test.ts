@@ -286,16 +286,51 @@ describe('useTiming', () => {
     expect(result.current.tapResultsRef.current[0].pad).toBeUndefined()
   })
 
-  it('lastFeedbackPad is set on tap and cleared on reset', () => {
+  it('padFeedback is set on tap and cleared on reset', () => {
     const elapsedMsRef = { current: 20 }
     const options = { exercise: drumExercise, bpm: 120, phase: 'playing' as const, elapsedMsRef }
     const { result } = renderHook(() => useTiming(options))
 
     act(() => { result.current.recordTap('kick') })
-    expect(result.current.lastFeedbackPad).toBe('kick')
+    expect(result.current.padFeedback.get('kick')?.judgment).toBe('on-time')
 
     act(() => { result.current.reset() })
-    expect(result.current.lastFeedbackPad).toBeNull()
+    expect(result.current.padFeedback.size).toBe(0)
+  })
+
+  it('keeps feedback for multiple pads lit at the same time', () => {
+    const elapsedMsRef = { current: 0 }
+    const options = { exercise: drumExercise, bpm: 120, phase: 'playing' as const, elapsedMsRef }
+    const { result } = renderHook(() => useTiming(options))
+
+    act(() => { result.current.recordTap('kick') })
+    elapsedMsRef.current = 500
+    act(() => { result.current.recordTap('snare') })
+
+    // A second tap on a different pad must not steal the first pad's flash.
+    expect(result.current.padFeedback.get('kick')).toBeDefined()
+    expect(result.current.padFeedback.get('snare')).toBeDefined()
+  })
+
+  it('clears each pad independently after the feedback window', () => {
+    vi.useFakeTimers()
+    const elapsedMsRef = { current: 0 }
+    const options = { exercise: drumExercise, bpm: 120, phase: 'playing' as const, elapsedMsRef }
+    const { result } = renderHook(() => useTiming(options))
+
+    act(() => { result.current.recordTap('kick') })
+    act(() => { vi.advanceTimersByTime(200) })
+    elapsedMsRef.current = 500
+    act(() => { result.current.recordTap('snare') })
+
+    // 200ms later kick's 300ms window has closed but snare's has not.
+    act(() => { vi.advanceTimersByTime(200) })
+    expect(result.current.padFeedback.get('kick')).toBeUndefined()
+    expect(result.current.padFeedback.get('snare')).toBeDefined()
+
+    act(() => { vi.advanceTimersByTime(200) })
+    expect(result.current.padFeedback.get('snare')).toBeUndefined()
+    vi.useRealTimers()
   })
 
   // --- Tap markers tests ---

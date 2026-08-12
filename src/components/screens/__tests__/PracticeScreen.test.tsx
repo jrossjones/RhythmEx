@@ -84,7 +84,7 @@ const timingState = {
 vi.mock('@/hooks/useTiming', () => ({
   useTiming: () => ({
     lastTapFeedback: null,
-    lastFeedbackPad: null,
+    padFeedback: new Map(),
     beatJudgments: timingState.beatJudgments,
     tapMarkers: [],
     recordTap: vi.fn(),

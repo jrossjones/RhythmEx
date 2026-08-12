@@ -5,8 +5,7 @@ import type { DrumPad as DrumPadType } from '@/types'
 
 const defaultProps = {
   onTap: vi.fn(),
-  lastFeedback: null,
-  lastFeedbackPad: null,
+  padFeedback: new Map(),
   disabled: false,
   activePads: ['kick', 'snare'] as DrumPadType[],
   nextExpectedPad: null as DrumPadType | null,
@@ -130,12 +129,29 @@ describe('DrumPad', () => {
     render(
       <DrumPad
         {...defaultProps}
-        lastFeedback={{ judgment: 'on-time', timestamp: performance.now() }}
-        lastFeedbackPad="kick"
+        padFeedback={new Map([['kick', { judgment: 'on-time', timestamp: 0 }]])}
       />
     )
 
     const kickPad = screen.getByTestId('drum-pad-kick')
     expect(kickPad.className).toContain('bg-green-400')
+    expect(screen.getByTestId('drum-pad-snare').className).not.toContain('bg-green-400')
+  })
+
+  it('flashes two pads at once with independent judgments', () => {
+    render(
+      <DrumPad
+        {...defaultProps}
+        padFeedback={
+          new Map([
+            ['kick', { judgment: 'on-time', timestamp: 0 }],
+            ['snare', { judgment: 'miss', timestamp: 0 }],
+          ])
+        }
+      />
+    )
+
+    expect(screen.getByTestId('drum-pad-kick').className).toContain('bg-green-400')
+    expect(screen.getByTestId('drum-pad-snare').className).toContain('bg-red-600')
   })
 })
