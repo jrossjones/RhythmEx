@@ -4,6 +4,14 @@ export type Difficulty = 'beginner' | 'intermediate' | 'advanced'
 // Time signature as [beatsPerMeasure, beatUnit]
 export type TimeSignature = [number, number]
 
+/**
+ * Sub-beat grid an exercise's beat times are counted on.
+ * 'straight' = 4 sixteenths per beat (default).
+ * 'triplet'  = 3 subdivisions per beat, i.e. a 12/8 feel counted as 4 pulses
+ *              of 3 — the standard reading of West African compound rhythms.
+ */
+export type Feel = 'straight' | 'triplet'
+
 // Strum direction for strumming exercises
 export type StrumDirection = 'down' | 'up'
 
@@ -25,6 +33,7 @@ export interface Exercise {
   measures: number
   beats: Beat[]
   instrument?: InstrumentType  // which instrument this exercise is for
+  feel?: Feel                  // sub-beat grid; defaults to 'straight' (sixteenths)
   scale?: string               // handpan scale preset id, e.g. 'd-kurd'
   key?: string                 // musical key for strumming exercises, e.g. "G"
   chords?: string[]            // chord names used in strumming exercises

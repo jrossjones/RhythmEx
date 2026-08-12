@@ -1,14 +1,32 @@
-import type { DrumPad, Exercise } from '@/types'
+import type { DrumPad, Exercise, Feel } from '@/types'
+
+/** Sub-beat divisions per beat for each feel. */
+const SUBDIVISIONS_PER_BEAT: Record<Feel, number> = {
+  straight: 4, // sixteenths
+  triplet: 3, // eighth-note triplets — a 12/8 feel read as 4 pulses of 3
+}
+
+/** How many sub-beat divisions per beat an exercise counts on. */
+export function subdivisionsPerBeat(feel: Feel = 'straight'): number {
+  return SUBDIVISIONS_PER_BEAT[feel]
+}
 
 /**
- * Convert Tone.js transport time "bars:beats:sixteenths" to absolute ms at a given BPM.
- * Format: "measure:beat:sixteenth" where each sixteenth = 1/4 of a beat.
+ * Convert Tone.js transport time "bars:beats:subdivisions" to absolute ms at a given BPM.
+ *
+ * The third field is a sixteenth (1/4 beat) by default. Pass `subdivisions = 3`
+ * for a triplet feel, where it is an eighth-note triplet (1/3 beat) instead —
+ * this is how the 12/8 West African rhythms are counted, as 4 pulses of 3
+ * rather than as true compound meter, so `timeSignature` stays [4, 4].
+ *
+ * Note: the measure offset assumes 4 beats per measure. Exercises in other
+ * time signatures would need the beats-per-measure threading through too.
  */
-export function transportTimeToMs(time: string, bpm: number): number {
+export function transportTimeToMs(time: string, bpm: number, subdivisions = 4): number {
   const parts = time.split(':').map(Number)
-  const [measures, beats, sixteenths] = parts
+  const [measures, beats, subs] = parts
   const msPerBeatVal = msPerBeat(bpm)
-  const totalBeats = measures * 4 + beats + sixteenths / 4
+  const totalBeats = measures * 4 + beats + subs / subdivisions
   return totalBeats * msPerBeatVal
 }
 
@@ -32,7 +50,8 @@ export function exerciseDurationMs(exercise: Exercise): number {
  * Get all beat positions as absolute ms timestamps.
  */
 export function beatTimesMs(exercise: Exercise): number[] {
-  return exercise.beats.map((beat) => transportTimeToMs(beat.time, exercise.bpm))
+  const subs = subdivisionsPerBeat(exercise.feel)
+  return exercise.beats.map((beat) => transportTimeToMs(beat.time, exercise.bpm, subs))
 }
 
 /**

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { transportTimeToMs, msPerBeat, exerciseDurationMs, beatTimesMs, exerciseHandpanNotes, exerciseChords } from '../rhythm'
+import { transportTimeToMs, msPerBeat, exerciseDurationMs, beatTimesMs, exerciseHandpanNotes, exerciseChords, subdivisionsPerBeat } from '../rhythm'
 import type { Exercise } from '@/types'
 
 describe('msPerBeat', () => {
@@ -37,6 +37,33 @@ describe('transportTimeToMs', () => {
     // 2 measures * 4 beats + 3 beats + 2/4 beats = 11.5 beats
     // At 60BPM: 11.5 * 1000ms = 11500ms
     expect(transportTimeToMs('2:3:2', 60)).toBe(11500)
+  })
+
+  it('defaults to sixteenths when no subdivision is given', () => {
+    expect(transportTimeToMs('0:0:1', 60)).toBe(250)
+  })
+
+  it('reads the third field as a triplet when subdivisions is 3', () => {
+    // One eighth-note triplet at 60BPM = 1000/3 ms
+    expect(transportTimeToMs('0:0:1', 60, 3)).toBeCloseTo(1000 / 3, 6)
+    expect(transportTimeToMs('0:0:2', 60, 3)).toBeCloseTo(2000 / 3, 6)
+  })
+
+  it('wraps a triplet bar to exactly 4 beats', () => {
+    // 0:3:2 is the last of 12 triplet subdivisions; the next lands on 1:0:0
+    expect(transportTimeToMs('0:3:2', 60, 3)).toBeCloseTo(3000 + 2000 / 3, 6)
+    expect(transportTimeToMs('1:0:0', 60, 3)).toBe(4000)
+  })
+})
+
+describe('subdivisionsPerBeat', () => {
+  it('defaults to 4 (sixteenths)', () => {
+    expect(subdivisionsPerBeat()).toBe(4)
+    expect(subdivisionsPerBeat('straight')).toBe(4)
+  })
+
+  it('returns 3 for a triplet feel', () => {
+    expect(subdivisionsPerBeat('triplet')).toBe(3)
   })
 })
 
@@ -100,6 +127,45 @@ describe('beatTimesMs', () => {
       beats: [],
     }
     expect(beatTimesMs(exercise)).toEqual([])
+  })
+
+  it('spaces a triplet-feel bar into 12 even subdivisions', () => {
+    // A 12/8 djembe bar: 4 pulses of 3, timeSignature stays [4, 4].
+    const exercise: Exercise = {
+      id: 'test-triplet',
+      name: 'Triplet',
+      difficulty: 'beginner',
+      timeSignature: [4, 4],
+      feel: 'triplet',
+      bpm: 60,
+      measures: 1,
+      beats: Array.from({ length: 12 }, (_, i) => ({
+        time: `0:${Math.floor(i / 3)}:${i % 3}`,
+        duration: '8t',
+        note: 'tone-strong',
+      })),
+    }
+    const times = beatTimesMs(exercise)
+    expect(times).toHaveLength(12)
+    // Evenly spaced by 1/3 beat = 333.33ms at 60BPM, filling exactly one bar
+    times.forEach((t, i) => expect(t).toBeCloseTo((i * 1000) / 3, 6))
+    expect(exerciseDurationMs(exercise)).toBe(4000)
+  })
+
+  it('leaves straight-feel exercises on the sixteenth grid', () => {
+    const straight: Exercise = {
+      id: 'test-straight',
+      name: 'Straight',
+      difficulty: 'beginner',
+      timeSignature: [4, 4],
+      bpm: 60,
+      measures: 1,
+      beats: [
+        { time: '0:0:0', duration: '16n', note: 'kick' },
+        { time: '0:0:2', duration: '16n', note: 'kick' },
+      ],
+    }
+    expect(beatTimesMs(straight)).toEqual([0, 500])
   })
 })
 
