@@ -58,7 +58,7 @@ export function TapZone({ onTap, lastFeedback, disabled }: TapZoneProps) {
       role="button"
       tabIndex={0}
       data-testid="tap-zone"
-      className={`flex min-h-[120px] w-full select-none items-center justify-center rounded-2xl text-2xl font-bold text-white shadow-md transition-colors duration-100 ${bgClass}`}
+      className={`flex min-h-[120px] w-full select-none touch-manipulation items-center justify-center rounded-2xl text-2xl font-bold text-white shadow-md transition-colors duration-100 ${bgClass}`}
       onClick={() => {
         if (!disabled) onTap()
       }}

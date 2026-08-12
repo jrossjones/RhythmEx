@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+/* Rapid tapping on a rhythm pad is exactly the gesture mobile browsers read as
+   pull-to-refresh (a downward flick) — which would reload mid-exercise.
+   Pinch-zoom is deliberately left alone: blocking it via the viewport meta tag
+   would break zoom for low-vision users. Double-tap-zoom is suppressed per tap
+   target with Tailwind's `touch-manipulation` instead. */
+html,
+body {
+  overscroll-behavior: none;
+}
+
 @theme {
   --animate-confetti-fall: confetti-fall 1s linear forwards;
   --animate-sticker-pop: sticker-pop 0.5s ease-out forwards;
