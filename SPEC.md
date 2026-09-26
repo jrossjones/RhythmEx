@@ -291,6 +291,30 @@ Strumming exercises may additionally include top-level `key` and `chords` fields
 
 - 423 tests passing (adds continuous-scroll / loop-seam coverage to `VerticalTimeline.test.tsx`; updates `SettingsPopover` toggle-count and `useAudio` mock tests for the new toggle and `audioDebugRef`).
 
+### Phase 6.5 — Players, Star Wallet & Avatar Shop (Complete)
+
+#### Local players
+- Up to **6 players** per device (`rhythmex-profiles`: `{ id, name, secret }[]`). All per-player data — scores, stickers, wallet, wardrobe — is stored as `<key>::<profileId>`; `storage.ts` routes every read/write through `profileKey()` using the active player set on login, so existing callers didn't change.
+- **Launch:** no players → creation screen; exactly one → straight to Home; two or more → "Who's playing?" picker.
+- **Picture password:** each player picks 1 of 6 emoji (🐶 🐱 🍎 ⭐ 🚀 🌈) at creation and taps it to log in, so children who can't read yet can still log in. A wrong pick shows "Oops — try again!".
+- **Grown-ups gate:** link on the picker → an addition question (6–9 + 6–9) → a panel that reveals every player's secret picture (to recover a forgotten one) and deletes players (confirm-guarded; removes all their data).
+- **Moving existing progress:** the first player created on a device inherits any older unscoped `rhythmex-scores`/`rhythmex-stickers` data (the old keys are then removed). Their wallet is seeded with the old best stars so past work is credited once, not paid again.
+- Home shows "Hi {name}!", the player's avatar, their star balance and a "👥 Players" switch button.
+
+#### Star wallet (hybrid payout)
+- Spendable stars live in a separate wallet (`rhythmex-wallet`), so buying things never lowers exercise stars or bests.
+- **Improvement:** beating the best already *paid* for an exercise+instrument pays the difference (first play pays its full stars). This is tracked in the wallet's `paidBest`, not in scores, so "Reset all progress" can't be used to earn the same stars again.
+- **Repeat:** a replay of 2★ or better that doesn't improve pays +1★, capped at **10 per player per day** (so loop mode and replays can't be farmed).
+- **Daily Challenge** pays improvement stars as normal; **Surprise Me** exercises (a new id every time) pay only the repeat rate.
+- Every loop round is paid; the Results screen after a loop exit shows the session total. Results show "+N ⭐" when something was earned.
+
+#### Avatars & shop
+- Three avatars: **Unicorn, Witch, Wizard**, drawn as layered SVG in a shared 200×240 viewBox with common anchors, so most items fit every body. A new player picks one free; the others cost **20★**. Witch and Wizard come with their hats.
+- **19 items**, most shared: hats (party hat, bow, flower crown, witch hat, wizard hat, crown), clothes (bow tie, scarf, sweater, tutu, star robe, cape, fairy wings), extras (glasses, star shades, plus avatar-specific ones: wand for witch/wizard, spell book for wizard, broomstick for witch, glitter horn for unicorn). Prices 3–8★.
+- **Colours:** coat/skin and mane/hair per avatar, and colour variants per item. The first colour of each is free and the others cost **2★**. **Skin tones are always free.**
+- **Shop & Wardrobe screen:** tabs Hats / Clothes / Extras / Colors / Buddies. Tapping something you don't own tries it on in the preview, with "Buy for N ⭐" or "Need N more ⭐" and "Not now". Tapping something you own puts it on or takes it off. Each avatar keeps its own outfit, and items remember their last colour.
+- **Results reaction:** the avatar dances (3★), bounces (2★) or wiggles (1★) — never a sad reaction. It uses `motion-safe:` so reduced-motion settings are respected.
+
 ### Phase 7 — Free Play Mode (Not Started)
 
 #### Overview

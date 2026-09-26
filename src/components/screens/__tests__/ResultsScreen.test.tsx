@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { ResultsScreen } from '../ResultsScreen'
 import { encouragements } from '@/data/encouragements'
-import type { ExerciseResult, TapResult } from '@/types'
+import type { AvatarLook, ExerciseResult, TapResult } from '@/types'
 
 vi.mock('@/utils/storage', () => ({
   getBestScore: vi.fn(() => null),
@@ -308,5 +308,60 @@ describe('ResultsScreen', () => {
       />,
     )
     expect(screen.queryByTestId('try-count')).not.toBeInTheDocument()
+  })
+  it('shows the stars added to the wallet', () => {
+    render(
+      <ResultsScreen
+        result={makeResult()}
+        exerciseName="Quarter Notes"
+        onRetry={vi.fn()}
+        onNewExercise={vi.fn()}
+        starsEarned={2}
+      />,
+    )
+    expect(screen.getByTestId('stars-earned')).toHaveTextContent('+2 ⭐')
+  })
+
+  it('hides the wallet line when nothing was earned', () => {
+    render(
+      <ResultsScreen
+        result={makeResult()}
+        exerciseName="Quarter Notes"
+        onRetry={vi.fn()}
+        onNewExercise={vi.fn()}
+        starsEarned={0}
+      />,
+    )
+    expect(screen.queryByTestId('stars-earned')).not.toBeInTheDocument()
+  })
+
+  describe('avatar reaction', () => {
+    const look: AvatarLook = { avatar: 'unicorn', outfit: { body: 'white', hair: 'magenta', items: {} } }
+    const renderWith = (stars: 1 | 2 | 3) =>
+      render(
+        <ResultsScreen
+          result={makeResult({ stars })}
+          exerciseName="Quarter Notes"
+          onRetry={vi.fn()}
+          onNewExercise={vi.fn()}
+          look={look}
+        />,
+      )
+
+    it.each([
+      [3, 'motion-safe:animate-avatar-dance'],
+      [2, 'motion-safe:animate-avatar-bounce'],
+      [1, 'motion-safe:animate-avatar-wiggle'],
+    ] as const)('reacts to %i stars', (stars, cls) => {
+      renderWith(stars)
+      expect(screen.getByTestId('avatar')).toHaveClass(cls)
+    })
+
+    it('shows no avatar when none is given', () => {
+      render(
+        <ResultsScreen result={makeResult()} exerciseName="Quarter Notes" onRetry={vi.fn()} onNewExercise={vi.fn()} />,
+      )
+      expect(screen.queryByTestId('avatar')).not.toBeInTheDocument()
+    })
   })
 })

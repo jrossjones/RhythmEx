@@ -8,6 +8,10 @@ import {
   saveStickerState,
   clearStickerState,
   clearAllScores,
+  profileKey,
+  setActiveProfileId,
+  loadProfiles,
+  saveProfiles,
 } from '../storage'
 import type { ExerciseResult } from '@/types'
 
@@ -54,12 +58,12 @@ describe('loadScores', () => {
         totalAccuracy: 80,
       },
     }
-    mockStorage['rhythmex-scores'] = JSON.stringify(scores)
+    mockStorage[profileKey('rhythmex-scores')] = JSON.stringify(scores)
     expect(loadScores()).toEqual(scores)
   })
 
   it('returns empty object on parse error', () => {
-    mockStorage['rhythmex-scores'] = 'invalid json'
+    mockStorage[profileKey('rhythmex-scores')] = 'invalid json'
     expect(loadScores()).toEqual({})
   })
 })
@@ -67,7 +71,7 @@ describe('loadScores', () => {
 describe('saveResult', () => {
   it('saves a new result with compound key', () => {
     saveResult(makeResult())
-    const saved = JSON.parse(mockStorage['rhythmex-scores'])
+    const saved = JSON.parse(mockStorage[profileKey('rhythmex-scores')])
     expect(saved['test-ex::drums']).toBeDefined()
     expect(saved['test-ex::drums'].bestStars).toBe(2)
     expect(saved['test-ex::drums'].bestAccuracy).toBe(85)
@@ -77,7 +81,7 @@ describe('saveResult', () => {
   it('updates to better score', () => {
     saveResult(makeResult({ accuracy: 70, stars: 1, timestamp: 1000 }))
     saveResult(makeResult({ accuracy: 95, stars: 3, timestamp: 2000 }))
-    const saved = JSON.parse(mockStorage['rhythmex-scores'])
+    const saved = JSON.parse(mockStorage[profileKey('rhythmex-scores')])
     expect(saved['test-ex::drums'].bestStars).toBe(3)
     expect(saved['test-ex::drums'].bestAccuracy).toBe(95)
   })
@@ -85,7 +89,7 @@ describe('saveResult', () => {
   it('keeps best score when new attempt is worse', () => {
     saveResult(makeResult({ accuracy: 95, stars: 3, timestamp: 1000 }))
     saveResult(makeResult({ accuracy: 60, stars: 1, timestamp: 2000 }))
-    const saved = JSON.parse(mockStorage['rhythmex-scores'])
+    const saved = JSON.parse(mockStorage[profileKey('rhythmex-scores')])
     expect(saved['test-ex::drums'].bestStars).toBe(3)
     expect(saved['test-ex::drums'].bestAccuracy).toBe(95)
     expect(saved['test-ex::drums'].lastPlayed).toBe(2000)
@@ -94,7 +98,7 @@ describe('saveResult', () => {
   it('stores scores independently per instrument', () => {
     saveResult(makeResult({ instrument: 'drums', accuracy: 90, stars: 3 }))
     saveResult(makeResult({ instrument: 'handpan', accuracy: 70, stars: 1 }))
-    const saved = JSON.parse(mockStorage['rhythmex-scores'])
+    const saved = JSON.parse(mockStorage[profileKey('rhythmex-scores')])
     expect(saved['test-ex::drums'].bestAccuracy).toBe(90)
     expect(saved['test-ex::handpan'].bestAccuracy).toBe(70)
   })
@@ -103,14 +107,14 @@ describe('saveResult', () => {
     saveResult(makeResult({ timestamp: 1000 }))
     saveResult(makeResult({ timestamp: 2000 }))
     saveResult(makeResult({ timestamp: 3000 }))
-    const saved = JSON.parse(mockStorage['rhythmex-scores'])
+    const saved = JSON.parse(mockStorage[profileKey('rhythmex-scores')])
     expect(saved['test-ex::drums'].attempts).toBe(3)
   })
 
   it('accumulates totalAccuracy across attempts', () => {
     saveResult(makeResult({ accuracy: 80, timestamp: 1000 }))
     saveResult(makeResult({ accuracy: 90, timestamp: 2000 }))
-    const saved = JSON.parse(mockStorage['rhythmex-scores'])
+    const saved = JSON.parse(mockStorage[profileKey('rhythmex-scores')])
     expect(saved['test-ex::drums'].totalAccuracy).toBe(170)
   })
 })
@@ -162,7 +166,7 @@ describe('sticker state', () => {
   })
 
   it('returns empty state on corrupt JSON', () => {
-    localStorage.setItem('rhythmex-stickers', 'not json{')
+    localStorage.setItem(profileKey('rhythmex-stickers'), 'not json{')
     expect(loadStickerState()).toEqual({ earned: {}, practiceDays: [] })
   })
 
@@ -176,5 +180,52 @@ describe('sticker state', () => {
     saveResult(makeResult())
     clearAllScores()
     expect(getAllScores()).toEqual({})
+  })
+})
+
+describe('profile-scoped keys', () => {
+  it('namespaces keys with the active profile id', () => {
+    setActiveProfileId('p1')
+    expect(profileKey('rhythmex-scores')).toBe('rhythmex-scores::p1')
+    expect(profileKey('rhythmex-scores', 'p2')).toBe('rhythmex-scores::p2')
+  })
+
+  it('keeps scores and stickers separate per profile', () => {
+    setActiveProfileId('p1')
+    saveResult(makeResult())
+    saveStickerState({ earned: { unicorn: 1 }, practiceDays: [] })
+
+    setActiveProfileId('p2')
+    expect(loadScores()).toEqual({})
+    expect(loadStickerState()).toEqual({ earned: {}, practiceDays: [] })
+
+    setActiveProfileId('p1')
+    expect(Object.keys(loadScores())).toHaveLength(1)
+    expect(loadStickerState().earned).toEqual({ unicorn: 1 })
+  })
+
+  it('never writes the legacy unscoped keys', () => {
+    saveResult(makeResult())
+    saveStickerState({ earned: {}, practiceDays: [] })
+    expect(mockStorage['rhythmex-scores']).toBeUndefined()
+    expect(mockStorage['rhythmex-stickers']).toBeUndefined()
+  })
+})
+
+describe('profiles list', () => {
+  it('returns an empty list when nothing saved', () => {
+    expect(loadProfiles()).toEqual([])
+  })
+
+  it('round-trips profiles under a global key', () => {
+    const profiles = [{ id: 'p1', name: 'Mia', secret: '🐶' }]
+    saveProfiles(profiles)
+    expect(loadProfiles()).toEqual(profiles)
+    expect(mockStorage['rhythmex-profiles']).toBeDefined()
+  })
+
+  it('returns an empty list on corrupt JSON', () => {
+    mockStorage['rhythmex-profiles'] = '{bad'
+    expect(loadProfiles()).toEqual([])
   })
 })

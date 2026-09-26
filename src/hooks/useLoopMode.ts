@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { saveResult } from '@/utils/storage'
+import { creditResult } from '@/utils/wallet'
 import type { ExerciseResult, StarRating } from '@/types'
 
 export interface LoopOverlayState {
@@ -17,6 +18,8 @@ interface UseLoopModeOptions {
 export interface UseLoopModeReturn {
   loopOverlay: LoopOverlayState | null
   lastLoopResult: ExerciseResult | null
+  /** Stars paid into the wallet across every loop since the last clear. */
+  loopStarsEarned: number
   triggerLoopCompletion: (result: ExerciseResult, nextBpm?: number) => void
   dismissOverlay: () => void
   clearLastLoopResult: () => void
@@ -29,6 +32,7 @@ export function useLoopMode({
 }: UseLoopModeOptions): UseLoopModeReturn {
   const [loopOverlay, setLoopOverlay] = useState<LoopOverlayState | null>(null)
   const [lastLoopResult, setLastLoopResult] = useState<ExerciseResult | null>(null)
+  const [loopStarsEarned, setLoopStarsEarned] = useState(0)
 
   const seamlessLoopRef = useRef(seamlessLoop)
   const onSeamlessRestartRef = useRef(onSeamlessRestart)
@@ -42,6 +46,8 @@ export function useLoopMode({
   const triggerLoopCompletion = useCallback(
     (result: ExerciseResult, nextBpm?: number) => {
       saveResult(result)
+      const earned = creditResult(result)
+      setLoopStarsEarned((total) => total + earned)
       setLastLoopResult(result)
 
       if (seamlessLoopRef.current) {
@@ -62,7 +68,8 @@ export function useLoopMode({
 
   const clearLastLoopResult = useCallback(() => {
     setLastLoopResult(null)
+    setLoopStarsEarned(0)
   }, [])
 
-  return { loopOverlay, lastLoopResult, triggerLoopCompletion, dismissOverlay, clearLastLoopResult }
+  return { loopOverlay, lastLoopResult, loopStarsEarned, triggerLoopCompletion, dismissOverlay, clearLastLoopResult }
 }

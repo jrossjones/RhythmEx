@@ -154,6 +154,7 @@ export type Screen =
   | 'practice'
   | 'results'
   | 'sticker-book'
+  | 'shop'
 
 // Full app navigation state
 export interface AppState {
@@ -162,4 +163,80 @@ export interface AppState {
   selectedExercise: Exercise | null
   lastResult: ExerciseResult | null
   newStickers: StickerDefinition[] | null
+  starsEarned: number | null
+}
+
+// Spendable stars, kept apart from scores so buying things never lowers a record.
+export interface WalletState {
+  balance: number
+  lifetimeEarned: number
+  /** Stars already paid per "exerciseId::instrument", so only improvements pay again. */
+  paidBest: Record<string, number>
+  /** Local date ("YYYY-MM-DD") that repeatCount belongs to. */
+  repeatDay: string
+  repeatCount: number
+}
+
+export type AvatarId = 'unicorn' | 'witch' | 'wizard'
+
+/** Where an item sits on the avatar. All bodies share one anchor layout. */
+export type ItemSlot = 'back' | 'body' | 'neck' | 'face' | 'hat' | 'hand' | 'horn'
+
+export interface EquippedItem {
+  id: string
+  color: string // colour id from data/avatarColors.ts
+}
+
+/** What one avatar is wearing. Each owned avatar remembers its own outfit. */
+export interface Outfit {
+  body: string // coat/skin colour id
+  hair: string // mane/hair colour id
+  items: Partial<Record<ItemSlot, EquippedItem>>
+}
+
+export interface AvatarLook {
+  avatar: AvatarId
+  outfit: Outfit
+}
+
+export interface AvatarDefinition {
+  id: AvatarId
+  name: string
+  price: number
+  bodyLabel: string // "Coat" / "Skin"
+  hairLabel: string // "Mane" / "Hair"
+  bodyColors: string[] // first is free
+  hairColors: string[] // first is free
+  /** Every body colour is free — used for human skin tones. */
+  bodyColorsFree: boolean
+  /** Granted and worn when the avatar is unlocked. */
+  starterItems: EquippedItem[]
+}
+
+export interface ShopItem {
+  id: string
+  name: string
+  icon: string
+  slot: ItemSlot
+  price: number
+  fits: 'all' | AvatarId[]
+  colors: string[] // first comes with the item; others cost extra
+}
+
+export interface WardrobeState {
+  ownedAvatars: AvatarId[]
+  activeAvatar: AvatarId
+  ownedItems: string[]
+  /** Paid colour unlocks, keyed by bodyColorKey()/itemColorKey() in utils/wardrobe.ts. */
+  ownedColors: string[]
+  /** Last colour chosen per item, so taking an item off and on keeps its colour. */
+  itemColors: Record<string, string>
+  outfits: Partial<Record<AvatarId, Outfit>>
+}
+
+// A local player on this device. `secret` is the emoji picture password.
+export interface Profile {
+  id: string
+  name: string
+  secret: string
 }

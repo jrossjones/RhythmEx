@@ -34,19 +34,32 @@ Three principles that override defaults when in tension:
 ## Project Structure
 ```
 src/
-  App.tsx               # Root component — state machine navigation across screens
+  App.tsx               # Root component — player gate (create/picker) then state machine navigation across screens
   main.tsx              # Entry point — renders App into DOM
-  index.css             # Tailwind CSS import + @theme keyframes (confetti-fall, sticker-pop)
+  index.css             # Tailwind CSS import + @theme keyframes (confetti-fall, sticker-pop, avatar-dance/bounce/wiggle)
   types/
     index.ts            # All shared TypeScript types and interfaces
   components/
     screens/            # Full-page screen components
-      HomeScreen.tsx
+      HomeScreen.tsx            # Greeting, avatar, star balance, Players switch, Shop/Sticker Book buttons
       InstrumentSelectScreen.tsx
       ExerciseSelectScreen.tsx
       PracticeScreen.tsx        # Exercise lifecycle, BPM controls, beat timeline, tap input
-      ResultsScreen.tsx         # Full results: stars, accuracy, tap breakdown, personal best, celebration (confetti/message/full-combo/sticker reveal)
+      ResultsScreen.tsx         # Full results: stars, accuracy, tap breakdown, personal best, celebration (confetti/message/full-combo/sticker reveal), "+N ⭐" payout, avatar reaction
       StickerBookScreen.tsx     # Sticker collection grid: earned vs "???" mystery tiles, N/13 counter
+      ProfilePickerScreen.tsx   # "Who's playing?" tiles → secret-picture login; Grown-ups gate → reveal secrets / delete
+      ProfileCreateScreen.tsx   # Name + secret picture + free starter buddy
+      ShopScreen.tsx            # Shop & Wardrobe: try-on preview, buy bar, Hats/Clothes/Extras/Colors/Buddies tabs
+    profile/            # Player UI pieces
+      SecretGrid.tsx    # The 6 picture-password buttons
+      ParentGate.tsx    # Addition question guarding grown-up actions (addends passed in — picked in a handler)
+      ParentPanel.tsx   # Reveal secrets, delete players
+    avatar/
+      Avatar.tsx        # Layered SVG composer (sizes sm/md/lg), aria-hidden, data-avatar attr; skips items that don't fit
+      bodyArt.tsx       # BODY_ART per avatar: back/torso/head layers in the shared 200×240 viewBox
+      itemArt.tsx       # ITEM_ART per item id + starPath helper; anchor coordinates documented at top
+    shop/
+      ShopTile.tsx, OfferBar.tsx (Offer type), ColorRow.tsx, ShopItemsTab.tsx, ShopBuddiesTab.tsx, ShopColorsTab.tsx
     ui/                 # Shared reusable UI components
       Button.tsx        # Variant/size props, 44px+ touch targets
       Layout.tsx        # Page wrapper with gradient bg, max-width
@@ -101,6 +114,9 @@ src/
     chordDiagrams.ts    # ChordDiagram type, fret/open/muted layout for 7 beginner shapes (G/C/D/Em/Am/A/E), getChordDiagram() lookup
     encouragements.ts   # Kid-voiced results messages keyed by star count (1/2/3)
     stickers.ts         # 13 emoji sticker achievement definitions (metadata only — predicates in utils/achievements.ts)
+    avatars.ts          # 3 AvatarDefinitions (unicorn/witch/wizard): price, body/hair palettes, bodyColorsFree (skin), starterItems
+    shopItems.ts        # 19 ShopItems: slot, price, fits ('all' | avatar ids), colors (first free)
+    avatarColors.ts     # COLORS palette: full literal fill-*/bg-* class strings (Tailwind must see them)
     cells/              # One-measure rhythm cells for the procedural exercise generator
       index.ts          # CellBeat/RhythmCell types, cellsFor(instrument, difficulty), re-exports strumProgressions
       drumCells.ts      # Drum patterns per difficulty (quarter pulse, backbeat, tresillo, tom fill...)
@@ -114,16 +130,24 @@ src/
   utils/
     rhythm.ts           # transportTimeToMs, msPerBeat, exerciseDurationMs, beatTimesMs, exerciseDrumPads, pitchClass, exerciseChords
     scoring.ts          # TIMING_WINDOWS, judgeTap, calculateAccuracy, calculateStars
-    storage.ts          # localStorage CRUD: compound key per instrument, attempt tracking, getAllScores, sticker state load/save
+    storage.ts          # localStorage CRUD; every per-player key goes through profileKey() (`<key>::<profileId>`): scores, stickers, wallet, wardrobe. Global profiles list
     random.ts           # mulberry32 PRNG, hashStringToSeed, pick — shared by Confetti and generator
     achievements.ts     # checkAchievements (pure predicates per sticker id) + evaluateAndStoreAchievements wrapper
     generator.ts        # generateExercise/dailyChallengeExercise/surpriseExercise + localDateStr (4/4 only)
+    profiles.ts         # createProfile (first player inherits old unscoped data + seeded wallet), deleteProfile, SECRET_CHOICES, MAX_PROFILES
+    wallet.ts           # computePayout (hybrid improvement/repeat payout), creditResult, spendStars, walletFromScores
+    wardrobe.ts         # Pure wardrobe logic: newWardrobe/defaultOutfit/lookOf/loadLook + buy/toggle/set for items, colours, avatars
     __tests__/          # Vitest unit tests
       rhythm.test.ts
       scoring.test.ts
       storage.test.ts
       achievements.test.ts
       generator.test.ts
+      profiles.test.ts
+      wallet.test.ts
+      wardrobe.test.ts
+  __tests__/
+    App.test.tsx        # Player gate, star wallet end-to-end, shop navigation (PracticeScreen stubbed)
   hooks/
     __tests__/
       useExercise.test.ts
@@ -140,6 +164,12 @@ src/
         PracticeScreen.test.tsx
         ExerciseSelectScreen.test.tsx
         StickerBookScreen.test.tsx
+        ProfilePickerScreen.test.tsx
+        ProfileCreateScreen.test.tsx
+        ShopScreen.test.tsx
+    avatar/
+      __tests__/
+        Avatar.test.tsx
     instruments/
       __tests__/
         DrumPad.test.tsx
@@ -165,6 +195,7 @@ src/
         chords.test.ts      # Chord voicing count, lookup, unknown returns undefined
     __tests__/
       chordDiagrams.test.ts # Diagram coverage for all strumming-exercise chords + shape integrity
+      avatarData.test.ts    # Avatar/item catalogue integrity: colours defined, art exists, starters fit, skin tones free
     cells/
       __tests__/
         cells.test.ts       # Cell pools non-empty, positions within one 4/4 measure, progression chord coverage
@@ -222,7 +253,7 @@ public/
 - **Practice settings:** `PracticeSettings` type with `metronomeOn`, `tapSoundOn`, `strictMode`, `speedTrainerOn`, `speedTrainerStep`, `loopMode`, `seamlessLoop`, `debugStatsOn`, `padLayout`, `leftHanded`. `SettingsPopover` takes an optional `instrument` prop and gates the djembe-only controls (pad layout, left-handed) behind it. Managed as state in `PracticeScreen`, controlled via `SettingsPopover` gear icon. Settings only changeable in idle phase.
 - **Strict mode:** When enabled, `useTiming.recordTap(pad)` compares the tapped pad against `exercise.beats[nearestIndex].note`. Wrong pad overrides judgment to `miss` with `expectedPad` set. Free mode (default) accepts any pad for timing-only scoring.
 - **Exercise drum assignments:** Exercises use drum pad names as `beat.note` — beginner uses kick+snare, intermediate adds hihat, advanced adds tom1+tom2. `exerciseDrumPads()` utility extracts the deduplicated pad set from any exercise.
-- **Score storage:** Compound key `"exerciseId::instrument"` in localStorage — scores are fully independent per instrument. Each entry tracks `bestStars`, `bestAccuracy`, `attempts`, and `totalAccuracy` (enables future average calculation). `getAllScores()` returns the full dict for summary screens.
+- **Score storage:** Compound key `"exerciseId::instrument"` in localStorage (inside the per-player `rhythmex-scores::<profileId>` key) — scores are fully independent per instrument and per player. Each entry tracks `bestStars`, `bestAccuracy`, `attempts`, and `totalAccuracy` (enables future average calculation). `getAllScores()` returns the full dict for summary screens.
 - **Results screen:** Compares current attempt against stored personal best on render. "New Best!" badge shown only when `attempts > 1` and accuracy meets or beats `bestAccuracy` (not shown on first ever attempt). Shows "Next: {bpm} BPM" hint when speed trainer is active.
 - **Vertical timeline:** `VerticalTimeline` orchestrates `VerticalDrumTimeline` or `VerticalSingleTimeline`. Guitar Hero-style drop-down: future beats appear at the top and fall toward a hit line at 70% from top. Inverted Y coordinate system with top/bottom padding so the playhead stays pinned at the hit line for the full exercise (`yPosition = topPadding + (1 - frac) * exercisePixels`). GPU-accelerated `translateY`. 80px per beat vertical density. Drum columns (64px each) match active pads. Handpan column (160px) with angular offsets based on pad position. Ding note renders as full-width horizontal bar (`line` shape). `scrollOffset = Math.min(playheadY - hitLineY, renderedHeight - containerHeight)` — only the upper clamp (for lead-in) is kept; no lower clamp, so `scrollOffset` may go negative near the end of the exercise and let the playhead reach the last beat. All `translateY` interpolations use `` `translateY(${-scrollOffset}px)` `` (not `` `translateY(-${scrollOffset}px)` ``) so a negative offset produces valid CSS instead of `translateY(--40px)`.
 - **Seamless loop continuous scroll:** During a seamless loop (`showLoopGhosts` = `loopMode && seamlessLoop && phase==='playing'` and not learn/demo), `VerticalTimeline` renders up to three stacked iterations via `buildIterationMarkers(iterationOffset, judgments)` — the incoming next iteration (`+1`, fresh), the current iteration (`0`, live `beatJudgments`), and — only after the first wrap — the outgoing previous iteration (`-1`, `prevBeatJudgments`). Each iteration's markers are shifted by `iterationOffset * exercisePixels` (`yPosition = topPadding + (1 - (frac + iterationOffset)) * exercisePixels`); ghost markers never pulse and get keys offset by `iterationOffset * 100000`. Geometry is exact: as `progress → 1` the next-iteration ghost's beat 0 sits on the hit line — the same screen position the real beat 0 occupies at `progress = 0` after the wrap — so the restart (which resets `elapsed`/`progress` to 0) produces no visual jump. `PracticeScreen` snapshots the finishing iteration's `beatJudgments` into `prevLoopJudgments` (state) inside `onSeamlessRestart` **before** `reset()`, so the outgoing ghost keeps its judged/hollow look instead of flashing fresh; cleared on Start/Stop. Measure lines and strum chord-changes are likewise repeated per rendered iteration.
@@ -258,6 +289,11 @@ public/
 - **Results celebration:** 3-star results render `<Confetti seed={result.timestamp} />` — 30 CSS pieces animated via `@keyframes confetti-fall` in `index.css` (`@theme` block). Encouraging message picked from `data/encouragements.ts` by `result.timestamp % bucket.length`. "Full Combo! 💯" badge when `counts.miss === 0 && totalTaps > 0`. Try-count line uses `best.attempts` (already includes the current attempt since `saveResult` runs before render). **No `Math.random()`/`new Date()` in render** — the `react-hooks/purity` ESLint rule flags impure calls; use seeded `mulberry32` in `useMemo` or module-level constants instead. Loop-mode 2s overlay deliberately has no celebration.
 - **Sticker achievements:** Definitions (id/emoji/name/description) in `data/stickers.ts`; one pure predicate per id in `utils/achievements.ts` `CHECKS`. `evaluateAndStoreAchievements(result)` is called in `App.tsx` from both `finishExercise` (after `saveResult`) and `showResults` (loop-exit path, already saved per-loop); it records the practice day (deduped local `YYYY-MM-DD`), persists newly earned ids, and returns them → `state.newStickers` → `ResultsScreen` → `StickerReveal`. `newStickers` is cleared on `navigate()`/`selectExercise()`. Sticker state lives under localStorage key `rhythmex-stickers` (`StickerState`: `earned` map + `practiceDays`). `StickerBookScreen` has subtle confirm-guarded reset links (testing/fresh-start): "Reset stickers" (`clearStickerState()` — earned stickers *and* practice days) and "Reset all progress" (additionally `clearAllScores()` — wipes `rhythmex-scores`, i.e. all stars/bests/attempts).
 - **Procedural exercise generator:** `utils/generator.ts` composes exercises from one-measure cells in `data/cells/` (monophonic, 4/4 only — `transportTimeToMs` hardcodes 4 beats/measure). Seeded `mulberry32`: picks 2 distinct cells, arranges AABA, BPM = difficulty base (70/85/95) ± 5. Handpan cells use scale degrees `"1"`-`"9"` mapped to d-kurd notes; strumming assigns one chord per measure from `strumProgressions` (diagram-covered chords only) and sets `key`/`chords`. **Daily Challenge** (ExerciseSelectScreen top card): seed = `hashStringToSeed(date + instrument)`, beginner/intermediate only, stable id `daily-YYYY-MM-DD` so scores persist all day. **Surprise Me** (per difficulty header): `Math.random()` seed in the click handler, id `surprise-<seed>`. Generated exercises ride `selectedExercise` through the normal App state machine — Retry/loop/results/saving work unchanged; `exerciseById()` won't find them (only used in tests). The `daily-`/`surprise-` id prefixes drive the 🌞/🎲 sticker predicates.
+- **Local players (profiles):** `rhythmex-profiles` holds `Profile[]` (`{ id, name, secret }`, max 6). Every per-player key is stored as `<key>::<profileId>` via `storage.ts`'s `profileKey()`, which reads a module-level active id set by `setActiveProfileId()` on login — so `loadScores()`/`saveResult()`/sticker/wallet/wardrobe callers never pass an id. **Add any new per-player key to `PROFILE_DATA_KEYS`** so `deleteProfile` removes it. `App` gates everything on a player: no profiles → `ProfileCreateScreen`; one → auto-login; several → `ProfilePickerScreen` (secret-picture login). `initialProfileId()` runs in a `useState` initializer. Moving old data: `createProfile` gives the **first** player the old unscoped `rhythmex-scores`/`rhythmex-stickers` (then deletes them) and seeds their wallet via `walletFromScores`. Grown-ups gate: `ParentGate` takes its addends as a prop, picked with `Math.random()` in the click handler (render stays pure).
+- **Star wallet:** `WalletState` (`rhythmex-wallet`) is separate from scores, so spending never lowers a record. `computePayout(wallet, result)` is pure: improvement over `paidBest[exerciseId::instrument]` pays the difference; otherwise ≥2★ pays `REPEAT_PAYOUT` (1) up to `REPEAT_DAILY_CAP` (10) per local day (`repeatDay` from `result.timestamp`). `surprise-` ids never pay improvements. `paidBest` lives in the wallet, not scores, so "Reset all progress" (scores + stickers only) can't be used to earn the same stars again. `creditResult` is called next to `saveResult` in both places that save: `App.finishExercise` and `useLoopMode.triggerLoopCompletion` (every loop round). `useLoopMode` totals `loopStarsEarned` (reset by `clearLastLoopResult`), which `PracticeScreen` passes as `onShowResults(result, starsEarned)` → `state.starsEarned` → Results "+N ⭐". Tests that mock `@/utils/storage` must also mock `@/utils/wallet` (`creditResult`).
+- **Avatars:** layered SVG in a shared 200×240 viewBox. All bodies share anchors (head centre (100,100) r≈44, torso x66–134 y140–206, right hand ≈(142,190)), which is what lets most items fit every body. `Avatar` draws in this order: back item → `BODY_ART[avatar].back` → torso → body/neck items → head → face item → hat → unicorn horn (default, or the `horn`-slot item) → hand item. Colour is applied by a Tailwind `fill-*` class on each item's `<g>`, and child shapes inherit it; fixed details set their own class. Palettes are **full literal class strings** in `data/avatarColors.ts`, never built with template strings. Art files export only data (`BODY_ART`, `ITEM_ART`) and use plain functions, not components, to keep `react-refresh/only-export-components` happy. Players without a wardrobe fall back to a plain unicorn (`getWardrobe`).
+- **Wardrobe & shop:** `WardrobeState` (`rhythmex-wardrobe`): `ownedAvatars`, `activeAvatar`, `ownedItems` (shared across avatars), `ownedColors` (keys `avatar.part.color` / `item.color`), `itemColors` (last colour per item) and `outfits` per avatar. All `utils/wardrobe.ts` operations are pure. `buy*` returns `{ wardrobe, wallet } | null` (null = unaffordable, already owned, or doesn't fit); `toggleItem`/`set*Color`/`switchAvatar` return the input unchanged when not allowed. Prices: avatars 20, items 3–8, extra colours `COLOR_PRICE` (2). The first colour is always free and human skin tones are always free (`bodyColorsFree`). **Try-on:** `ShopScreen` previews an `Offer` by running its `buy` against a wallet with `balance: Infinity` and never saves that result. `ShopScreen` persists on every change.
+- **Results avatar reaction:** `ResultsScreen` takes `look` and renders `Avatar` with `motion-safe:animate-avatar-{dance|bounce|wiggle}` for 3/2/1★ (keyframes in `index.css` `@theme`). There is never a sad reaction.
 
 - **Djembe — hand convention:** `beat.note` is `"stroke-hand"` where hand is **`strong`/`weak`**, never `right`/`left` (e.g. `"tone-strong"`). This matches the tradition: djembe notation encodes the hand by letter case (`B`/`b`, `T`/`t`, `S`/`s`) and the oral system encodes it in the syllable (**Gun/Dun** bass, **Go/Do** tone, **Pa/Ta** slap). Keeping data hand-agnostic means `settings.leftHanded` mirrors at render time only — `djembeHandSide(hand, leftHanded)` is the single place handedness resolves, so scoring never sees it. `DJEMBE_SYLLABLES` provides the traditional labels; components take `showSyllables` to swap `B`/`T`/`S` for `Gun`/`Dun`/…
 - **Djembe — stroke geometry:** On a real drum, bass is the centre (**furthest** reach) and tone/slap are at the rim (**nearest** the player), so `DJEMBE_RADIAL_ORDER` is `bass → tone → slap` inner-to-outer and both pad layouts put slap nearest the player. Tone and slap are played at almost the same spot in reality, differing by hand shape rather than position — so the tone/slap boundary gets the widest gutter on screen, supplying a separation the instrument doesn't.

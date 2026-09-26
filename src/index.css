@@ -13,6 +13,43 @@ body {
 @theme {
   --animate-confetti-fall: confetti-fall 1s linear forwards;
   --animate-sticker-pop: sticker-pop 0.5s ease-out forwards;
+  /* Results-screen avatar reactions: livelier for more stars, never sad. */
+  --animate-avatar-dance: avatar-dance 0.7s ease-in-out 4;
+  --animate-avatar-bounce: avatar-bounce 0.6s ease-in-out 3;
+  --animate-avatar-wiggle: avatar-wiggle 0.5s ease-in-out 2;
+
+  @keyframes avatar-dance {
+    0%, 100% {
+      transform: translateY(0) rotate(0deg);
+    }
+    25% {
+      transform: translateY(-14px) rotate(-8deg);
+    }
+    75% {
+      transform: translateY(-14px) rotate(8deg);
+    }
+  }
+
+  @keyframes avatar-bounce {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  @keyframes avatar-wiggle {
+    0%, 100% {
+      transform: rotate(0deg);
+    }
+    25% {
+      transform: rotate(-4deg);
+    }
+    75% {
+      transform: rotate(4deg);
+    }
+  }
 
   @keyframes confetti-fall {
     from {

@@ -8,7 +8,7 @@ Run `npm run dev` and open the app in a browser to execute these tests.
 ## Phase 1 — Scaffolding & App Shell
 
 ### 1.1 Home Screen
-- [ ] App loads without errors and displays the Home screen
+- [ ] App loads without errors and displays the Home screen (on a fresh device, the "New player" screen comes first — see Phase 6.5)
 - [ ] Home screen shows app title/branding
 - [ ] "Start" button is visible and has a 44px+ touch target
 - [ ] Background has a gradient (Layout component)
@@ -932,3 +932,32 @@ Covers `polyrhythm-never-going-back` (drums) and `handpan-polyrhythm-never-going
 - [ ] Before any tap, "Audio" shows a non-running state; after the first tap it reads `running`
 - [ ] Tapping a pad increments the "Taps" counter and updates "Last sched-ahead" / "Since last tap"
 - [ ] "Look-ahead" reflects the Tone.js scheduling delay (default ~100 ms) — this is the lever for diagnosing reactive-tap lag
+
+---
+
+## Phase 6.5 — Players, Star Wallet & Avatar Shop
+
+Scoring rules, wallet math, purchases, profile isolation and migration logic are covered by automated tests (`wallet`, `wardrobe`, `profiles`, `storage`, `ShopScreen`, `App` suites). These checks cover only what they can't: real storage across reloads, looks, feel and touch.
+
+### 12.1 Upgrade From an Existing Install (do once, before clearing storage)
+- [ ] On a browser that already has stars/stickers from before this update, reload — the "New player" screen shows "Welcome back! Your stars and stickers will be kept…"
+- [ ] Create the player — exercise cards still show the old best stars, the Sticker Book still shows old stickers, and Home's ⭐ balance equals the sum of old best stars
+- [ ] Replaying an old 3★ exercise pays only +1 ⭐ (not +3 again)
+
+### 12.2 Persistence & Switching
+- [ ] Create two players, earn stars as one, reload the page — the picker appears; each player sees only their own stars, stickers, balance and outfit
+- [ ] Log in with the wrong secret picture → "Oops — try again!"; the right one → Home
+- [ ] Grown-ups link → answer the sum → secret pictures are visible; deleting a player removes their tile (and doesn't touch the other player)
+
+### 12.3 Avatar Art & Shop Look (phone, portrait)
+- [ ] All three buddies are clearly readable at every size (picker tile, Home, shop preview); the white unicorn stands out from white cards
+- [ ] Try on several items per slot on each buddy — hats sit on the head, glasses on the eyes, cape/wings behind the body, wand/book/broom in the right hand; nothing looks badly misplaced
+- [ ] Colour swatches are distinguishable, and the "2⭐" price badge on locked swatches is legible
+- [ ] Shop tabs, tiles and the buy bar fit without horizontal scrolling on a small phone (≈360px wide)
+- [ ] Every tile and swatch is easy to tap with a finger (no double-tap zoom)
+
+### 12.4 Results Reaction
+- [ ] 3★ — avatar dances alongside the confetti; 2★ — bounces; 1★ — gentle wiggle (never looks sad)
+- [ ] With the OS "reduce motion" setting on, the avatar stays still
+- [ ] "+N ⭐" appears under the accuracy when stars were earned, and Home's balance goes up by the same amount
+- [ ] Loop mode: play several loops, press Stop — Results shows the total earned across all loops

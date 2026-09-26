@@ -28,7 +28,7 @@ export function StickerBookScreen({ onBack }: StickerBookScreenProps) {
   const handleFullReset = () => {
     if (
       window.confirm(
-        'Clear ALL progress — stickers, stars, and best scores? This cannot be undone.',
+        'Clear ALL progress — stickers, stars, and best scores? Shop stars and outfits are kept. This cannot be undone.',
       )
     ) {
       clearStickerState()

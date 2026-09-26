@@ -32,7 +32,7 @@ interface PracticeScreenProps {
   onBack: () => void
   initialBpm?: number
   onSpeedTrainerBpmChange?: (nextBpm: number | null) => void
-  onShowResults?: (result: ExerciseResult) => void
+  onShowResults?: (result: ExerciseResult, starsEarned: number) => void
 }
 
 export function PracticeScreen({ exercise, instrument, onFinish, onBack, initialBpm, onSpeedTrainerBpmChange, onShowResults }: PracticeScreenProps) {
@@ -71,7 +71,7 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
   const currentBpmRef = useRef(0)
   const onSpeedTrainerBpmChangeRef = useRef(onSpeedTrainerBpmChange)
 
-  const { loopOverlay, lastLoopResult, triggerLoopCompletion, dismissOverlay } = useLoopMode({
+  const { loopOverlay, lastLoopResult, loopStarsEarned, triggerLoopCompletion, dismissOverlay } = useLoopMode({
     seamlessLoop: settings.seamlessLoop,
     onSeamlessRestart: (nextBpm) => {
       // Snapshot the finished iteration's judgments for the exiting ghost, then
@@ -458,7 +458,7 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
     }
     // If we have a last loop result, show full results screen
     if (lastLoopResult && onShowResults) {
-      onShowResults(lastLoopResult)
+      onShowResults(lastLoopResult, loopStarsEarned)
       return
     }
   }

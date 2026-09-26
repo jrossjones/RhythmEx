@@ -139,6 +139,10 @@ vi.mock('@/utils/storage', () => ({
   saveResult: vi.fn(),
 }))
 
+vi.mock('@/utils/wallet', () => ({
+  creditResult: vi.fn(() => 0),
+}))
+
 import { saveResult } from '@/utils/storage'
 import { PracticeScreen } from '../PracticeScreen'
 const mockSaveResult = vi.mocked(saveResult)

@@ -5,9 +5,10 @@ import { Button } from '@/components/ui/Button'
 import { StarDisplay } from '@/components/ui/StarDisplay'
 import { Confetti } from '@/components/ui/Confetti'
 import { StickerReveal } from '@/components/ui/StickerReveal'
+import { Avatar } from '@/components/avatar/Avatar'
 import { getBestScore } from '@/utils/storage'
 import { encouragements } from '@/data/encouragements'
-import type { ExerciseResult, StickerDefinition, TimingJudgment } from '@/types'
+import type { AvatarLook, ExerciseResult, StarRating, StickerDefinition, TimingJudgment } from '@/types'
 
 interface ResultsScreenProps {
   result: ExerciseResult
@@ -16,6 +17,10 @@ interface ResultsScreenProps {
   onNewExercise: () => void
   speedTrainerNextBpm?: number
   newStickers?: StickerDefinition[]
+  /** Stars paid into the wallet for this attempt (or the whole loop session). */
+  starsEarned?: number
+  /** The player's avatar, which reacts to the star rating. */
+  look?: AvatarLook
 }
 
 const judgmentColors: Record<TimingJudgment, string> = {
@@ -23,6 +28,13 @@ const judgmentColors: Record<TimingJudgment, string> = {
   early: 'bg-yellow-500',
   late: 'bg-orange-500',
   miss: 'bg-red-500',
+}
+
+// Class names written in full so Tailwind finds them. motion-safe respects reduced-motion settings.
+const avatarReactions: Record<StarRating, string> = {
+  3: 'motion-safe:animate-avatar-dance',
+  2: 'motion-safe:animate-avatar-bounce',
+  1: 'motion-safe:animate-avatar-wiggle',
 }
 
 const judgmentLabels: Record<TimingJudgment, string> = {
@@ -39,6 +51,8 @@ export function ResultsScreen({
   onNewExercise,
   speedTrainerNextBpm,
   newStickers,
+  starsEarned,
+  look,
 }: ResultsScreenProps) {
   const counts = useMemo(() => {
     const c: Record<TimingJudgment, number> = {
@@ -77,6 +91,9 @@ export function ResultsScreen({
       <Navigation title={exerciseName} />
 
       <div className="flex flex-col items-center gap-6 pt-4 text-center">
+        {/* Avatar reaction */}
+        {look && <Avatar look={look} className={`origin-bottom ${avatarReactions[result.stars]}`} />}
+
         {/* Stars */}
         <StarDisplay stars={result.stars} size="lg" />
 
@@ -89,6 +106,16 @@ export function ResultsScreen({
         <p className="text-4xl font-bold text-gray-800">
           {Math.round(result.accuracy)}%
         </p>
+
+        {/* Wallet payout */}
+        {starsEarned !== undefined && starsEarned > 0 && (
+          <span
+            className="rounded-full bg-amber-100 px-4 py-1 text-lg font-bold text-amber-700"
+            data-testid="stars-earned"
+          >
+            +{starsEarned} ⭐
+          </span>
+        )}
 
         {/* New stickers */}
         {newStickers && newStickers.length > 0 && (

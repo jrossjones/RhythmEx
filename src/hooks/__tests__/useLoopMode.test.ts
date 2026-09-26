@@ -7,8 +7,14 @@ vi.mock('@/utils/storage', () => ({
   saveResult: vi.fn(),
 }))
 
+vi.mock('@/utils/wallet', () => ({
+  creditResult: vi.fn(() => 2),
+}))
+
 import { saveResult } from '@/utils/storage'
+import { creditResult } from '@/utils/wallet'
 const mockSaveResult = vi.mocked(saveResult)
+const mockCreditResult = vi.mocked(creditResult)
 
 const baseResult: ExerciseResult = {
   exerciseId: 'e1',
@@ -148,5 +154,28 @@ describe('useLoopMode', () => {
     })
 
     expect(onSeamless).toHaveBeenCalledWith(undefined)
+  })
+
+  it('credits every loop to the wallet and totals the stars earned', () => {
+    mockCreditResult.mockClear()
+    const { result } = renderHook(() =>
+      useLoopMode({ seamlessLoop: true, onSeamlessRestart: vi.fn(), onOverlayRestart: vi.fn() })
+    )
+
+    act(() => {
+      result.current.triggerLoopCompletion(baseResult)
+    })
+    act(() => {
+      result.current.triggerLoopCompletion(baseResult)
+    })
+
+    expect(mockCreditResult).toHaveBeenCalledTimes(2)
+    expect(mockCreditResult).toHaveBeenCalledWith(baseResult)
+    expect(result.current.loopStarsEarned).toBe(4)
+
+    act(() => {
+      result.current.clearLastLoopResult()
+    })
+    expect(result.current.loopStarsEarned).toBe(0)
   })
 })
