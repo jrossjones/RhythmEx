@@ -363,11 +363,26 @@ The technique drills (Ex 1–5, 11, 12) need no verification — they are drills
 1. ~~`transportTimeToMs` triplet support + tests (§2.1)~~ — ✅ **DONE**, 7 new tests
 2. ~~Cross-instrument touch fixes (gotchas 4, 5)~~ — ✅ **DONE**
 3. ~~Per-pad judgment flash (gotcha 1)~~ — ✅ **DONE**, 3 new tests
-4. `'djembe'` instrument type; `DjembePadFan` + `DjembePadGrid` behind a `padLayout` setting; synths with strong/weak asymmetry (§2.2)
-5. Timeline: lane-per-stroke, colour-per-hand, adaptive lane count (§12.5)
-6. Strict-mode `"stroke-hand"` comparison in `useTiming`
-7. `data/exercises/djembe-beginner.ts` (Ex 1–12) and `djembe-intermediate.ts` (Ex 13–20), registered in `data/exercises/index.ts` — **gated on §9.4 pattern verification**
-8. Per the `CLAUDE.md` spec-change protocol: update `MANUAL_TESTS.md` (six-input pads, both layouts, triplet timeline, strict-mode hand enforcement, safe-area/touch behaviour) and `CLAUDE.md` (djembe architecture decisions, `feel` field, exercise count 30 → 50)
+4. ~~`'djembe'` instrument type; `DjembePadFan` + `DjembePadGrid` behind a `padLayout` setting; synths with strong/weak asymmetry (§2.2)~~ — ✅ **DONE**
+5. ~~Timeline: lane-per-stroke, colour-per-hand, adaptive lane count (§12.5)~~ — ✅ **DONE**
+6. ~~Strict-mode `"stroke-hand"` comparison in `useTiming`~~ — ✅ **DONE, no code needed.** Free mode already judges timing only, and strict mode already compares `pad !== expectedNote` on the whole note string, which for djembe *is* `"stroke-hand"`. So strict mode enforces stroke **and** hand and free mode ignores both, exactly as decided — no djembe branch was added.
+7. The 7 verification-free technique drills (Ex 1–5, 11, 12) — ✅ **DONE** in `data/exercises/djembe-beginner.ts`. The 13 traditional rhythms (Ex 6–10, 13–20) remain **gated on §9.4 pattern verification**.
+8. Per the `CLAUDE.md` spec-change protocol: `CLAUDE.md` — ✅ **DONE**. `MANUAL_TESTS.md` — **still to do** (six-input pads, both layouts, left-handed mirroring, triplet timeline, strict-mode hand enforcement, safe-area/touch behaviour).
+
+### What was built
+
+| Area | Files |
+| --- | --- |
+| Types | `DjembeStroke`, `DjembeHand`, `DjembeNote`, `PadLayout`; `'djembe'` in `InstrumentType`; `padLayout` + `leftHanded` in `PracticeSettings` |
+| Constants | `DJEMBE_*` in `timelineConstants.ts` — lane/radial order, hand colours + SVG fills, shapes, syllables, `parseDjembeNote`, `djembeNote`, `djembeHandSide` |
+| Pads | `DjembePad` (wrapper), `DjembePadFan` (SVG sectors), `DjembePadGrid` |
+| Timeline | `VerticalDjembeTimeline`; djembe branch + per-instrument constants in `VerticalTimeline` |
+| Audio | `playDjembe(stroke, hand)` in `useAudio` — 2 membrane synths + 2 filtered noise chains |
+| Wiring | `PracticeScreen` (handler, active strokes, render branch), `useDemoMode`, `SettingsPopover`, `InstrumentSelectScreen` |
+| Data | `djembe-beginner.ts` (7 drills), `djembeCells.ts` (generator cells) |
+| Tests | +28 — `DjembePad.test.tsx` (17), `VerticalDjembeTimeline.test.tsx` (7), plus djembe audio and stroke-extraction cases. **468 total, all passing** |
+
+Fan geometry was verified numerically: every extreme point lands inside the 348 × 225 viewBox, with band thicknesses 74 / 64 / 62 px and per-hand arc lengths 65 / 114 / 161 px — matching §12.4's table.
 
 ## 11. Open items
 

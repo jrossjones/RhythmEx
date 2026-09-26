@@ -1,4 +1,4 @@
-import type { DrumPad, TimingJudgment } from '@/types'
+import type { DjembeHand, DjembeNote, DjembeStroke, DrumPad, TimingJudgment } from '@/types'
 
 export type MarkerShape = 'circle' | 'diamond' | 'square' | 'triangle' | 'rounded-rect' | 'line'
 export type HandpanRegister = 'low' | 'mid' | 'high'
@@ -187,6 +187,126 @@ export function handpanNoteOffset(noteIndex: number, toneFieldCount: number): nu
   const pos = ringPos === -1 ? noteIndex - 1 : ringPos
   const angle = (2 * Math.PI * pos) / toneFieldCount - Math.PI / 2
   return 0.5 + Math.cos(angle) * 0.35
+}
+
+// ---------------------------------------------------------------------------
+// Djembe
+// ---------------------------------------------------------------------------
+
+/**
+ * Lane order, left to right. High to low, matching DRUM_COLUMN_ORDER's
+ * convention (hihat leftmost, kick rightmost).
+ */
+export const DJEMBE_LANE_ORDER: DjembeStroke[] = ['slap', 'tone', 'bass']
+
+/**
+ * Radial order on the drum head, inner (drum centre, furthest reach) to outer
+ * (rim, nearest the player). Drives the fan layout's band order and the grid's
+ * row order — see DJEMBE_LESSON_PLAN.md §12.2.
+ */
+export const DJEMBE_RADIAL_ORDER: DjembeStroke[] = ['bass', 'tone', 'slap']
+
+export const DJEMBE_STROKE_LABELS: Record<DjembeStroke, string> = {
+  bass: 'B',
+  tone: 'T',
+  slap: 'S',
+}
+
+export const DJEMBE_STROKE_NAMES: Record<DjembeStroke, string> = {
+  bass: 'Bass',
+  tone: 'Tone',
+  slap: 'Slap',
+}
+
+/**
+ * Traditional oral notation. The syllable encodes both stroke and hand, which
+ * is how these rhythms are taught by ear — see DJEMBE_LESSON_PLAN.md §3.1.
+ */
+export const DJEMBE_SYLLABLES: Record<DjembeStroke, Record<DjembeHand, string>> = {
+  bass: { strong: 'Gun', weak: 'Dun' },
+  tone: { strong: 'Go', weak: 'Do' },
+  slap: { strong: 'Pa', weak: 'Ta' },
+}
+
+/**
+ * Hand is encoded by colour, stroke by lane position + shape — the split
+ * Melodics uses (blue left hand, yellow right hand). Two hues rather than six
+ * keeps it readable while scrolling and survives red-green colourblindness.
+ */
+export const DJEMBE_HAND_COLORS: Record<DjembeHand, string> = {
+  strong: 'bg-amber-400',
+  weak: 'bg-blue-500',
+}
+
+export const DJEMBE_HAND_MUTED_COLORS: Record<DjembeHand, string> = {
+  strong: 'bg-amber-200',
+  weak: 'bg-blue-200',
+}
+
+/** SVG fill equivalents of DJEMBE_HAND_COLORS, for the fan layout's paths. */
+export const DJEMBE_HAND_FILLS: Record<DjembeHand, string> = {
+  strong: '#fbbf24', // amber-400
+  weak: '#3b82f6', // blue-500
+}
+
+export const DJEMBE_HAND_MUTED_FILLS: Record<DjembeHand, string> = {
+  strong: '#fde68a', // amber-200
+  weak: '#bfdbfe', // blue-200
+}
+
+/** Judgment flash fills for the fan's SVG paths (mirrors feedbackColors). */
+export const DJEMBE_JUDGMENT_FILLS: Record<TimingJudgment, string> = {
+  'on-time': '#4ade80', // green-400
+  early: '#facc15', // yellow-400
+  late: '#facc15',
+  miss: '#dc2626', // red-600
+}
+
+/** Reuses the drum shape vocabulary: low → circle, mid → diamond, high → triangle. */
+export const DJEMBE_STROKE_SHAPES: Record<DjembeStroke, MarkerShape> = {
+  bass: 'circle',
+  tone: 'diamond',
+  slap: 'triangle',
+}
+
+export const DJEMBE_LANE_WIDTH = 108
+
+/**
+ * Djembe gets a denser vertical grid and a shorter timeline than drums: three
+ * pad rows need the height, and the tighter packing still yields *more*
+ * lookahead (3.0 beats vs 2.6). See DJEMBE_LESSON_PLAN.md §12.1.
+ */
+export const PX_PER_BEAT_VERTICAL_DJEMBE = 56
+export const VERTICAL_TIMELINE_HEIGHT_DJEMBE = 240
+
+/** Split a "stroke-hand" note into its parts. Returns null if malformed. */
+export function parseDjembeNote(
+  note: string
+): { stroke: DjembeStroke; hand: DjembeHand } | null {
+  const [stroke, hand] = note.split('-')
+  if (
+    (stroke === 'bass' || stroke === 'tone' || stroke === 'slap') &&
+    (hand === 'strong' || hand === 'weak')
+  ) {
+    return { stroke, hand }
+  }
+  return null
+}
+
+/** Build a "stroke-hand" note. */
+export function djembeNote(stroke: DjembeStroke, hand: DjembeHand): DjembeNote {
+  return `${stroke}-${hand}`
+}
+
+/**
+ * Physical screen side a hand occupies. Strong hand sits right for a
+ * right-handed player and left for a left-handed one; this is the only place
+ * handedness is resolved, so scoring never sees it.
+ */
+export function djembeHandSide(hand: DjembeHand, leftHanded: boolean): 'left' | 'right' {
+  const strongIsRight = !leftHanded
+  if (hand === 'strong') return strongIsRight ? 'right' : 'left'
+  return strongIsRight ? 'left' : 'right'
 }
 
 // Strumming timeline constants

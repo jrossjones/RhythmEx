@@ -11,6 +11,7 @@ const instruments: { type: InstrumentType; label: string; emoji: string; color: 
   { type: 'drums', label: 'Drums', emoji: '\uD83E\uDD41', color: 'from-orange-400 to-red-500' },
   { type: 'handpan', label: 'Handpan', emoji: '\uD83C\uDFB6', color: 'from-teal-400 to-cyan-500' },
   { type: 'strumming', label: 'Strumming', emoji: '\uD83C\uDFB8', color: 'from-blue-400 to-indigo-500' },
+  { type: 'djembe', label: 'Djembe', emoji: '\uD83E\uDE98', color: 'from-amber-400 to-orange-600' },
 ]
 
 export function InstrumentSelectScreen({ onSelect, onBack }: InstrumentSelectScreenProps) {

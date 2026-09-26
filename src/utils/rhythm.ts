@@ -1,4 +1,5 @@
-import type { DrumPad, Exercise, Feel } from '@/types'
+import type { DjembeStroke, DrumPad, Exercise, Feel } from '@/types'
+import { DJEMBE_LANE_ORDER, parseDjembeNote } from '@/components/practice/timelineConstants'
 
 /** Sub-beat divisions per beat for each feel. */
 const SUBDIVISIONS_PER_BEAT: Record<Feel, number> = {
@@ -63,6 +64,22 @@ export function exerciseDrumPads(exercise: Exercise): DrumPad[] {
     pads.add(beat.note as DrumPad)
   }
   return [...pads]
+}
+
+/**
+ * Get the distinct djembe strokes an exercise uses, in canonical lane order.
+ *
+ * Drives adaptive lane count on the timeline the same way `exerciseDrumPads`
+ * drives DrumPad's adaptive grid — a single-stroke drill shows one lane, not
+ * three, so beginners never face the full highway.
+ */
+export function exerciseDjembeStrokes(exercise: Exercise): DjembeStroke[] {
+  const used = new Set<DjembeStroke>()
+  for (const beat of exercise.beats) {
+    const parsed = parseDjembeNote(beat.note)
+    if (parsed) used.add(parsed.stroke)
+  }
+  return DJEMBE_LANE_ORDER.filter((s) => used.has(s))
 }
 
 /**

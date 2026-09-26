@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback, useEffect } from 'react'
 import * as Tone from 'tone'
-import type { DrumPad, StrumDirection } from '@/types'
+import type { DjembeHand, DjembeStroke, DrumPad, StrumDirection } from '@/types'
 import { getChord } from '@/data/chords'
 
 interface Synths {
@@ -13,6 +13,31 @@ interface Synths {
   handpan: Tone.PolySynth
   reverb: Tone.Reverb
   strumming: Tone.Sampler
+  djembeBass: Tone.MembraneSynth
+  djembeTone: Tone.MembraneSynth
+  // Slap gets one chain per hand rather than a shared, mutated filter: the
+  // weak hand's duller attack is a different cutoff, and re-tuning a shared
+  // filter mid-phrase would race with the previous note still ringing.
+  djembeSlapStrong: Tone.NoiseSynth
+  djembeSlapStrongFilter: Tone.Filter
+  djembeSlapWeak: Tone.NoiseSynth
+  djembeSlapWeakFilter: Tone.Filter
+}
+
+/**
+ * Strong/weak asymmetry. A player's weak hand strikes with less force and
+ * slightly less definition, and the strong hand leads the phrase — so the two
+ * hands must not sound identical. Same approach as playStrum's up/down
+ * differentiation (velocity 1.0 vs 0.6).
+ */
+const DJEMBE_VELOCITY: Record<DjembeHand, number> = { strong: 1, weak: 0.75 }
+
+/** Weak-hand strikes land ~15 cents flat from the softer contact. */
+const DJEMBE_WEAK_DETUNE = 0.991
+
+const DJEMBE_STROKE_PITCH: Record<'bass' | 'tone', string> = {
+  bass: 'C1',
+  tone: 'G2',
 }
 
 // Live audio-scheduling stats for the debug overlay. Updated on every tap-driven
@@ -27,6 +52,7 @@ export interface UseAudioReturn {
   playDrum: (pad: DrumPad) => void
   playHandpan: (note: string) => void
   playStrum: (chord: string, direction: StrumDirection) => void
+  playDjembe: (stroke: DjembeStroke, hand: DjembeHand) => void
   playMetronomeClick: (accent?: boolean) => void
   startAudioContext: () => Promise<void>
   isAudioReady: boolean
@@ -120,9 +146,53 @@ export function useAudio(): UseAudioReturn {
       release: 0.5,
     }).toDestination()
 
+    // Djembe: bass = full palm in the centre (low, resonant), tone = fingers
+    // on the skin near the rim (mid, shorter), slap = fingertips at the rim
+    // (sharp filtered noise). Reuses the drum-synth approach, no new samples.
+    const djembeBass = new Tone.MembraneSynth({
+      pitchDecay: 0.06,
+      octaves: 5,
+      envelope: { attack: 0.001, decay: 0.5, sustain: 0, release: 0.4 },
+    }).toDestination()
+
+    const djembeTone = new Tone.MembraneSynth({
+      pitchDecay: 0.03,
+      octaves: 3,
+      envelope: { attack: 0.001, decay: 0.22, sustain: 0, release: 0.15 },
+    }).toDestination()
+
+    const djembeSlapStrongFilter = new Tone.Filter(2200, 'highpass').toDestination()
+    const djembeSlapStrong = new Tone.NoiseSynth({
+      noise: { type: 'white' },
+      envelope: { attack: 0.001, decay: 0.09, sustain: 0, release: 0.05 },
+    }).connect(djembeSlapStrongFilter)
+
+    // Weak hand: lower cutoff = duller attack, shorter decay = less carry.
+    const djembeSlapWeakFilter = new Tone.Filter(1500, 'highpass').toDestination()
+    const djembeSlapWeak = new Tone.NoiseSynth({
+      noise: { type: 'white' },
+      envelope: { attack: 0.001, decay: 0.07, sustain: 0, release: 0.04 },
+    }).connect(djembeSlapWeakFilter)
+
     await Tone.loaded()
 
-    return { kick, snare, hihat, tom1, tom2, metronome, handpan, reverb, strumming }
+    return {
+      kick,
+      snare,
+      hihat,
+      tom1,
+      tom2,
+      metronome,
+      handpan,
+      reverb,
+      strumming,
+      djembeBass,
+      djembeTone,
+      djembeSlapStrong,
+      djembeSlapStrongFilter,
+      djembeSlapWeak,
+      djembeSlapWeakFilter,
+    }
   }, [])
 
   const startAudioContext = useCallback(async () => {
@@ -189,6 +259,26 @@ export function useAudio(): UseAudioReturn {
     })
   }, [recordTapDebug])
 
+  const playDjembe = useCallback((stroke: DjembeStroke, hand: DjembeHand) => {
+    const synths = synthsRef.current
+    if (!synths) return
+
+    const now = Tone.now()
+    recordTapDebug(now)
+    const velocity = DJEMBE_VELOCITY[hand]
+
+    if (stroke === 'slap') {
+      const slap = hand === 'strong' ? synths.djembeSlapStrong : synths.djembeSlapWeak
+      slap.triggerAttackRelease('16n', now, velocity)
+      return
+    }
+
+    const synth = stroke === 'bass' ? synths.djembeBass : synths.djembeTone
+    const hz = Tone.Frequency(DJEMBE_STROKE_PITCH[stroke]).toFrequency()
+    const pitch = hand === 'weak' ? hz * DJEMBE_WEAK_DETUNE : hz
+    synth.triggerAttackRelease(pitch, stroke === 'bass' ? '8n' : '16n', now, velocity)
+  }, [recordTapDebug])
+
   const playMetronomeClick = useCallback((accent?: boolean) => {
     const synths = synthsRef.current
     if (!synths) return
@@ -210,10 +300,16 @@ export function useAudio(): UseAudioReturn {
         synths.handpan.dispose()
         synths.reverb.dispose()
         synths.strumming.dispose()
+        synths.djembeBass.dispose()
+        synths.djembeTone.dispose()
+        synths.djembeSlapStrong.dispose()
+        synths.djembeSlapStrongFilter.dispose()
+        synths.djembeSlapWeak.dispose()
+        synths.djembeSlapWeakFilter.dispose()
         synthsRef.current = null
       }
     }
   }, [])
 
-  return { playDrum, playHandpan, playStrum, playMetronomeClick, startAudioContext, isAudioReady, audioDebugRef }
+  return { playDrum, playHandpan, playStrum, playDjembe, playMetronomeClick, startAudioContext, isAudioReady, audioDebugRef }
 }

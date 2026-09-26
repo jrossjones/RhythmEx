@@ -2,8 +2,34 @@ import { describe, it, expect } from 'vitest'
 import { allExercises, exercisesByDifficulty, exerciseById } from '../index'
 
 describe('allExercises', () => {
-  it('contains 32 exercises total (10 drums + 10 handpan + 12 strumming)', () => {
-    expect(allExercises).toHaveLength(32)
+  it('contains 39 exercises total (10 drums + 10 handpan + 12 strumming + 7 djembe)', () => {
+    expect(allExercises).toHaveLength(39)
+  })
+
+  // Only the 7 verification-free technique drills exist so far; the 13
+  // traditional rhythms are gated on source verification (DJEMBE_LESSON_PLAN §9.4).
+  it('all djembe exercises have instrument: djembe and stroke-hand notes', () => {
+    const djembeExercises = allExercises.filter((e) => e.instrument === 'djembe')
+    expect(djembeExercises).toHaveLength(7)
+    for (const exercise of djembeExercises) {
+      for (const beat of exercise.beats) {
+        expect(beat.note).toMatch(/^(bass|tone|slap)-(strong|weak)$/)
+      }
+    }
+  })
+
+  it('djembe 12/8 drills use a triplet feel over 4/4', () => {
+    const triplet = allExercises.filter((e) => e.instrument === 'djembe' && e.feel === 'triplet')
+    expect(triplet).toHaveLength(2)
+    for (const exercise of triplet) {
+      expect(exercise.timeSignature).toEqual([4, 4])
+      // Triplet subdivisions only ever index 0-2.
+      for (const beat of exercise.beats) {
+        const sub = Number(beat.time.split(':')[2])
+        expect(sub).toBeGreaterThanOrEqual(0)
+        expect(sub).toBeLessThanOrEqual(2)
+      }
+    }
   })
 
   it('all exercises have required fields', () => {
@@ -68,7 +94,11 @@ describe('exercisesByDifficulty', () => {
 
   it('returns all beginner exercises when no instrument filter', () => {
     const exercises = exercisesByDifficulty('beginner')
-    expect(exercises).toHaveLength(12)
+    expect(exercises).toHaveLength(19)
+  })
+
+  it('returns the djembe drills for the djembe filter', () => {
+    expect(exercisesByDifficulty('beginner', 'djembe')).toHaveLength(7)
   })
 
   it('returns intermediate exercises for each instrument', () => {

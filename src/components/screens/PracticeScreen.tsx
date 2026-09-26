@@ -6,6 +6,7 @@ import { VerticalTimeline } from '@/components/practice/VerticalTimeline'
 import { TapZone } from '@/components/practice/TapZone'
 import { DrumPad } from '@/components/instruments/DrumPad'
 import { HandpanPad } from '@/components/instruments/HandpanPad'
+import { DjembePad } from '@/components/instruments/DjembePad'
 import { StrumZone } from '@/components/instruments/StrumZone'
 import { ResultsOverlay } from '@/components/practice/ResultsOverlay'
 import { SettingsPopover } from '@/components/practice/SettingsPopover'
@@ -19,9 +20,10 @@ import { useMetronome } from '@/hooks/useMetronome'
 import { useDemoMode } from '@/hooks/useDemoMode'
 import { useLoopMode } from '@/hooks/useLoopMode'
 import { calculateAccuracy, calculateStars } from '@/utils/scoring'
-import { beatTimesMs, exerciseDrumPads, exerciseDurationMs, msPerBeat } from '@/utils/rhythm'
+import { beatTimesMs, exerciseDjembeStrokes, exerciseDrumPads, exerciseDurationMs, msPerBeat } from '@/utils/rhythm'
+import { parseDjembeNote } from '@/components/practice/timelineConstants'
 import { getScale, DEFAULT_HANDPAN_SCALE } from '@/data/handpan/scales'
-import type { DrumPad as DrumPadType, Exercise, ExerciseResult, InstrumentType, PracticeSettings, StrumDirection, TapResult, TimingJudgment } from '@/types'
+import type { DjembeNote, DrumPad as DrumPadType, Exercise, ExerciseResult, InstrumentType, PracticeSettings, StrumDirection, TapResult, TimingJudgment } from '@/types'
 
 interface PracticeScreenProps {
   exercise: Exercise
@@ -43,6 +45,8 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
     seamlessLoop: false,
     speedTrainerStep: 5,
     debugStatsOn: false,
+    padLayout: 'fan',
+    leftHanded: false,
   })
 
   const [isDemoMode, setIsDemoMode] = useState(false)
@@ -56,7 +60,7 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
   // copy during a seamless loop so beats below the hit line don't flicker at the wrap.
   const [prevLoopJudgments, setPrevLoopJudgments] = useState<Map<number, TimingJudgment> | null>(null)
 
-  const { playDrum, playHandpan, playStrum, playMetronomeClick, startAudioContext, audioDebugRef } = useAudio()
+  const { playDrum, playHandpan, playStrum, playDjembe, playMetronomeClick, startAudioContext, audioDebugRef } = useAudio()
 
   // Refs to break circular dependency between useExercise and useTiming/settings
   const finalizeRef = useRef<() => TapResult[]>(() => [])
@@ -202,6 +206,13 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
 
   // Derive active pads and next expected pad for drums
   const activePads = useMemo(() => exerciseDrumPads(exercise), [exercise])
+
+  // Djembe lanes/pads follow the strokes the exercise actually uses, so a
+  // single-stroke drill shows one lane rather than the full three.
+  const activeStrokes = useMemo(
+    () => (instrument === 'djembe' ? exerciseDjembeStrokes(exercise) : []),
+    [instrument, exercise]
+  )
 
   const activeJudgments = isLearnMode ? learnBeatJudgments : beatJudgments
 
@@ -385,6 +396,30 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
     recordTap(note)
   }, [phase, isLearnMode, learnPhase, settings.tapSoundOn, playHandpan, recordTap, recordLearnTap, exercise.beats, learnBeatJudgments, startAudioContext])
 
+  // Djembe tap handler. Mirrors the others; the only djembe-specific part is
+  // splitting "stroke-hand" so the synth can apply the strong/weak asymmetry.
+  const handleDjembeTap = useCallback(async (note: string) => {
+    const parsed = parseDjembeNote(note)
+    if (!parsed) return
+    const sound = () => playDjembe(parsed.stroke, parsed.hand)
+
+    if (phase !== 'playing' && (!isLearnMode || learnPhase !== 'active')) {
+      await startAudioContext()
+      sound()
+      return
+    }
+    if (isLearnMode) {
+      recordLearnTap(note)
+      const expected = exercise.beats.find((_, i) => !learnBeatJudgments.has(i))
+      if (expected && note === expected.note) {
+        sound()
+      }
+      return
+    }
+    if (settings.tapSoundOn) sound()
+    recordTap(note)
+  }, [phase, isLearnMode, learnPhase, settings.tapSoundOn, playDjembe, recordTap, recordLearnTap, exercise.beats, learnBeatJudgments, startAudioContext])
+
   // Start with audio context
   const handleStart = useCallback(async () => {
     setPrevLoopJudgments(null)
@@ -476,6 +511,7 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
     playDrum,
     playHandpan,
     playStrum,
+    playDjembe,
   })
 
   return (
@@ -507,6 +543,7 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
             settings={settings}
             onSettingsChange={setSettings}
             disabled={!isIdle || isLearnMode}
+            instrument={instrument}
           />
         </div>
       </div>
@@ -551,6 +588,7 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
           instrument={instrument}
           tapMarkers={isLearnMode ? [] : tapMarkers}
           activePads={activePads}
+          activeStrokes={activeStrokes}
           scaleNotes={handpanScaleNotes}
           chordDiagramMode={chordDiagramMode}
           showLoopGhosts={settings.loopMode && settings.seamlessLoop && phase === 'playing' && !isLearnMode && !isDemoMode}
@@ -631,6 +669,16 @@ export function PracticeScreen({ exercise, instrument, onFinish, onBack, initial
             currentChord={currentChord}
             nextExpectedDirection={nextExpectedDirection}
             approachProgress={approachRings}
+          />
+        ) : instrument === 'djembe' ? (
+          <DjembePad
+            onTap={handleDjembeTap}
+            padFeedback={padFeedbackMap}
+            disabled={isDemoMode}
+            activeStrokes={activeStrokes}
+            nextExpectedNote={nextExpectedNote as DjembeNote | null}
+            layout={settings.padLayout}
+            leftHanded={settings.leftHanded}
           />
         ) : instrument === 'handpan' ? (
           <HandpanPad

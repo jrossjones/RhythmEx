@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
-import type { PracticeSettings } from '@/types'
+import type { InstrumentType, PracticeSettings } from '@/types'
 
 interface SettingsPopoverProps {
   settings: PracticeSettings
   onSettingsChange: (settings: PracticeSettings) => void
   disabled: boolean
+  /** Gates instrument-specific settings (djembe pad layout, handedness). */
+  instrument?: InstrumentType
 }
 
 interface ToggleProps {
@@ -38,7 +40,7 @@ function Toggle({ label, checked, onChange, disabled }: ToggleProps) {
   )
 }
 
-export function SettingsPopover({ settings, onSettingsChange, disabled }: SettingsPopoverProps) {
+export function SettingsPopover({ settings, onSettingsChange, disabled, instrument }: SettingsPopoverProps) {
   const [isOpen, setIsOpen] = useState(false)
   const popoverRef = useRef<HTMLDivElement>(null)
 
@@ -136,6 +138,39 @@ export function SettingsPopover({ settings, onSettingsChange, disabled }: Settin
                   label="Seamless"
                   checked={settings.seamlessLoop}
                   onChange={(val) => onSettingsChange({ ...settings, seamlessLoop: val })}
+                  disabled={disabled}
+                />
+              </div>
+            )}
+            {instrument === 'djembe' && (
+              <div className="mt-1 border-t border-gray-100 pt-1">
+                <div className="flex items-center justify-between gap-2 py-1">
+                  <span className="text-sm text-gray-700">Pads</span>
+                  <div className="flex items-center gap-1.5">
+                    {(['fan', 'grid'] as const).map((layout) => (
+                      <button
+                        key={layout}
+                        type="button"
+                        data-testid={`pad-layout-${layout}`}
+                        disabled={disabled}
+                        onClick={() => onSettingsChange({ ...settings, padLayout: layout })}
+                        className={`rounded-md px-2 py-0.5 text-xs font-bold capitalize transition-colors ${
+                          disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                        } ${
+                          settings.padLayout === layout
+                            ? 'bg-amber-500 text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        {layout}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <Toggle
+                  label="Left-handed"
+                  checked={settings.leftHanded}
+                  onChange={(val) => onSettingsChange({ ...settings, leftHanded: val })}
                   disabled={disabled}
                 />
               </div>

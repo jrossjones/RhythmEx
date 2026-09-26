@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { beatTimesMs } from '@/utils/rhythm'
-import type { DrumPad, Exercise, ExercisePhase, InstrumentType, StrumDirection } from '@/types'
+import { parseDjembeNote } from '@/components/practice/timelineConstants'
+import type { DjembeHand, DjembeStroke, DrumPad, Exercise, ExercisePhase, InstrumentType, StrumDirection } from '@/types'
 
 interface UseDemoModeOptions {
   phase: ExercisePhase
@@ -12,6 +13,7 @@ interface UseDemoModeOptions {
   playDrum: (pad: DrumPad) => void
   playHandpan: (note: string) => void
   playStrum: (chord: string, direction: StrumDirection) => void
+  playDjembe?: (stroke: DjembeStroke, hand: DjembeHand) => void
 }
 
 export function useDemoMode({
@@ -24,14 +26,17 @@ export function useDemoMode({
   playDrum,
   playHandpan,
   playStrum,
+  playDjembe,
 }: UseDemoModeOptions): void {
   const playDrumRef = useRef(playDrum)
   const playHandpanRef = useRef(playHandpan)
   const playStrumRef = useRef(playStrum)
+  const playDjembeRef = useRef(playDjembe)
   useEffect(() => {
     playDrumRef.current = playDrum
     playHandpanRef.current = playHandpan
     playStrumRef.current = playStrum
+    playDjembeRef.current = playDjembe
   })
 
   useEffect(() => {
@@ -55,6 +60,9 @@ export function useDemoMode({
               exercise.beats[i].chord ?? '',
               exercise.beats[i].note as StrumDirection
             )
+          } else if (instrument === 'djembe') {
+            const parsed = parseDjembeNote(exercise.beats[i].note)
+            if (parsed) playDjembeRef.current?.(parsed.stroke, parsed.hand)
           }
         }
       }

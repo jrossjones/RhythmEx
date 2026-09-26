@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import type { DrumPad, Exercise, InstrumentType, TapMarker, TimingJudgment } from '@/types'
+import type { DjembeStroke, DrumPad, Exercise, InstrumentType, TapMarker, TimingJudgment } from '@/types'
 import { beatTimesMs, exerciseDurationMs, msPerBeat } from '@/utils/rhythm'
 import { VerticalDrumTimeline } from './VerticalDrumTimeline'
 import { VerticalSingleTimeline } from './VerticalSingleTimeline'
@@ -22,8 +22,16 @@ import {
   VERTICAL_TIMELINE_HEIGHT,
   STRUM_DIRECTION_COLORS,
   STRUM_DIRECTION_LABELS,
+  DJEMBE_HAND_COLORS,
+  DJEMBE_STROKE_SHAPES,
+  DJEMBE_SYLLABLES,
+  DJEMBE_STROKE_LABELS,
+  PX_PER_BEAT_VERTICAL_DJEMBE,
+  VERTICAL_TIMELINE_HEIGHT_DJEMBE,
+  parseDjembeNote,
   type StrumDirection,
 } from './timelineConstants'
+import { VerticalDjembeTimeline } from './VerticalDjembeTimeline'
 
 interface VerticalTimelineProps {
   exercise: Exercise
@@ -33,8 +41,11 @@ interface VerticalTimelineProps {
   instrument?: InstrumentType
   tapMarkers?: TapMarker[]
   activePads?: DrumPad[]
+  activeStrokes?: DjembeStroke[]
   scaleNotes?: string[]
   chordDiagramMode?: 'fixed' | 'scroll'
+  /** Label djembe markers with the traditional syllables instead of B/T/S. */
+  showSyllables?: boolean
   // Seamless-loop continuous scroll: also render the incoming (next) and
   // outgoing (previous) iterations so the wrap has no visual jump.
   showLoopGhosts?: boolean
@@ -49,27 +60,33 @@ export function VerticalTimeline({
   instrument,
   tapMarkers,
   activePads = [],
+  activeStrokes = [],
   scaleNotes = [],
   chordDiagramMode = 'fixed',
+  showSyllables = false,
   showLoopGhosts = false,
   prevBeatJudgments = null,
 }: VerticalTimelineProps) {
   const isDrum = instrument === 'drums'
   const isHandpan = instrument === 'handpan'
   const isStrumming = instrument === 'strumming'
+  const isDjembe = instrument === 'djembe'
 
   const exerciseWithBpm = useMemo(() => ({ ...exercise, bpm }), [exercise, bpm])
   const durationMs = exerciseDurationMs(exerciseWithBpm)
   const times = beatTimesMs(exerciseWithBpm)
 
-  const containerHeight = VERTICAL_TIMELINE_HEIGHT
+  // Djembe packs the vertical grid tighter and runs a shorter timeline so three
+  // pad rows fit on a small phone — which nets *more* lookahead, not less (§12.1).
+  const containerHeight = isDjembe ? VERTICAL_TIMELINE_HEIGHT_DJEMBE : VERTICAL_TIMELINE_HEIGHT
+  const pxPerBeat = isDjembe ? PX_PER_BEAT_VERTICAL_DJEMBE : PX_PER_BEAT_VERTICAL
   const hitLineY = containerHeight * HIT_LINE_POSITION_VERTICAL
 
   // Calculate rendered height with padding so playhead can stay at hit line
   // for the entire exercise. Beats drop from top toward the hit line.
   const [beatsPerMeasure] = exercise.timeSignature
   const totalBeats = exercise.measures * beatsPerMeasure
-  const exercisePixels = totalBeats * PX_PER_BEAT_VERTICAL
+  const exercisePixels = totalBeats * pxPerBeat
   const topPadding = containerHeight - hitLineY  // space above for future beats to enter
   const bottomPadding = hitLineY                 // space below for past beats to exit
   const renderedHeight = exercisePixels + topPadding + bottomPadding
@@ -149,13 +166,18 @@ export function VerticalTimeline({
     const yPosition = topPadding + (1 - (frac + iterationOffset)) * exercisePixels
     const judgment = judgments?.get(i)
 
+    // Djembe: colour carries the HAND, not the stroke — stroke is already
+    // unambiguous from lane position and marker shape (§12.5).
+    const djembeParts = isDjembe ? parseDjembeNote(beat.note) : null
     const baseColor = isDrum
       ? (DRUM_PAD_COLORS[beat.note as keyof typeof DRUM_PAD_COLORS] ?? 'bg-gray-400')
       : isHandpan
         ? (HANDPAN_NOTE_COLORS[pitchClass(beat.note)] ?? 'bg-gray-400')
         : isStrumming
           ? (STRUM_DIRECTION_COLORS[beat.note as StrumDirection] ?? 'bg-gray-400')
-          : (DURATION_COLORS[beat.duration] ?? 'bg-gray-400')
+          : djembeParts
+            ? DJEMBE_HAND_COLORS[djembeParts.hand]
+            : (DURATION_COLORS[beat.duration] ?? 'bg-gray-400')
     const color = judgment ? JUDGMENT_COLORS[judgment] : baseColor
     const isNext = iterationOffset === 0 && i === nextBeatIndex && !judgment
     const isJudged = !!judgment
@@ -188,6 +210,11 @@ export function VerticalTimeline({
       shape = 'triangle'
       rotation = beat.note === 'down' ? 180 : 0
       label = STRUM_DIRECTION_LABELS[beat.note as StrumDirection]
+    } else if (djembeParts) {
+      shape = DJEMBE_STROKE_SHAPES[djembeParts.stroke]
+      label = showSyllables
+        ? DJEMBE_SYLLABLES[djembeParts.stroke][djembeParts.hand]
+        : DJEMBE_STROKE_LABELS[djembeParts.stroke]
     }
 
     return {
@@ -261,6 +288,18 @@ export function VerticalTimeline({
           containerHeight={containerHeight}
           chordChanges={chordChanges}
           chordDiagramMode={chordDiagramMode}
+          loopBoundaryLines={loopBoundaryLines}
+        />
+      ) : isDjembe ? (
+        <VerticalDjembeTimeline
+          markers={markers}
+          measureLines={measureLines}
+          scrollOffset={scrollOffset}
+          hitLineY={hitLineY}
+          renderedHeight={renderedHeight}
+          activeStrokes={activeStrokes}
+          tapMarkers={processedTapMarkers}
+          containerHeight={containerHeight}
           loopBoundaryLines={loopBoundaryLines}
         />
       ) : isDrum ? (

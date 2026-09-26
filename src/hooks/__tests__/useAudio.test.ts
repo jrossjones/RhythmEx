@@ -73,6 +73,20 @@ function MockSampler(this: ReturnType<typeof createMockSynth>) {
 }
 MockSampler.prototype.toDestination = function () { return this }
 
+function MockFilter(this: ReturnType<typeof createMockSynth>) {
+  const synth = createMockSynth()
+  Object.assign(this, synth)
+  createdSynths.filter.push(this)
+  return this
+}
+MockFilter.prototype.toDestination = function () { return this }
+
+// Tone.Frequency is called as a plain function, not constructed. Declared as a
+// function (not a const) because vi.mock is hoisted above the file's bindings.
+function MockFrequency(note: string | number) {
+  return { toFrequency: () => (typeof note === 'number' ? note : 100) }
+}
+
 vi.mock('tone', () => ({
   start: vi.fn().mockResolvedValue(undefined),
   loaded: vi.fn().mockResolvedValue(undefined),
@@ -86,6 +100,8 @@ vi.mock('tone', () => ({
   PolySynth: MockPolySynth,
   FMSynth: MockFMSynth,
   Sampler: MockSampler,
+  Filter: MockFilter,
+  Frequency: MockFrequency,
 }))
 
 import { useAudio } from '../useAudio'
@@ -94,7 +110,7 @@ import * as Tone from 'tone'
 describe('useAudio', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    createdSynths = { membrane: [], noise: [], metal: [], synth: [], reverb: [], polySynth: [], sampler: [] }
+    createdSynths = { membrane: [], noise: [], metal: [], synth: [], reverb: [], polySynth: [], sampler: [], filter: [] }
   })
 
   afterEach(() => {
@@ -239,6 +255,64 @@ describe('useAudio', () => {
 
     const handpanInstance = createdSynths.polySynth[0]
     expect(handpanInstance.triggerAttackRelease).toHaveBeenCalledWith('D3', '0.8', 0)
+  })
+
+  it('playDjembe is no-op before startAudioContext', () => {
+    const { result } = renderHook(() => useAudio())
+
+    act(() => {
+      result.current.playDjembe('bass', 'strong')
+    })
+
+    expect(createdSynths.membrane).toHaveLength(0)
+  })
+
+  it('playDjembe strikes the weak hand softer than the strong hand', async () => {
+    const { result } = renderHook(() => useAudio())
+
+    await act(async () => {
+      await result.current.startAudioContext()
+    })
+
+    // Djembe synths are created after the drum kit: membrane[3] = djembe bass.
+    const djembeBass = createdSynths.membrane[3]
+
+    act(() => {
+      result.current.playDjembe('bass', 'strong')
+      result.current.playDjembe('bass', 'weak')
+    })
+
+    expect(djembeBass.triggerAttackRelease).toHaveBeenCalledTimes(2)
+    const [strongCall, weakCall] = djembeBass.triggerAttackRelease.mock.calls
+    // 4th arg is velocity — the weak hand strikes with less force.
+    expect(weakCall[3]).toBeLessThan(strongCall[3] as number)
+    // ...and lands slightly flat, from the softer contact.
+    expect(weakCall[0]).toBeLessThan(strongCall[0] as number)
+  })
+
+  it('playDjembe routes each hand to its own slap chain', async () => {
+    const { result } = renderHook(() => useAudio())
+
+    await act(async () => {
+      await result.current.startAudioContext()
+    })
+
+    // noise[0] = snare; the two djembe slap chains follow.
+    const slapStrong = createdSynths.noise[1]
+    const slapWeak = createdSynths.noise[2]
+
+    act(() => {
+      result.current.playDjembe('slap', 'strong')
+    })
+
+    expect(slapStrong.triggerAttackRelease).toHaveBeenCalledTimes(1)
+    expect(slapWeak.triggerAttackRelease).not.toHaveBeenCalled()
+
+    act(() => {
+      result.current.playDjembe('slap', 'weak')
+    })
+
+    expect(slapWeak.triggerAttackRelease).toHaveBeenCalledTimes(1)
   })
 
   it('disposes synths on unmount', async () => {

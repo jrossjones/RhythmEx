@@ -2,6 +2,7 @@ import type { Difficulty, InstrumentType } from '@/types'
 import { drumCells } from './drumCells'
 import { handpanCells } from './handpanCells'
 import { strumCells } from './strumCells'
+import { djembeCells } from './djembeCells'
 
 // A single beat within a one-measure rhythm cell.
 // pos = "beat:sixteenth" within the measure (4/4 only).
@@ -22,6 +23,7 @@ const cellsByInstrument: Record<InstrumentType, Record<Difficulty, RhythmCell[]>
   drums: drumCells,
   handpan: handpanCells,
   strumming: strumCells,
+  djembe: djembeCells,
 }
 
 export function cellsFor(instrument: InstrumentType, difficulty: Difficulty): RhythmCell[] {

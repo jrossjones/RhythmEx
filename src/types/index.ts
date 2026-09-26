@@ -40,10 +40,28 @@ export interface Exercise {
 }
 
 // Available instrument types
-export type InstrumentType = 'drums' | 'handpan' | 'strumming'
+export type InstrumentType = 'drums' | 'handpan' | 'strumming' | 'djembe'
 
 // Drum pad identifiers
 export type DrumPad = 'kick' | 'snare' | 'hihat' | 'tom1' | 'tom2'
+
+/** The three djembe strokes, ordered inner → outer on the drum head. */
+export type DjembeStroke = 'bass' | 'tone' | 'slap'
+
+/**
+ * Which hand plays a stroke, as strong/weak rather than right/left.
+ * This is the traditional distinction — both the written case convention
+ * (B/b, T/t, S/s) and the oral one (Gun/Dun, Go/Do, Pa/Ta) encode strong vs.
+ * weak, not right vs. left. Keeping the data hand-agnostic means left-handed
+ * play is a render-time mirror and never touches scoring.
+ */
+export type DjembeHand = 'strong' | 'weak'
+
+/** `beat.note` value for a djembe exercise, e.g. "tone-strong". */
+export type DjembeNote = `${DjembeStroke}-${DjembeHand}`
+
+/** Which djembe pad arrangement to render. */
+export type PadLayout = 'fan' | 'grid'
 
 // Timing judgment for a single tap
 export type TimingJudgment = 'early' | 'on-time' | 'late' | 'miss'
@@ -77,6 +95,10 @@ export interface PracticeSettings {
   seamlessLoop: boolean
   speedTrainerStep: number
   debugStatsOn: boolean
+  /** Djembe pad arrangement. 'fan' is the physically faithful default. */
+  padLayout: PadLayout
+  /** Mirror the pad layout for a left-handed player. */
+  leftHanded: boolean
 }
 
 // Star rating (1-3)

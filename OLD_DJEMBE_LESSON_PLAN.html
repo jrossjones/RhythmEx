@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Djembe Lesson Plan — RhythmEx</title>
+<style>
+  :root {
+    --bg: #fbf9f6;
+    --surface: #ffffff;
+    --ink: #1c1a17;
+    --ink-soft: #5c564e;
+    --rule: #e3ddd4;
+    --accent: #a8471f;
+    --accent-soft: #f4e6de;
+    --green: #2f6b3a;
+    --amber: #8a6410;
+    --red: #a12c22;
+    --code-bg: #f4f0ea;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #16150f;
+      --surface: #1e1c16;
+      --ink: #ece7dd;
+      --ink-soft: #a39c90;
+      --rule: #35322a;
+      --accent: #e8895c;
+      --accent-soft: #2c2119;
+      --green: #7fc08d;
+      --amber: #d9b45c;
+      --red: #e58b7f;
+      --code-bg: #232019;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 16px/1.65 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-text-size-adjust: 100%;
+  }
+  .wrap { max-width: 62rem; margin: 0 auto; padding: 3rem 1.25rem 6rem; }
+  header { border-bottom: 3px solid var(--accent); padding-bottom: 1.25rem; margin-bottom: 2.5rem; }
+  header .kicker { font-size: .78rem; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+  h1 { font-size: clamp(1.9rem, 5vw, 2.7rem); line-height: 1.1; margin: .4rem 0 .5rem; letter-spacing: -.02em; }
+  header p { margin: 0; color: var(--ink-soft); }
+  h2 {
+    font-size: 1.3rem; margin: 3rem 0 1rem; padding-bottom: .4rem;
+    border-bottom: 1px solid var(--rule); letter-spacing: -.01em;
+  }
+  h3 { font-size: 1.02rem; margin: 2rem 0 .6rem; letter-spacing: -.005em; }
+  h4 { font-size: .95rem; margin: 1.4rem 0 .5rem; color: var(--ink-soft); }
+  p, li { color: var(--ink); }
+  a { color: var(--accent); }
+  code {
+    font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+    font-size: .87em; background: var(--code-bg); padding: .12em .35em; border-radius: 4px;
+  }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--rule); border-radius: 8px;
+    padding: .85rem 1rem; overflow-x: auto; margin: .75rem 0 1rem;
+  }
+  pre code { background: none; padding: 0; font-size: .84rem; line-height: 1.55; white-space: pre; }
+  table { border-collapse: collapse; width: 100%; margin: 1rem 0 1.5rem; font-size: .93rem; }
+  .table-scroll { overflow-x: auto; }
+  th, td { text-align: left; padding: .55rem .7rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); }
+  blockquote {
+    margin: 1.25rem 0; padding: .85rem 1.1rem; background: var(--accent-soft);
+    border-left: 3px solid var(--accent); border-radius: 0 6px 6px 0; color: var(--ink);
+  }
+  blockquote p { margin: 0; }
+  .ex {
+    background: var(--surface); border: 1px solid var(--rule); border-radius: 10px;
+    padding: 1.1rem 1.25rem; margin: 1.1rem 0;
+  }
+  .ex h3 { margin-top: 0; display: flex; flex-wrap: wrap; gap: .5rem; align-items: baseline; }
+  .ex .num { color: var(--accent); font-variant-numeric: tabular-nums; }
+  .meta { font-size: .8rem; color: var(--ink-soft); margin: 0 0 .5rem; }
+  .badge {
+    display: inline-block; font-size: .68rem; letter-spacing: .07em; text-transform: uppercase;
+    font-weight: 700; padding: .16rem .45rem; border-radius: 4px; vertical-align: .1em;
+  }
+  .b-beg { background: color-mix(in srgb, var(--green) 16%, transparent); color: var(--green); }
+  .b-int { background: color-mix(in srgb, var(--amber) 20%, transparent); color: var(--amber); }
+  .b-block { background: color-mix(in srgb, var(--red) 16%, transparent); color: var(--red); }
+  .origin { font-style: italic; color: var(--ink-soft); font-size: .9rem; margin: 0 0 .6rem; }
+  .teaches { margin: .5rem 0 0; font-size: .93rem; }
+  .teaches strong { color: var(--accent); }
+  .stage-intro { color: var(--ink-soft); }
+  ul, ol { padding-left: 1.4rem; }
+  li { margin: .3rem 0; }
+  hr { border: none; border-top: 1px solid var(--rule); margin: 3rem 0; }
+  .legend { display: flex; flex-wrap: wrap; gap: 1.25rem; margin: 1rem 0; font-size: .92rem; }
+  .legend div { flex: 1 1 12rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="kicker">RhythmEx · Plan Document</div>
+  <h1>Djembe Lesson Plan</h1>
+  <p>20 exercises, beginner → intermediate. Plan for review — <strong>no code yet</strong>; implementation is a follow-up pass.</p>
+</header>
+
+<h2>1. Decisions locked in</h2>
+<div class="table-scroll">
+<table>
+  <thead><tr><th>Question</th><th>Decision</th></tr></thead>
+  <tbody>
+    <tr><td>Deliverable</td><td>This plan doc now; exercise data + instrument build later</td></tr>
+    <tr><td>Instrument model</td><td>New <code>'djembe'</code> instrument type (not a re-skin of <code>'drums'</code>)</td></tr>
+    <tr><td>Hand tracking</td><td><strong>Scored</strong> — six distinct inputs (bass/tone/slap × R/L)</td></tr>
+    <tr><td>Content</td><td>Traditional West African repertoire, including 12/8 material</td></tr>
+    <tr><td>Audio</td><td>Reuse the existing drum-synth approach (no new samples)</td></tr>
+    <tr><td>R/L strictness</td><td>Enforced <strong>only under strict mode</strong>; free mode judges timing only</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>2. Engine prerequisites</h2>
+<p>These must land before <strong>any</strong> 12/8 exercise (Ex 11–15, 18) can be authored. Everything in 4/4 (Ex 1–10, 16, 17, 19, 20) works with the engine as it stands.</p>
+
+<h3>2.1 Triplet subdivision — required</h3>
+<p><code>transportTimeToMs</code> (<code>src/utils/rhythm.ts:7</code>) parses <code>"measure:beat:sixteenth"</code> and hardcodes <code>totalBeats = measures * 4 + beats + sixteenths / 4</code>. The <code>/ 4</code> makes triplets inexpressible — an 8th-note triplet lands at 1/3 of a beat, which has no exact sixteenth representation.</p>
+<p>Djembe 12/8 is conventionally counted as <strong>4 pulses × 3 subdivisions</strong>, not 12 independent beats. That makes the fix small:</p>
+<ul>
+  <li>Add <code>feel?: 'straight' | 'triplet'</code> to <code>Exercise</code> (default <code>'straight'</code>).</li>
+  <li><code>transportTimeToMs</code> takes the subdivision count: <code>straight</code> → 4 per beat, <code>triplet</code> → 3 per beat.</li>
+  <li><code>beatTimesMs</code> (<code>rhythm.ts:34</code>) passes it through — it is the <strong>only</strong> caller of <code>transportTimeToMs</code> in app code, so the blast radius is one function plus its tests.</li>
+  <li><code>timeSignature</code> stays <code>[4, 4]</code>, so <code>exerciseDurationMs</code>, <code>useMetronome</code>'s downbeat accent, measure-divider rendering, and the <code>measures * 4</code> term all keep working untouched.</li>
+</ul>
+<p>A 12/8 bar is then <code>0:0:0 0:0:1 0:0:2 0:1:0 … 0:3:2</code>.</p>
+<blockquote><p><strong>Trade-off worth naming:</strong> this models "4/4 with a triplet feel", not true compound meter. It covers the whole djembe repertoire below and costs almost nothing. A general meter engine is a much larger change with no additional payoff here.</p></blockquote>
+
+<h3>2.2 Six-input djembe instrument</h3>
+<ul>
+  <li><code>InstrumentType</code> gains <code>'djembe'</code>; <code>DjembePad</code> component; <code>exerciseDjembeStrokes()</code> alongside <code>exerciseDrumPads()</code>.</li>
+  <li><strong><code>beat.note</code> convention:</strong> <code>"bass-R" | "bass-L" | "tone-R" | "tone-L" | "slap-R" | "slap-L"</code>. Consistent with the existing per-instrument convention (drum pad names / note names / strum directions).</li>
+  <li><strong>Pad layout:</strong> 2 columns (Left hand | Right hand) × 3 rows (bass / tone / slap). Keyboard: <code>s d f</code> = L bass/tone/slap, <code>j k l</code> = R bass/tone/slap, <code>Space</code> = next expected.</li>
+  <li><strong>Timeline:</strong> six columns is wide for a phone. Recommend grouping as 3 stroke columns with an L/R glyph inside each marker, rather than 6 columns — decide during the build.</li>
+  <li><strong>Audio:</strong> <code>MembraneSynth</code> low-tuned for bass, <code>MembraneSynth</code> mid-tuned for tone, <code>NoiseSynth</code> + highpass for slap. R and L share one sound per stroke type; an optional few-cents detune between hands is a nice-to-have, not required.</li>
+  <li><strong>Scoring:</strong> strict mode compares the full <code>"stroke-hand"</code> string. Free mode ignores it entirely — a 5-year-old should not be penalized for hand choice.</li>
+</ul>
+
+<h3>2.3 Concern to flag</h3>
+<p>Six scored inputs with hand differentiation is a real jump in difficulty for the stated 5+ audience. Free mode being the default handles this, but Ex 1–4 exist specifically so hand alternation is trained before any repertoire arrives. If early testing shows it's too much, the fallback is 3 pads with R/L as an advisory label only.</p>
+
+<h2>3. Notation used below</h2>
+<div class="legend">
+  <div><code>B</code> — bass (center, flat palm)</div>
+  <div><code>T</code> — tone (edge, flat fingers)</div>
+  <div><code>S</code> — slap (edge, snapped fingertips)</div>
+  <div><code>-</code> — rest</div>
+</div>
+<p>Sticking on the line beneath each pattern: <code>R</code> / <code>L</code>.</p>
+<ul>
+  <li><strong>4/4 patterns</strong> on a 16-cell sixteenth grid: <code>1 e &amp; a &nbsp;2 e &amp; a &nbsp;3 e &amp; a &nbsp;4 e &amp; a</code></li>
+  <li><strong>12/8 patterns</strong> on a 12-cell triplet grid: <code>1 . . &nbsp;2 . . &nbsp;3 . . &nbsp;4 . .</code></li>
+</ul>
+<p>Each entry gives one bar; repeat for the stated measure count.</p>
+
+<h2>4. Progression model</h2>
+<p>Difficulty advances along five independent axes, one or two at a time:</p>
+<ol>
+  <li><strong>Stroke count</strong> — one stroke type → two → all three within a bar</li>
+  <li><strong>Subdivision</strong> — quarters → eighths → sixteenths / triplets</li>
+  <li><strong>Sticking</strong> — strict alternation → strong-hand-lead → mixed</li>
+  <li><strong>Downbeat dependence</strong> — on-beat → offbeat → syncopated</li>
+  <li><strong>Length</strong> — 4 measures → 8 → 16</li>
+</ol>
+<p>Difficulty field: Ex 1–12 <span class="badge b-beg">beginner</span>, Ex 13–20 <span class="badge b-int">intermediate</span>.</p>
+
+<hr>
+
+<h2>5. Stage A — Hands &amp; Strokes (Ex 1–4)</h2>
+<p class="stage-intro">Pure technique. No repertoire yet — the point is that each stroke has a distinct sound and that both hands can produce it. 4 measures each.</p>
+
+<div class="ex">
+  <h3><span class="num">Ex 1</span> Bass Walk <span class="badge b-beg">beginner</span></h3>
+  <p class="meta">4/4 · 70 BPM · 4 measures</p>
+<pre><code>1  e  &amp;  a  2  e  &amp;  a  3  e  &amp;  a  4  e  &amp;  a
+B  -  -  -  B  -  -  -  B  -  -  -  B  -  -  -
+R           L           R           L</code></pre>
+  <p class="teaches">Full palm in the drum's center. <strong>Teaches:</strong> the bass stroke, strict alternation.</p>
+</div>
+
+<div class="ex">
+  <h3><span class="num">Ex 2</span> Tone Walk <span class="badge b-beg">beginner</span></h3>
+  <p class="meta">4/4 · 70 BPM · 4 measures</p>
+<pre><code>1  e  &amp;  a  2  e  &amp;  a  3  e  &amp;  a  4  e  &amp;  a
+T  -  -  -  T  -  -  -  T  -  -  -  T  -  -  -
+R           L           R           L</code></pre>
+  <p class="teaches">Flat fingers on the edge, hand rebounds off. <strong>Teaches:</strong> edge contact point, rebound.</p>
+</div>
+
+<div class="ex">
+  <h3><span class="num">Ex 3</span> Slap Walk <span class="badge b-beg">beginner</span></h3>
+  <p class="meta">4/4 · 65 BPM · 4 measures</p>
+<pre><code>1  e  &amp;  a  2  e  &amp;  a  3  e  &amp;  a  4  e  &amp;  a
+S  -  -  -  S  -  -  -  S  -  -  -  S  -  -  -
+R           L           R           L</code></pre>
+  <p class="teaches">Slower than Ex 1–2 because the slap is the hardest stroke to produce cleanly. <strong>Teaches:</strong> relaxed, snapping fingertips.</p>
+</div>
+
+<div class="ex">
+  <h3><span class="num">Ex 4</span> Three Voices <span class="badge b-beg">beginner</span></h3>
+  <p class="meta">4/4 · 70 BPM · 4 measures</p>
+  <p>Stroke changes every two beats; hands alternate continuously, so each stroke gets played by both hands.</p>
+<pre><code>M1: B  B  T  T     M2: S  S  B  B
+    R  L  R  L         R  L  R  L
+
+M3: T  T  S  S     M4: B  B  T  T
+    R  L  R  L         R  L  R  L</code></pre>
+  <p class="teaches"><strong>Teaches:</strong> switching stroke type without breaking the hand pattern. Last pure-technique exercise.</p>
+</div>
+
+<h2>6. Stage B — First accompaniments, 4/4 (Ex 5–10)</h2>
+<p class="stage-intro">Real accompaniment parts. Strong-hand-lead sticking (<code>R</code> starts each pair) appears here — this is normal djembe practice, not an error.</p>
+
+<div class="ex">
+  <h3><span class="num">Ex 5</span> Tone Pairs <span class="badge b-beg">beginner</span></h3>
+  <p class="meta">4/4 · 80 BPM · 4 measures</p>
+<pre><code>1  e  &amp;  a  2  e  &amp;  a  3  e  &amp;  a  4  e  &amp;  a
+T  T  -  -  -  -  -  -  T  T  -  -  -  -  -  -
+R  L                    R  L</code></pre>
+  <p class="teaches">Bridge drill. <strong>Teaches:</strong> the eighth-note pair — the building block of nearly every part below.</p>
+</div>
+
+<div class="ex">
+  <h3><span class="num">Ex 6</span> Kuku — 1st accompaniment <span class="badge b-beg">beginner</span></h3>
+  <p class="meta">4/4 · 85 BPM · 4 measures</p>
+  <p class="origin">Guinea (Manian) — usually the first rhythm taught.</p>
+<pre><code>1  e  &amp;  a  2  e  &amp;  a  3  e  &amp;  a  4  e  &amp;  a
+B  -  -  -  T  -  T  -  S  -  -  -  T  -  T  -
+R           R     L     R           R     L</code></pre>
+  <p class="teaches"><strong>Teaches:</strong> all three strokes in one bar; strong-hand-lead pairs.</p>
+</div>
+
+<div class="ex">
+  <h3><span class="num">Ex 7</span> Kassa — 1st accompaniment <span class="badge b-beg">beginner</span></h3>
+  <p class="meta">4/4 · 85 BPM · 4 measures</p>
+  <p class="origin">Malinke harvest rhythm.</p>
+<pre><code>1  e  &amp;  a  2  e  &amp;  a  3  e  &amp;  a  4  e  &amp;  a
+B  -  -  -  B  -  -  -  T  -  T  -  S  -  -  -
+R           L           R     L     R</code></pre>
+  <p class="teaches"><strong>Teaches:</strong> two consecutive basses on alternating hands, then a stroke change.</p>
+</div>
+
+<div class="ex">
+  <h3><span class="num">Ex 8</span> Djole — 1st accompaniment <span class="badge b-beg">beginner</span></h3>
+  <p class="meta">4/4 · 90 BPM · 4 measures</p>
+  <p class="origin">Temne, Sierra Leone.</p>
+<pre><code>1  e  &amp;  a  2  e  &amp;  a  3  e  &amp;  a  4  e  &amp;  a
+B  -  -  -  -  -  T  T  S  -  -  -  -  -  T  T
+R                 R  L  R                 R  L</code></pre>
+  <p class="teaches"><strong>Teaches:</strong> the first <strong>sixteenth-note</strong> pair, landing on <code>&amp; a</code> rather than on the beat.</p>
+</div>
+
+<div class="ex">
+  <h3><span class="num">Ex 9</span> Kuku — 2nd accompaniment <span class="badge b-beg">beginner</span></h3>
+  <p class="meta">4/4 · 85 BPM · 4 measures</p>
+<pre><code>1  e  &amp;  a  2  e  &amp;  a  3  e  &amp;  a  4  e  &amp;  a
+-  -  T  -  -  -  T  -  -  -  S  -  -  -  S  -
+      R           L           R           L</code></pre>
+  <p class="teaches">Every note is an offbeat. Practice with the metronome <strong>on</strong> — the whole lesson is holding a part that never coincides with the pulse. <strong>Teaches:</strong> independence from the downbeat. Pairs with Ex 6 (see Ex 20).</p>
+</div>
+
+<div class="ex">
+  <h3><span class="num">Ex 10</span> Yankadi accompaniment <span class="badge b-beg">beginner</span></h3>
+  <p class="meta">4/4 · 70 BPM · 4 measures</p>
+  <p class="origin">Susu — a slow social dance; traditionally paired with the faster Makru.</p>
+<pre><code>1  e  &amp;  a  2  e  &amp;  a  3  e  &amp;  a  4  e  &amp;  a
+B  -  -  T  -  -  S  -  B  -  -  T  -  -  S  -
+R        L        R     R        L        R</code></pre>
+  <p class="teaches"><strong>Teaches:</strong> the <code>a</code> (fourth sixteenth) — the least intuitive slot in the bar. The slow tempo makes it learnable.</p>
+</div>
+
+<h2>7. Stage C — Triplet feel / 12-8 (Ex 11–15)</h2>
+<p class="stage-intro"><span class="badge b-block">blocked on §2.1</span> Everything here is <code>feel: 'triplet'</code>, <code>timeSignature: [4, 4]</code>. BPM refers to the four main pulses.</p>
+
+<div class="ex">
+  <h3><span class="num">Ex 11</span> Triplet Hand Walk <span class="badge b-beg">beginner</span></h3>
+  <p class="meta">12/8 · 60 BPM · 4 measures</p>
+<pre><code>1  .  .  2  .  .  3  .  .  4  .  .
+T  T  T  T  T  T  T  T  T  T  T  T
+R  L  R  L  R  L  R  L  R  L  R  L</code></pre>
+  <p class="teaches"><strong>Teaches:</strong> the triplet grid, and that strict alternation over a 3-grouping means each pulse starts on the opposite hand. This is the core sensation of 12/8 drumming.</p>
+</div>
+
+<div class="ex">
+  <h3><span class="num">Ex 12</span> Pulse &amp; Bass <span class="badge b-beg">beginner</span></h3>
+  <p class="meta">12/8 · 65 BPM · 4 measures</p>
+<pre><code>1  .  .  2  .  .  3  .  .  4  .  .
+B  T  T  B  T  T  B  T  T  B  T  T
+R  L  R  R  L  R  R  L  R  R  L  R</code></pre>
+  <p class="teaches">Bass always with the strong hand, marking the pulse. <strong>Teaches:</strong> hearing the 4 pulses inside 12 subdivisions.</p>
+</div>
+
+<div class="ex">
+  <h3><span class="num">Ex 13</span> Tiriba — 1st accompaniment <span class="badge b-int">intermediate</span></h3>
+  <p class="meta">12/8 · 70 BPM · 4 measures</p>
+  <p class="origin">Guinea (Baga / Landuma).</p>
+<pre><code>1  .  .  2  .  .  3  .  .  4  .  .
+B  -  -  T  T  -  S  -  -  T  T  -
+R        R  L     R        R  L</code></pre>
+  <p class="teaches"><strong>Teaches:</strong> the first real 12/8 repertoire part; pairs land on subdivisions 1–2 of a pulse.</p>
+</div>
+
+<div class="ex">
+  <h3><span class="num">Ex 14</span> Sunguru Bani — 1st accompaniment <span class="badge b-int">intermediate</span></h3>
+  <p class="meta">12/8 · 70 BPM · 4 measures</p>
+  <p class="origin">Malinke.</p>
+<pre><code>1  .  .  2  .  .  3  .  .  4  .  .
+-  -  T  T  -  -  S  -  T  T  -  -
+      R  L        R     R  L</code></pre>
+  <p class="teaches"><strong>Teaches:</strong> entering on the <strong>third</strong> subdivision — 12/8's equivalent of Ex 9's offbeat challenge. Notes straddle the pulse line.</p>
+</div>
+
+<div class="ex">
+  <h3><span class="num">Ex 15</span> Kakilambe — 1st accompaniment <span class="badge b-int">intermediate</span></h3>
+  <p class="meta">12/8 · 60 BPM · 4 measures</p>
+  <p class="origin">Guinea (Baga).</p>
+<pre><code>1  .  .  2  .  .  3  .  .  4  .  .
+B  -  -  B  -  -  T  T  S  -  -  -
+R        L        R  L  R</code></pre>
+  <p class="teaches">Slow and ceremonial. <strong>Teaches:</strong> sustaining a sparse part at low tempo — patience, and consistent stroke quality with time to think between notes.</p>
+</div>
+
+<h2>8. Stage D — Intermediate (Ex 16–20)</h2>
+<p class="stage-intro">Sixteenth density, syncopation, longer forms, and finally a multi-section piece.</p>
+
+<div class="ex">
+  <h3><span class="num">Ex 16</span> Soli (fast) — accompaniment <span class="badge b-int">intermediate</span></h3>
+  <p class="meta">4/4 · 100 BPM · 4 measures</p>
+  <p class="origin">Malinke. Soli exists in both a slow 12/8 and a fast 4/4 version; this is the fast one.</p>
+<pre><code>1  e  &amp;  a  2  e  &amp;  a  3  e  &amp;  a  4  e  &amp;  a
+T  T  S  -  T  T  S  -  T  T  S  -  B  -  -  -
+R  L  R     R  L  R     R  L  R     R</code></pre>
+  <p class="teaches"><strong>Teaches:</strong> sustained sixteenth density (12 notes/bar) and a three-note repeating cell that resets on beat 4.</p>
+</div>
+
+<div class="ex">
+  <h3><span class="num">Ex 17</span> Mendiani accompaniment <span class="badge b-int">intermediate</span></h3>
+  <p class="meta">4/4 · 95 BPM · 8 measures</p>
+  <p class="origin">Malinke — a young girls' dance rhythm.</p>
+<pre><code>1  e  &amp;  a  2  e  &amp;  a  3  e  &amp;  a  4  e  &amp;  a
+B  -  T  T  S  -  T  T  -  S  T  T  S  -  T  T
+R     R  L  R     R  L     R  R  L  R     R  L</code></pre>
+  <p class="teaches"><strong>Teaches:</strong> syncopation — the slap on beat 3 displaces to the <code>e</code>. Doubles the exercise length to 8 measures (endurance).</p>
+</div>
+
+<div class="ex">
+  <h3><span class="num">Ex 18</span> Dunumba accompaniment <span class="badge b-int">intermediate</span></h3>
+  <p class="meta">12/8 · 75 BPM · 8 measures</p>
+  <p class="origin">Malinke — "dance of the strong men". Heavy bass, wide dynamics.</p>
+<pre><code>1  .  .  2  .  .  3  .  .  4  .  .
+B  -  T  -  T  -  S  -  T  T  -  -
+R     L     R     R     R  L</code></pre>
+  <p class="teaches"><strong>Teaches:</strong> 12/8 with notes on subdivisions 1 and 3 of alternating pulses; dynamic contrast between the heavy bass and light tones. Longest 12/8 exercise.</p>
+</div>
+
+<div class="ex">
+  <h3><span class="num">Ex 19</span> Kuku call / heat-up <span class="badge b-int">intermediate</span></h3>
+  <p class="meta">4/4 · 95 BPM · 8 measures (two-bar phrase ×4)</p>
+  <p>A <strong>signal</strong> part, not an accompaniment — the phrase that tells dancers and drummers a change is coming.</p>
+<pre><code>Bar 1:
+1  e  &amp;  a  2  e  &amp;  a  3  e  &amp;  a  4  e  &amp;  a
+T  T  S  -  T  T  S  -  T  T  S  -  T  T  S  -
+R  L  R     R  L  R     R  L  R     R  L  R
+
+Bar 2:
+1  e  &amp;  a  2  e  &amp;  a  3  e  &amp;  a  4  e  &amp;  a
+B  -  -  -  B  -  -  -  B  -  -  -  -  -  -  -
+R           L           R</code></pre>
+  <p class="teaches"><strong>Teaches:</strong> two-bar phrasing — the first exercise where the pattern doesn't reset every bar. Driving density resolving into space.</p>
+</div>
+
+<div class="ex">
+  <h3><span class="num">Ex 20</span> Kuku Full Cycle <span class="badge b-int">intermediate</span></h3>
+  <p class="meta">4/4 · 95 BPM · 16 measures</p>
+  <p>Capstone. Four four-bar sections, no repeats within the exercise:</p>
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>Measures</th><th>Content</th></tr></thead>
+    <tbody>
+      <tr><td>1–4</td><td>Ex 6 — Kuku accompaniment 1</td></tr>
+      <tr><td>5–8</td><td>Ex 9 — Kuku accompaniment 2 (offbeat)</td></tr>
+      <tr><td>9–12</td><td>Ex 19 — call phrase (two-bar phrase ×2)</td></tr>
+      <tr><td>13–16</td><td>Ex 6 — return to accompaniment 1</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="teaches"><strong>Teaches:</strong> form. Switching parts mid-piece without dropping the pulse — the actual skill a djembe player needs in an ensemble, and the natural graduation point to advanced material.</p>
+</div>
+
+<hr>
+
+<h2>9. Pattern provenance — read before building</h2>
+<p>The <strong>structure, progression, meters, and tempos</strong> above are mine to stand behind. The <strong>specific note placements</strong> are common teaching versions written from memory, and djembe repertoire varies genuinely and legitimately by region, teacher, and lineage — there is often no single correct version of a part.</p>
+<p>Recommendation before authoring the data files: verify each repertoire pattern (Ex 6–10, 13–20) against a source you trust — a teacher, or a published transcription. The repo already has the right pipeline for this: export MusicXML and run <code>references/musicxml_to_beats.py</code> to generate the <code>beats: [...]</code> arrays (see <code>references/MUSICXML_IMPORT.md</code>). That path gets verified patterns in without hand-transcription errors.</p>
+<p>The technique drills (Ex 1–5, 11, 12) need no verification — they are drills, not repertoire.</p>
+
+<h2>10. Implementation order for the follow-up pass</h2>
+<ol>
+  <li><code>transportTimeToMs</code> triplet support + tests (§2.1) — unblocks everything in 12/8</li>
+  <li><code>'djembe'</code> instrument type, <code>DjembePad</code>, synths, timeline column strategy (§2.2)</li>
+  <li>Strict-mode <code>"stroke-hand"</code> comparison in <code>useTiming</code></li>
+  <li><code>data/exercises/djembe-beginner.ts</code> (Ex 1–12) and <code>djembe-intermediate.ts</code> (Ex 13–20), registered in <code>data/exercises/index.ts</code></li>
+  <li>Per the <code>CLAUDE.md</code> spec-change protocol: update <code>MANUAL_TESTS.md</code> (six-input pads, triplet timeline, strict-mode hand enforcement) and <code>CLAUDE.md</code> (djembe architecture decisions, <code>feel</code> field, exercise count 30 → 50)</li>
+</ol>
+
+<h2>11. Open items</h2>
+<ul>
+  <li><strong>Timeline width</strong> — 6 columns vs. 3 columns with L/R glyphs. Decide from a phone-width mockup.</li>
+  <li><strong>Sticker predicates</strong> — should djembe get its own achievement(s)? <code>utils/achievements.ts</code> currently has 13.</li>
+  <li><strong>Dunun / accompanying parts</strong> — every rhythm here also has bass-drum (dunun / sangban / kenkeni) parts. Out of scope, but they're what make these rhythms recognizable; worth considering as backing audio during playback later.</li>
+  <li><strong>Advanced tier</strong> — deliberately empty. Solo phrases and échauffements belong there once Ex 1–20 test well.</li>
+</ul>
+
+</div>
+</body>
+</html>

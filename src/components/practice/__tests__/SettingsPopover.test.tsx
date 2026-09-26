@@ -12,6 +12,8 @@ const defaultSettings: PracticeSettings = {
   seamlessLoop: false,
   speedTrainerStep: 5,
   debugStatsOn: false,
+  padLayout: 'fan',
+  leftHanded: false,
 }
 
 describe('SettingsPopover', () => {

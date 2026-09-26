@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { transportTimeToMs, msPerBeat, exerciseDurationMs, beatTimesMs, exerciseHandpanNotes, exerciseChords, subdivisionsPerBeat } from '../rhythm'
+import { transportTimeToMs, msPerBeat, exerciseDurationMs, beatTimesMs, exerciseHandpanNotes, exerciseChords, subdivisionsPerBeat, exerciseDjembeStrokes } from '../rhythm'
 import type { Exercise } from '@/types'
 
 describe('msPerBeat', () => {
@@ -166,6 +166,39 @@ describe('beatTimesMs', () => {
       ],
     }
     expect(beatTimesMs(straight)).toEqual([0, 500])
+  })
+})
+
+describe('exerciseDjembeStrokes', () => {
+  const build = (notes: string[]): Exercise => ({
+    id: 'dj',
+    name: 'Djembe',
+    difficulty: 'beginner',
+    instrument: 'djembe',
+    timeSignature: [4, 4],
+    bpm: 70,
+    measures: 1,
+    beats: notes.map((note, i) => ({ time: `0:${i}:0`, duration: '4n', note })),
+  })
+
+  it('returns strokes in canonical lane order, not order of appearance', () => {
+    expect(exerciseDjembeStrokes(build(['bass-strong', 'slap-weak', 'tone-strong']))).toEqual([
+      'slap',
+      'tone',
+      'bass',
+    ])
+  })
+
+  it('deduplicates across hands — hand is not a lane', () => {
+    expect(exerciseDjembeStrokes(build(['tone-strong', 'tone-weak']))).toEqual(['tone'])
+  })
+
+  it('returns a single stroke for a one-stroke drill', () => {
+    expect(exerciseDjembeStrokes(build(['bass-strong', 'bass-weak']))).toEqual(['bass'])
+  })
+
+  it('ignores notes that are not stroke-hand pairs', () => {
+    expect(exerciseDjembeStrokes(build(['kick', 'C4', 'down']))).toEqual([])
   })
 })
 
